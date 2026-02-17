@@ -48,10 +48,12 @@ class MyApplication : Application() {
         // 使用一次性观察者，避免内存泄漏
         val modeObserver = object : Observer<ShellManager.Mode> {
             override fun onChanged(value: ShellManager.Mode) {
+                // 在获取到权限时清除缓存
                 if (value == ShellManager.Mode.ROOT || value == ShellManager.Mode.SHIZUKU || value == ShellManager.Mode.SHIZUKU_FALLBACK) {
                     cachedAppList = null
-                    ShellManager.mode.removeObserver(this)
                 }
+                // 无论什么模式，第一次变化后都移除观察者
+                ShellManager.mode.removeObserver(this)
             }
         }
         ShellManager.mode.observeForever(modeObserver)
