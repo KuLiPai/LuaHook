@@ -3,6 +3,7 @@ package com.kulipai.luahook.app
 import android.app.Application
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import androidx.lifecycle.Observer
 import com.google.android.material.color.DynamicColors
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.crash.AppCrashHandler
@@ -44,11 +45,16 @@ class MyApplication : Application() {
         ShellManager.init(applicationContext)
 
         // 当获取到 Root 或 Shizuku 权限时，清除缓存，以便重新加载完整应用列表
-        ShellManager.mode.observeForever {
-            if (it == ShellManager.Mode.ROOT || it == ShellManager.Mode.SHIZUKU || it == ShellManager.Mode.SHIZUKU_FALLBACK) {
-                cachedAppList = null
+        // 使用一次性观察者，避免内存泄漏
+        val modeObserver = object : Observer<ShellManager.Mode> {
+            override fun onChanged(value: ShellManager.Mode) {
+                if (value == ShellManager.Mode.ROOT || value == ShellManager.Mode.SHIZUKU || value == ShellManager.Mode.SHIZUKU_FALLBACK) {
+                    cachedAppList = null
+                    ShellManager.mode.removeObserver(this)
+                }
             }
         }
+        ShellManager.mode.observeForever(modeObserver)
 
         XposedScope.init()
     }
