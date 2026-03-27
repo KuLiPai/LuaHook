@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.ApkChecker" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- 启动背景 -->
+        <item name="windowSplashScreenBackground">@color/black</item>
+
+        <!-- 中间图标 -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+
+        <!-- 进入应用后的主题 -->
+        <item name="postSplashScreenTheme">@style/Theme.ApkChecker</item>
+    </style>
+</resources>
