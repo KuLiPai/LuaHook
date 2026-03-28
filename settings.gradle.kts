@@ -1,4 +1,3 @@
-
 // Gradle插件管理配置
 pluginManagement {
     // 包含build-logic目录作为构建逻辑模块
@@ -33,7 +32,10 @@ rootProject.name = "LuaHook"
 // 包含主应用模块
 include(":app")
 
+// 核心模块
+include(":core:theme")
 
 
 // feature 功能模块
 include(":feature:main")
+

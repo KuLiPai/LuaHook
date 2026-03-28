@@ -53,10 +53,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
 
 
-    implementation(libs.miuix)
-    implementation(libs.miuix.icons)
-    implementation(libs.miuix.navigation3.ui)
-
     implementation(libs.backdrop)
     implementation(libs.capsule)
     implementation(libs.haze)

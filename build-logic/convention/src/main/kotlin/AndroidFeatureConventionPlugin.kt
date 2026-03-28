@@ -43,7 +43,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
 //                "implementation"(project(":core:common")) // 公共
 //                "implementation"(project(":core:model")) // 模型
 //                "implementation"(project(":core:result")) // 结果处理\
-
+                "implementation"(project(":core:theme")) // 主题模块
 
                 // MiUiX
                 "implementation"(libs.findLibrary("miuix").get())
@@ -61,6 +61,15 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 "implementation"(libs.findLibrary("koin.android").get())
                 "implementation"(libs.findLibrary("koin.androidx.compose").get())
                 "implementation"(libs.findLibrary("koin.compose.viewmodel").get())
+
+                // 液态玻璃和毛玻璃模糊等
+                "implementation"(libs.findLibrary("backdrop").get())
+                "implementation"(libs.findLibrary("capsule").get())
+                "implementation"(libs.findLibrary("haze").get())
+
+                // material 图标扩展
+                "implementation"(libs.findLibrary("androidx.compose.material.icons.extended").get())
+
 
             }
         }

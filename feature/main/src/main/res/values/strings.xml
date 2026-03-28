@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <string name="home">Home</string>
+    <string name="superuser">Superuser</string>
+    <string name="module">Module</string>
+    <string name="settings">Settings</string>
+</resources>

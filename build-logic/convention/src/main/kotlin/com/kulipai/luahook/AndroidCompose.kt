@@ -43,6 +43,12 @@ internal fun Project.configureAndroidCompose(
         "debugImplementation"(libs.findLibrary("androidx.compose.ui.tooling").get())
         "debugImplementation"(libs.findLibrary("androidx.compose.ui.test.manifest").get())
 
+        // MiUiX
+        "implementation"(libs.findLibrary("miuix").get())
+        "implementation"(libs.findLibrary("miuix.icons").get())
+        "implementation"(libs.findLibrary("miuix.navigation3.ui").get())
+
+
 
     }
 }
