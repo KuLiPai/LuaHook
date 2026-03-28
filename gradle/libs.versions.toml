@@ -1,6 +1,26 @@
 [versions]
+
+# 项目基础配置
+# 构建版本
+versionCode = "2026032801"
+# 版本号
+versionName = "4.2.0"
+# 包名
+namespace = "com.kulipai.luahook"
+
+# Android SDK 配置
+# 编译 SDK 版本
+compileSdk = "36"
+# 最低支持的 SDK 版本
+minSdk = "26"
+# 目标 SDK 版本
+targetSdk = "36"
+
+
+
 agp = "9.1.0"
 coreKtx = "1.18.0"
+desugarJdkLibs = "2.1.5"
 datastorePreferences = "1.2.1"
 splashscreen = "1.2.0"
 lifecycle = "2.10.0"
@@ -18,6 +38,15 @@ navigation3 = "1.1.0-rc01"
 haze = "1.7.2"
 koinBom = "4.2.0"
 
+appcompat = "1.7.1"
+material = "1.13.0"
+
+
+# KSP (Kotlin Symbol Processing): https://github.com/google/ksp
+# 说明: Kotlin 注解处理器，用于代码生成
+ksp = "2.3.4"
+
+
 [libraries]
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 
@@ -27,8 +56,13 @@ androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lif
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+
+# 导航相关库
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle" }
-androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "navigation3" }
+
+android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugarJdkLibs" }
 
 
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -60,6 +94,17 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koinBom" }
 koin-core = { module = "io.insert-koin:koin-core" }
 
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+
+# 构建工具相关库
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle-api", version.ref = "agp" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+
+# 依赖注入相关库
+ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+
 [bundles]
 koin = ["koin-android","koin-androidx-compose","koin-core","koin-compose-viewmodel"]
 
@@ -67,3 +112,13 @@ koin = ["koin-android","koin-androidx-compose","koin-core","koin-compose-viewmod
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+
+
+
+# 自定义插件别名 - 参考 Now in Android 项目结构
+luahook-android-application-compose = { id = "com.kulipai.luahook.android.application.compose" }
+luahook-android-feature = { id = "com.kulipai.luahook.android.feature" }
+luahook-android-library = { id = "com.kulipai.luahook.android.library" }
+luahook-android-library-compose = { id = "com.kulipai.luahook.android.library.compose" }
+luahook-koin = { id = "com.kulipai.luahook.koin" }

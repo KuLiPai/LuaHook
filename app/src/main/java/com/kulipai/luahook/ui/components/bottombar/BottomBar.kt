@@ -22,8 +22,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import com.kulipai.luahook.ui.theme.LocalUiMode
-import com.kulipai.luahook.ui.theme.UiMode
+import com.kulipai.luahook.core.theme.LocalUiMode
+import com.kulipai.luahook.core.theme.UiMode
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle

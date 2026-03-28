@@ -30,9 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kulipai.luahook.ui.theme.LocalEnableBlur
-import com.kulipai.luahook.ui.theme.LocalEnableFloatingBottomBar
-import com.kulipai.luahook.ui.theme.LocalEnableFloatingBottomBarBlur
+import com.kulipai.luahook.core.theme.LocalEnableBlur
+import com.kulipai.luahook.core.theme.LocalEnableFloatingBottomBar
+import com.kulipai.luahook.core.theme.LocalEnableFloatingBottomBarBlur
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle

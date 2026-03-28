@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name=".app.MyApplication"
+        android:name="com.kulipai.luahook.core.app.MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,7 +15,7 @@
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="33">
         <activity
-            android:name=".app.MainActivity"
+            android:name="com.kulipai.luahook.core.app.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.App.Starting">
             <intent-filter>
