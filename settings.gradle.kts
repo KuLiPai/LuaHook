@@ -34,6 +34,7 @@ include(":app")
 
 // 核心模块
 include(":core:theme")
+include(":core:navigation")
 
 
 // feature 功能模块

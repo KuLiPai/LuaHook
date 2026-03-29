@@ -1,18 +1,18 @@
-package com.kulipai.luahook.main.pager.home
+package com.kulipai.luahook.feature.main.pager.module
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
-import com.kulipai.luahook.ui.navigation3.Navigator
+import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.theme.LocalUiMode
 import com.kulipai.luahook.core.theme.UiMode
 
 @Composable
-fun HomePager(
+fun ModulePager(
     navigator: Navigator,
     bottomInnerPadding: Dp
 ) {
     when (LocalUiMode.current) {
-        UiMode.Miuix -> HomePagerMiuix(navigator, bottomInnerPadding)
-        UiMode.Material -> HomePagerMaterial(navigator, bottomInnerPadding)
+        UiMode.Miuix -> ModulePagerMiuix(navigator, bottomInnerPadding)
+        UiMode.Material -> ModulePagerMaterial(navigator, bottomInnerPadding)
     }
 }

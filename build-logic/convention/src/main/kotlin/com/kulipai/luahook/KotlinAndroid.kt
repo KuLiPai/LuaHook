@@ -48,7 +48,8 @@ internal fun Project.configureKotlinAndroid(
  *
  * 此函数为纯 JVM 项目配置 Kotlin 编译选项
  *
- * @author Joker.X
+ * Original author: Joker.X
+ * Modified by: KuLiPai
  */
 internal fun Project.configureKotlinJvm() {
     extensions.configure<JavaPluginExtension> {

@@ -4,7 +4,7 @@ plugins {
 //    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.luahook.android.application.compose)
     alias(libs.plugins.luahook.koin)
-    id("kotlin-parcelize")
+//    id("kotlin-parcelize")
 
 
 }

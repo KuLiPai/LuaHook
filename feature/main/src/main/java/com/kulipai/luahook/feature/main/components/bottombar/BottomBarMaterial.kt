@@ -6,13 +6,11 @@
  *
  * Modifications by KuLiPai
  */
-
-package com.kulipai.luahook.main.components.bottombar
+package com.kulipai.luahook.feature.main.components.bottombar
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
@@ -25,21 +23,19 @@ import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FlexibleBottomAppBar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.kulipai.luahook.feature.main.R
 
-import com.kulipai.luahook.R
-
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun NavigationRailMaterial(
-    modifier: Modifier = Modifier,
-) {
+fun BottomBarMaterial() {
     val mainPagerState = LocalMainPagerState.current
 
 
@@ -50,15 +46,14 @@ fun NavigationRailMaterial(
         Triple(R.string.settings, Icons.Filled.Settings, Icons.Outlined.Settings)
     )
 
-    NavigationRail(
-        modifier = modifier.fillMaxHeight(),
+    FlexibleBottomAppBar(
         windowInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout).only(
-            WindowInsetsSides.Start + WindowInsetsSides.Vertical
+            WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
         )
     ) {
         items.forEachIndexed { index, (label, selectedIcon, unselectedIcon) ->
             val selected = mainPagerState.selectedPage == index
-            NavigationRailItem(
+            NavigationBarItem(
                 selected = selected,
                 onClick = {
                     if (!selected) {
@@ -68,10 +63,10 @@ fun NavigationRailMaterial(
                 icon = {
                     Icon(
                         if (selected) selectedIcon else unselectedIcon,
-                        stringResource(label)
+                        label as? String ?: stringResource(label.toInt())
                     )
                 },
-                label = { Text(stringResource(label)) }
+                label = { Text(label as? String ?: stringResource(label.toInt())) }
             )
         }
     }

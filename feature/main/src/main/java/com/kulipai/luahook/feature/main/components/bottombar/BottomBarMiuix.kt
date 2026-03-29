@@ -6,7 +6,7 @@
  *
  * Modifications by KuLiPai
  */
-package com.kulipai.luahook.main.components.bottombar
+package com.kulipai.luahook.feature.main.components.bottombar
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable

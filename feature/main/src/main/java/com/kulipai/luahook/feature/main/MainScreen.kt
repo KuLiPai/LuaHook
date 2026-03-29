@@ -1,4 +1,4 @@
-package com.kulipai.luahook.main
+package com.kulipai.luahook.feature.main
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
@@ -34,14 +34,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import com.kulipai.luahook.main.components.bottombar.BottomBar
-import com.kulipai.luahook.main.components.bottombar.LocalMainPagerState
-import com.kulipai.luahook.main.components.bottombar.MainPagerState
-import com.kulipai.luahook.main.components.bottombar.SideRail
-import com.kulipai.luahook.main.components.bottombar.rememberMainPagerState
-import com.kulipai.luahook.main.navigation3.LocalNavigator
-import com.kulipai.luahook.main.navigation3.Navigator
-import com.kulipai.luahook.main.navigation3.Route
+import com.kulipai.luahook.feature.main.components.bottombar.BottomBar
+import com.kulipai.luahook.feature.main.components.bottombar.LocalMainPagerState
+import com.kulipai.luahook.feature.main.components.bottombar.MainPagerState
+import com.kulipai.luahook.feature.main.components.bottombar.SideRail
+import com.kulipai.luahook.feature.main.components.bottombar.rememberMainPagerState
+import com.kulipai.luahook.core.navigation.LocalNavigator
+import com.kulipai.luahook.core.navigation.Navigator
+import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.feature.main.pager.home.HomePager
 import com.kulipai.luahook.feature.main.pager.module.ModulePager
 import com.kulipai.luahook.feature.main.pager.setting.SettingPager
@@ -58,6 +58,11 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeSource
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+
+/**
+ * @author kulipai
+ * @date 2026/3/2
+ */
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable

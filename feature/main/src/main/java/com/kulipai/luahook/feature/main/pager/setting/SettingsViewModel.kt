@@ -1,4 +1,4 @@
-package com.kulipai.luahook.main.pager.setting
+package com.kulipai.luahook.feature.main.pager.setting
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

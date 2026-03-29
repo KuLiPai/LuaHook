@@ -1,4 +1,4 @@
-package com.kulipai.luahook.main.pager.setting
+package com.kulipai.luahook.feature.main.pager.setting
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box

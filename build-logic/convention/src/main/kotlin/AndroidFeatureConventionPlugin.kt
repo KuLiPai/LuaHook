@@ -10,17 +10,22 @@ import org.gradle.kotlin.dsl.dependencies
  * - 应用基础的Android库和Compose配置
  * - 启用BuildConfig生成
  * - 配置Feature模块通用依赖
+ * - 配置Koin依赖注入
+ * - 添加液态玻璃和毛玻璃模糊等依赖
+ * - 添加Material图标扩展依赖
  *
  * Feature模块是应用的功能模块，通常包含特定功能的UI和业务逻辑
  *
- * @author Joker.X
+ * Original author: Joker.X
+ * Modified by: KuLiPai
  */
 class AndroidFeatureConventionPlugin : Plugin<Project> {
     /**
      * 插件应用入口
      *
      * @param target 目标项目实例
-     * @author Joker.X
+     * Original author: Joker.X
+     * Modified by: KuLiPai
      */
     override fun apply(target: Project) {
         with(target) {
@@ -35,7 +40,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             // 配置Feature模块依赖
             dependencies {
                 // 项目内基础模块依赖
-//                "implementation"(project(":core:navigation")) // 导航模块
+                "implementation"(project(":core:navigation")) // 导航模块
 //                "implementation"(project(":core:designsystem")) // 设计系统
 //                "implementation"(project(":core:ui")) // UI组件库
 //                "implementation"(project(":core:util")) // 工具类
@@ -44,16 +49,6 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
 //                "implementation"(project(":core:model")) // 模型
 //                "implementation"(project(":core:result")) // 结果处理\
                 "implementation"(project(":core:theme")) // 主题模块
-
-                // MiUiX
-                "implementation"(libs.findLibrary("miuix").get())
-                "implementation"(libs.findLibrary("miuix.icons").get())
-                "implementation"(libs.findLibrary("miuix.navigation3.ui").get())
-
-                // Navigation3 导航框架
-                "implementation"(libs.findLibrary("androidx.navigation3.runtime").get())
-                "implementation"(libs.findLibrary("androidx.navigation3.ui").get())
-                "implementation"(libs.findLibrary("androidx.lifecycle.viewmodel.navigation3").get())
 
                 // Koin 依赖注入
                 "implementation"(platform(libs.findLibrary("koin.bom").get()))

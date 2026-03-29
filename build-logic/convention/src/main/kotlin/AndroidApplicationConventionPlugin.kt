@@ -16,7 +16,8 @@ import org.gradle.kotlin.dsl.configure
  *
  * 主要通过扩展Android Gradle Plugin的ApplicationExtension来实现配置
  *
- * @author Joker.X
+ * Original author: Joker.X
+ * Modified by: KuLiPai
  */
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     /**

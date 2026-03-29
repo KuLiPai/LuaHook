@@ -18,17 +18,18 @@ import org.gradle.kotlin.dsl.dependencies
  * 插件会根据模块在项目中的位置自动生成合适的命名空间，支持以下模块类型：
  * - feature模块：com.kulipai.luahook.feature.xxx
  * - core模块：com.kulipai.luahook.core.xxx
- * - core模块：com.kulipai.luahook.core.xxx
  * - 其他模块：根据模块路径生成
  *
- * @author Joker.X
+ * Original author: Joker.X
+ * Modified by: KuLiPai
  */
 class AndroidLibraryConventionPlugin : Plugin<Project> {
     /**
      * 插件应用入口
      *
      * @param target 目标项目实例
-     * @author Joker.X
+     * Original author: Joker.X
+     * Modified by: KuLiPai
      */
     override fun apply(target: Project) {
         with(target) {
@@ -102,7 +103,8 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
  * - Material Design
  * - 测试相关依赖
  *
- * @author Joker.X
+ * Original author: Joker.X
+ * Modified by: KuLiPai
  */
 internal fun Project.configureDependencies() {
     dependencies {

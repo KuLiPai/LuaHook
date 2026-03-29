@@ -1,4 +1,4 @@
-package com.kulipai.luahook.main.pager.home
+package com.kulipai.luahook.feature.main.pager.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,8 +31,8 @@ import com.kulipai.luahook.ui.components.miuix.LearnMoreCard
 import com.kulipai.luahook.ui.components.miuix.StatusCard
 import com.kulipai.luahook.ui.components.miuix.TopBar
 import com.kulipai.luahook.ui.components.miuix.WarningCard
-import com.kulipai.luahook.ui.navigation3.Navigator
-import com.kulipai.luahook.ui.navigation3.Route
+import com.kulipai.luahook.core.navigation.Navigator
+import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.core.theme.LocalEnableBlur
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle

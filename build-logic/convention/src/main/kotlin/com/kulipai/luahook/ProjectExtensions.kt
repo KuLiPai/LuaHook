@@ -20,7 +20,8 @@ import org.gradle.kotlin.dsl.getByType
  * ```
  *
  * @return VersionCatalog 返回名为"libs"的版本目录实例
- * @author Joker.X
+ * Original author: Joker.X
+ * Modified by: KuLiPai
  */
 val Project.libs
     get(): VersionCatalog = extensions.getByType<VersionCatalogsExtension>().named("libs")

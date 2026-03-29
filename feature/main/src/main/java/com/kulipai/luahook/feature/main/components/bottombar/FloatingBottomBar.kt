@@ -7,7 +7,7 @@
  * Modifications by KuLiPai
  */
 
-package com.kulipai.luahook.main.components.bottombar
+package com.kulipai.luahook.feature.main.components.bottombar
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut

@@ -7,7 +7,7 @@
  * Modifications by KuLiPai
  */
 
-package com.kulipai.luahook.main.components.bottombar
+package com.kulipai.luahook.feature.main.components.bottombar
 
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
