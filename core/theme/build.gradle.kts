@@ -10,4 +10,6 @@ android {
 dependencies {
     implementation(libs.material.kolor)
 
+    implementation(project(":core:model"))
+
 }

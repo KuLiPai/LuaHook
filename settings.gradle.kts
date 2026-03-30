@@ -35,8 +35,11 @@ include(":app")
 // 核心模块
 include(":core:theme")
 include(":core:navigation")
+include(":core:data")
+include(":core:model")
 
 
 // feature 功能模块
 include(":feature:main")
 
+include(":feature:about")

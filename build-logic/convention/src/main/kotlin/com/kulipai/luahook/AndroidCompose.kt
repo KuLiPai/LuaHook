@@ -53,7 +53,6 @@ internal fun Project.configureAndroidCompose(
 
         // Navigation3 导航框架
         "implementation"(libs.findLibrary("androidx.navigation3.runtime").get())
-        "implementation"(libs.findLibrary("androidx.navigation3.ui").get())
         "implementation"(libs.findLibrary("androidx.lifecycle.viewmodel.navigation3").get())
 
 

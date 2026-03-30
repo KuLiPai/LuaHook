@@ -36,10 +36,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.kulipai.luahook.R
-import com.kulipai.luahook.core.data.model.SettingsUiState
-import com.kulipai.luahook.ui.navigation3.Navigator
-import com.kulipai.luahook.ui.navigation3.Route
+import com.kulipai.luahook.feature.main.R
+import com.kulipai.luahook.core.model.SettingsUiState
+import com.kulipai.luahook.core.navigation.Navigator
+import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.core.theme.UiMode
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle

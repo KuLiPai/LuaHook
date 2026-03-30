@@ -11,8 +11,8 @@ package com.kulipai.luahook.core.theme
 
 import android.content.Context
 import androidx.compose.runtime.staticCompositionLocalOf
-import com.kulipai.luahook.core.data.model.AppSettings
-import com.kulipai.luahook.core.data.model.ColorMode
+import com.kulipai.luahook.core.model.AppSettings
+import com.kulipai.luahook.core.model.ColorMode
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 

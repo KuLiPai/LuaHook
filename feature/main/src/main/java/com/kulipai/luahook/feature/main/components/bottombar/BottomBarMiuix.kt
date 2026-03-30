@@ -37,7 +37,7 @@ import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeEffect
-import com.kulipai.luahook.R
+import com.kulipai.luahook.feature.main.R
 
 
 import top.yukonga.miuix.kmp.basic.Icon

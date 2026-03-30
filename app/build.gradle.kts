@@ -43,22 +43,20 @@ dependencies {
 //    implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
+    implementation(project(":core:data"))
+    implementation(project(":core:model"))
+    implementation(project(":core:theme"))
+    implementation(project(":core:navigation"))
+    implementation(project(":feature:main"))
+    implementation(project(":feature:about"))
+
     implementation(libs.androidx.compose.material.icons.extended)
-
-
     implementation(libs.androidx.datastore.preferences)
 
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.ui.graphics)
 
-
-    implementation(libs.backdrop)
-    implementation(libs.capsule)
-    implementation(libs.haze)
-
-
-    implementation(libs.material.kolor)
 
 
 

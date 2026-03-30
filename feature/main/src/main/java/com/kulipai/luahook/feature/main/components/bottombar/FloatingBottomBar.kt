@@ -71,8 +71,8 @@ import com.kyant.capsule.ContinuousCapsule
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import com.kulipai.luahook.ui.animation.DampedDragAnimation
-import com.kulipai.luahook.ui.animation.InteractiveHighlight
+import com.kulipai.luahook.feature.main.animation.DampedDragAnimation
+import com.kulipai.luahook.feature.main.animation.InteractiveHighlight
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import kotlin.math.abs
 import kotlin.math.sign

@@ -4,7 +4,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalContext
-import com.kulipai.luahook.core.data.model.AppSettings
+import com.kulipai.luahook.core.model.AppSettings
 
 
 @Composable
