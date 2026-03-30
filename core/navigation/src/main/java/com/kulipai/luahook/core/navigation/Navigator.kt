@@ -144,13 +144,6 @@ class Navigator(
 }
 
 
-@Composable
-fun rememberNavigator(startRoute: NavKey): Navigator {
-    return rememberSaveable(startRoute, saver = Navigator.Saver) {
-        Navigator(startRoute)
-    }
-}
-
 val LocalNavigator = staticCompositionLocalOf<Navigator> {
     error("LocalNavigator not provided")
 }

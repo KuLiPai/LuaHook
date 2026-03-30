@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.luahook.android.library)
-    alias(libs.plugins.luahook.android.library.compose)
     id("kotlin-parcelize")
 }
 
@@ -9,5 +8,5 @@ android {
 }
 
 dependencies {
-//    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.runtime)
 }

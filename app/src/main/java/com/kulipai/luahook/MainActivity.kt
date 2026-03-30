@@ -8,15 +8,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.kulipai.luahook.core.navigation.LocalNavigator
+import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
-import com.kulipai.luahook.core.navigation.rememberNavigator
 import com.kulipai.luahook.feature.about.AboutScreen
 import com.kulipai.luahook.feature.main.MainScreen
 import com.kulipai.luahook.feature.main.pager.setting.SettingsViewModel
@@ -83,5 +85,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+
+// TODO: 封装这个到app/Navigation
+@Composable
+fun rememberNavigator(startRoute: NavKey): Navigator {
+    return rememberSaveable(startRoute, saver = Navigator.Saver) {
+        Navigator(startRoute)
     }
 }
