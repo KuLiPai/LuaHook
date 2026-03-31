@@ -33,7 +33,7 @@ import com.kulipai.luahook.feature.main.components.miuix.TopBar
 import com.kulipai.luahook.feature.main.components.miuix.WarningCard
 import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
-import com.kulipai.luahook.core.theme.LocalEnableBlur
+import com.kulipai.luahook.core.theme.currentEnableBlur
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -51,7 +51,7 @@ fun HomePagerMiuix(
 ) {
 
     val scrollBehavior = MiuixScrollBehavior()
-    val enableBlur = LocalEnableBlur.current
+    val enableBlur = currentEnableBlur()
     val hazeState = remember { HazeState() }
     val hazeStyle = if (enableBlur) {
         HazeStyle(

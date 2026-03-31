@@ -58,14 +58,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kulipai.luahook.feature.main.R
-import com.kulipai.luahook.core.model.SettingsUiState
+import com.kulipai.luahook.core.model.UiMode
 import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.feature.main.components.material.SegmentedColumn
 import com.kulipai.luahook.feature.main.components.material.SegmentedDropdownItem
 import com.kulipai.luahook.feature.main.components.material.SegmentedListItem
 import com.kulipai.luahook.feature.main.components.material.SegmentedSwitchItem
 import com.kulipai.luahook.core.navigation.Route
-import com.kulipai.luahook.core.theme.UiMode
+import com.kulipai.luahook.core.theme.currentThemePreference
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 import java.time.LocalDateTime
@@ -79,8 +79,8 @@ fun SettingPagerMaterial(
 ) {
 
     val viewModel: SettingsViewModel = koinViewModel()
-    val uiMode by viewModel.uiMode.collectAsStateWithLifecycle()
-    val uiState = SettingsUiState()
+    val uiState by viewModel.settingsUiState.collectAsStateWithLifecycle()
+    val themePreference = currentThemePreference()
 
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
@@ -168,9 +168,9 @@ fun SettingPagerMaterial(
                             title = "settings_ui_mode",
                             summary = "settings_ui_mode_summary",
                             items = uiModeItems,
-                            selectedIndex = if (uiMode == UiMode.Material) 1 else 0,
+                            selectedIndex = if (themePreference.uiMode == UiMode.Material) 1 else 0,
                             onItemSelected = { index ->
-                                viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
+                                viewModel.setUiMode(if (index == 0) UiMode.Miuix else UiMode.Material)
                             }
                         )
                     }

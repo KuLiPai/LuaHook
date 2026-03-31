@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.kulipai.luahook.core.theme.LocalEnableBlur
+import com.kulipai.luahook.core.theme.currentEnableBlur
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeEffect
@@ -32,7 +32,7 @@ fun NavigationRailMiuix(
 
 
     val mainState = LocalMainPagerState.current
-    val enableBlur = LocalEnableBlur.current
+    val enableBlur = currentEnableBlur()
 
     val items = BottomBarDestination.entries.map { destination ->
         Pair(stringResource(destination.label), destination.icon)

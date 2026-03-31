@@ -1,12 +1,12 @@
 package com.kulipai.luahook.feature.about
 
 import androidx.compose.runtime.Composable
-import com.kulipai.luahook.core.theme.LocalUiMode
-import com.kulipai.luahook.core.theme.UiMode
+import com.kulipai.luahook.core.model.UiMode
+import com.kulipai.luahook.core.theme.currentUiMode
 
 @Composable
 fun AboutScreen() {
-    when (LocalUiMode.current) {
+    when (currentUiMode()) {
         UiMode.Miuix -> AboutScreenMiuix()
         UiMode.Material -> AboutScreenMaterial()
     }

@@ -10,6 +10,8 @@
 package com.kulipai.luahook.core.theme
 
 import android.app.Activity
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
@@ -21,22 +23,24 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsControllerCompat
-import com.kulipai.luahook.core.model.AppSettings
+import com.kulipai.luahook.core.model.ThemePreference
 import com.materialkolor.rememberDynamicColorScheme
 
+@RequiresApi(Build.VERSION_CODES.S)
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun MaterialKernelSUTheme(
-    appSettings: AppSettings,
+fun MaterialLuaHookTheme(
+    themePreference: ThemePreference,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
-    val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
-    val amoledMode = appSettings.colorMode.isAmoled
-    val dynamicColor = appSettings.keyColor == 0
-    val colorStyle = appSettings.paletteStyle
-    val colorSpec = appSettings.colorSpec
+    val colorMode = themePreference.resolvedColorMode()
+    val darkTheme = colorMode.isDark || (colorMode.isSystem && systemDarkTheme)
+    val amoledMode = colorMode.isAmoled
+    val dynamicColor = themePreference.keyColor == 0
+    val colorStyle = themePreference.paletteStyle
+    val colorSpec = themePreference.colorSpec
 
     val colorScheme = if (dynamicColor) {
         val baseScheme = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -55,7 +59,7 @@ fun MaterialKernelSUTheme(
         )
     } else {
         rememberDynamicColorScheme(
-            seedColor = Color(appSettings.keyColor),
+            seedColor = Color(themePreference.keyColor),
             isDark = darkTheme,
             isAmoled = amoledMode,
             style = colorStyle,

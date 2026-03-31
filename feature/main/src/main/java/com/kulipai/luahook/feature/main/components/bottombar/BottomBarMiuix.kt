@@ -30,9 +30,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kulipai.luahook.core.theme.LocalEnableBlur
-import com.kulipai.luahook.core.theme.LocalEnableFloatingBottomBar
-import com.kulipai.luahook.core.theme.LocalEnableFloatingBottomBarBlur
+import com.kulipai.luahook.core.theme.currentEnableBlur
+import com.kulipai.luahook.core.theme.currentEnableFloatingBottomBar
+import com.kulipai.luahook.core.theme.currentEnableFloatingBottomBarBlur
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -57,9 +57,9 @@ fun BottomBarMiuix(
 
 
     val mainState = LocalMainPagerState.current
-    val enableBlur = LocalEnableBlur.current
-    val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
-    val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
+    val enableBlur = currentEnableBlur()
+    val enableFloatingBottomBar = currentEnableFloatingBottomBar()
+    val enableFloatingBottomBarBlur = currentEnableFloatingBottomBarBlur()
 
     val items = BottomBarDestination.entries.map { destination ->
         NavigationItem(

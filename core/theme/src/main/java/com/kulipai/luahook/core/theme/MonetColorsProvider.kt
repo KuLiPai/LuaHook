@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.kulipai.luahook.core.model.UiMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.iterator
@@ -33,7 +34,7 @@ object MonetColorsProvider {
 
     @Composable
     fun UpdateCss() {
-        when (LocalUiMode.current) {
+        when (currentUiMode()) {
             UiMode.Miuix -> UpdateCssMiuix()
             UiMode.Material -> UpdateCssMaterial()
         }

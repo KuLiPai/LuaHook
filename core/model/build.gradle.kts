@@ -6,5 +6,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.material.kolor)
+    api(libs.material.kolor)
 }

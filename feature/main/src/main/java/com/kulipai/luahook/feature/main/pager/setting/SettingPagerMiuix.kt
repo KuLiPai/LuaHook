@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.RemoveModerator
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material.icons.rounded.UploadFile
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -36,11 +37,12 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kulipai.luahook.feature.main.R
-import com.kulipai.luahook.core.model.SettingsUiState
+import com.kulipai.luahook.core.model.UiMode
 import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
-import com.kulipai.luahook.core.theme.UiMode
+import com.kulipai.luahook.core.theme.currentThemePreference
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -67,7 +69,8 @@ fun SettingPagerMiuix(
 ) {
 
     val viewModel: SettingsViewModel = koinViewModel()
-    val uiState = SettingsUiState()
+    val uiState by viewModel.settingsUiState.collectAsStateWithLifecycle()
+    val themePreference = currentThemePreference()
 
     val scrollBehavior = MiuixScrollBehavior()
     val hazeState = remember { HazeState() }
@@ -79,7 +82,7 @@ fun SettingPagerMiuix(
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = if (uiState.enableBlur) {
+                modifier = if (themePreference.enableBlur) {
                     Modifier.hazeEffect(hazeState) {
                         style = hazeStyle
                         blurRadius = 30.dp
@@ -88,7 +91,7 @@ fun SettingPagerMiuix(
                 } else {
                     Modifier
                 },
-                color = if (uiState.enableBlur) Color.Transparent else colorScheme.surface,
+                color = if (themePreference.enableBlur) Color.Transparent else colorScheme.surface,
                 title = stringResource(R.string.settings),
                 scrollBehavior = scrollBehavior
             )
@@ -106,7 +109,7 @@ fun SettingPagerMiuix(
                 .scrollEndHaptic()
                 .overScrollVertical()
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .hazeSource(state = hazeState)
+                .then(if (themePreference.enableBlur) Modifier.hazeSource(state = hazeState) else Modifier)
                 .padding(horizontal = 12.dp),
             contentPadding = innerPadding,
             overscrollEffect = null,
@@ -171,9 +174,9 @@ fun SettingPagerMiuix(
                                 tint = colorScheme.onBackground
                             )
                         },
-                        selectedIndex = if (uiState.uiMode == UiMode.Material.value) 1 else 0,
+                        selectedIndex = if (themePreference.uiMode == UiMode.Material) 1 else 0,
                         onSelectedIndexChange = { index ->
-                            viewModel.setUiMode(if (index == 0) UiMode.Miuix.value else UiMode.Material.value)
+                            viewModel.setUiMode(if (index == 0) UiMode.Miuix else UiMode.Material)
                         }
                     )
                     SuperArrow(

@@ -22,8 +22,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
-import com.kulipai.luahook.core.theme.LocalUiMode
-import com.kulipai.luahook.core.theme.UiMode
+import com.kulipai.luahook.core.model.UiMode
+import com.kulipai.luahook.core.theme.currentUiMode
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -103,7 +103,7 @@ fun BottomBar(
     backdrop: Backdrop,
     modifier: Modifier = Modifier,
 ) {
-    when (LocalUiMode.current) {
+    when (currentUiMode()) {
         UiMode.Miuix -> BottomBarMiuix(hazeState, hazeStyle, backdrop, modifier)
         UiMode.Material -> BottomBarMaterial()
     }
@@ -115,7 +115,7 @@ fun SideRail(
     hazeStyle: HazeStyle,
     modifier: Modifier = Modifier,
 ) {
-    when (LocalUiMode.current) {
+    when (currentUiMode()) {
         UiMode.Miuix -> NavigationRailMiuix(hazeState, hazeStyle, modifier)
         UiMode.Material -> NavigationRailMaterial(modifier)
     }

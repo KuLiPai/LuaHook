@@ -39,6 +39,7 @@ import com.kulipai.luahook.feature.main.components.bottombar.LocalMainPagerState
 import com.kulipai.luahook.feature.main.components.bottombar.MainPagerState
 import com.kulipai.luahook.feature.main.components.bottombar.SideRail
 import com.kulipai.luahook.feature.main.components.bottombar.rememberMainPagerState
+import com.kulipai.luahook.core.model.UiMode
 import com.kulipai.luahook.core.navigation.LocalNavigator
 import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
@@ -46,11 +47,7 @@ import com.kulipai.luahook.feature.main.pager.home.HomePager
 import com.kulipai.luahook.feature.main.pager.module.ModulePager
 import com.kulipai.luahook.feature.main.pager.setting.SettingPager
 import com.kulipai.luahook.feature.main.pager.superuser.SuperUserPager
-import com.kulipai.luahook.core.theme.LocalEnableBlur
-import com.kulipai.luahook.core.theme.LocalEnableFloatingBottomBar
-import com.kulipai.luahook.core.theme.LocalEnableFloatingBottomBarBlur
-import com.kulipai.luahook.core.theme.LocalUiMode
-import com.kulipai.luahook.core.theme.UiMode
+import com.kulipai.luahook.core.theme.currentThemePreference
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import dev.chrisbanes.haze.HazeState
@@ -64,13 +61,16 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  * @date 2026/3/2
  */
 
+
+// TODO)) 将pager分别放在不同的feature下
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainScreen() {
     val navController = LocalNavigator.current
-    val enableBlur = LocalEnableBlur.current
-    val enableFloatingBottomBar = LocalEnableFloatingBottomBar.current
-    val enableFloatingBottomBarBlur = LocalEnableFloatingBottomBarBlur.current
+    val themePreference = currentThemePreference()
+    val enableBlur = themePreference.enableBlur
+    val enableFloatingBottomBar = themePreference.enableFloatingBottomBar
+    val enableFloatingBottomBarBlur = themePreference.enableFloatingBottomBarBlur
     var currentPage by rememberSaveable { mutableIntStateOf(0) }
     val pagerState = rememberPagerState(initialPage = currentPage, pageCount = { 4 })
     LaunchedEffect(pagerState.currentPage) {
@@ -78,7 +78,7 @@ fun MainScreen() {
     }
     val mainPagerState = rememberMainPagerState(pagerState)
     var userScrollEnabled by remember { mutableStateOf(true) }
-    val uiMode = LocalUiMode.current
+    val uiMode = themePreference.uiMode
     val surfaceColor = when (uiMode) {
         UiMode.Material -> MaterialTheme.colorScheme.surface // Haze is not used in Material, this is just a placeholder
         UiMode.Miuix -> MiuixTheme.colorScheme.surface
@@ -181,11 +181,11 @@ fun MainScreen() {
             }
 
             when (uiMode) {
-                UiMode.Material -> Scaffold(bottomBar = bottomBar) { innerPadding ->
+                UiMode.Material -> androidx.compose.material3.Scaffold(bottomBar = bottomBar) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
 
-                UiMode.Miuix -> Scaffold(bottomBar = bottomBar) { innerPadding ->
+                UiMode.Miuix -> top.yukonga.miuix.kmp.basic.Scaffold(bottomBar = bottomBar) { innerPadding ->
                     pagerContent(innerPadding.calculateBottomPadding())
                 }
             }

@@ -16,8 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsControllerCompat
-import com.kulipai.luahook.core.model.AppSettings
 import com.kulipai.luahook.core.model.ColorMode
+import com.kulipai.luahook.core.model.ThemePreference
 import com.materialkolor.dynamiccolor.ColorSpec
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -26,15 +26,16 @@ import top.yukonga.miuix.kmp.theme.ThemeController
 import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 
 @Composable
-fun MiuixKernelSUTheme(
-    appSettings: AppSettings,
+fun MiuixLuaHookTheme(
+    themePreference: ThemePreference,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
     val systemDarkTheme = isSystemInDarkTheme()
-    val darkTheme = appSettings.colorMode.isDark || (appSettings.colorMode.isSystem && systemDarkTheme)
-    val colorStyle = appSettings.paletteStyle
-    val colorSpec = appSettings.colorSpec
+    val colorMode = themePreference.resolvedColorMode()
+    val darkTheme = colorMode.isDark || (colorMode.isSystem && systemDarkTheme)
+    val colorStyle = themePreference.paletteStyle
+    val colorSpec = themePreference.colorSpec
 
     val miuixPaletteStyle = try {
         ThemePaletteStyle.valueOf(colorStyle.name)
@@ -49,7 +50,7 @@ fun MiuixKernelSUTheme(
     }
 
     val controller = ThemeController(
-        when (appSettings.colorMode) {
+        when (colorMode) {
             ColorMode.SYSTEM -> ColorSchemeMode.System
             ColorMode.LIGHT -> ColorSchemeMode.Light
             ColorMode.DARK -> ColorSchemeMode.Dark
@@ -57,7 +58,7 @@ fun MiuixKernelSUTheme(
             ColorMode.MONET_LIGHT -> ColorSchemeMode.MonetLight
             ColorMode.MONET_DARK, ColorMode.DARK_AMOLED -> ColorSchemeMode.MonetDark
         },
-        keyColor = if (appSettings.keyColor == 0) null else Color(appSettings.keyColor),
+        keyColor = if (themePreference.keyColor == 0) null else Color(themePreference.keyColor),
         isDark = darkTheme,
         paletteStyle = miuixPaletteStyle,
         colorSpec = miuixColorSpec,

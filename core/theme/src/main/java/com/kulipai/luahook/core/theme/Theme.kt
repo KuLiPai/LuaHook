@@ -1,31 +1,35 @@
 package com.kulipai.luahook.core.theme
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.platform.LocalContext
-import com.kulipai.luahook.core.model.AppSettings
+import com.kulipai.luahook.core.model.ThemePreference
+import com.kulipai.luahook.core.model.UiMode
 
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun LuaHookTheme(
-    appSettings: AppSettings? = null,
-    uiMode: UiMode = LocalUiMode.current,
+    themePreference: ThemePreference = LocalThemePreference.current,
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
-    val currentAppSettings = appSettings ?: ThemeController.getAppSettings(context)
+    CompositionLocalProvider(
+        LocalThemePreference provides themePreference,
+    ) {
+        when (themePreference.uiMode) {
+            UiMode.Miuix -> MiuixLuaHookTheme(
+                themePreference = themePreference,
+                content = content
+            )
 
-    when (uiMode) {
-        UiMode.Miuix -> MiuixKernelSUTheme(
-            appSettings = currentAppSettings,
-            content = content
-        )
-
-        UiMode.Material -> MaterialKernelSUTheme(
-            appSettings = currentAppSettings,
-            content = content
-        )
+            UiMode.Material -> MaterialLuaHookTheme(
+                themePreference = themePreference,
+                content = content
+            )
+        }
     }
 }
 
@@ -33,7 +37,7 @@ fun LuaHookTheme(
 @Composable
 @ReadOnlyComposable
 fun isInDarkTheme(): Boolean {
-    return when (LocalColorMode.current) {
+    return when (currentColorMode().value) {
         1, 4 -> false  // Force light mode
         2, 5, 6 -> true   // Force dark mode
         else -> isSystemInDarkTheme()  // Follow system (0 or default)
