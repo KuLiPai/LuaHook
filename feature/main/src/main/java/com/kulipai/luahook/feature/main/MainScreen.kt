@@ -62,7 +62,6 @@ import top.yukonga.miuix.kmp.theme.MiuixTheme
  */
 
 
-// TODO)) 将pager分别放在不同的feature下
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun MainScreen() {

@@ -3,6 +3,8 @@ package com.kulipai.luahook.navigation
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -15,8 +17,10 @@ import com.kulipai.luahook.core.navigation.LocalNavigator
 import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.core.theme.LuaHookTheme
 import com.kulipai.luahook.core.theme.currentUiMode
-import com.kulipai.luahook.feature.about.AboutScreen
+import com.kulipai.luahook.feature.about.navigation.aboutGraph
+import com.kulipai.luahook.feature.about.screen.AboutScreen
 import com.kulipai.luahook.feature.main.MainScreen
+import com.kulipai.luahook.feature.main.navigation.mainGraph
 import com.kulipai.luahook.rememberNavigator
 
 
@@ -34,21 +38,25 @@ fun AppNavHost(
         LuaHookTheme(themePreference = themePreference) {
             val uiMode = currentUiMode()
             val navDisplay = @Composable {
-                NavDisplay(
-                    backStack = navigator.backStack,
-                    entryDecorators = listOf(
-                        rememberSaveableStateHolderNavEntryDecorator(),
-                        rememberViewModelStoreNavEntryDecorator()
-                    ),
-                    onBack = {
-                        navigator.pop()
-                    },
-                    entryProvider = entryProvider {
-                        entry<Route.Main> { MainScreen() }
-                        entry<Route.About> { AboutScreen() }
+                SharedTransitionLayout {
+                    NavDisplay(
+                        backStack = navigator.backStack,
+                        entryDecorators = listOf(
+                            rememberSaveableStateHolderNavEntryDecorator(),
+                            rememberViewModelStoreNavEntryDecorator()
+                        ),
+                        onBack = {
+                            navigator.pop()
+                        },
+                        entryProvider = appEntryProvider(this@SharedTransitionLayout),
+//                    entryProvider = entryProvider {
+//                        entry<Route.Main> { MainScreen() }
+//                        entry<Route.About> { AboutScreen() }
+//
+//                    }
 
-                    }
-                )
+                    )
+                }
             }
 
             when (uiMode) {
@@ -57,4 +65,28 @@ fun AppNavHost(
             }
         }
     }
+}
+
+
+/**
+ * 构建应用级路由注册器
+ *
+ * 按模块聚合 graph，避免全部 entry 混在同一个函数中。
+ *
+ * @return 应用级 EntryProvider
+ * @author kulipai
+ */
+private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {
+    mainGraph()
+    aboutGraph()
+//    mainGraph(sharedTransitionScope)
+//    goodsGraph()
+//    authGraph()
+//    userGraph(sharedTransitionScope)
+//    orderGraph()
+//    csGraph()
+//    commonGraph()
+//    marketGraph()
+//    feedbackGraph()
+//    launchGraph(sharedTransitionScope)
 }

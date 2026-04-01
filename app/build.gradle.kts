@@ -47,6 +47,8 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:theme"))
     implementation(project(":core:navigation"))
+
+
     implementation(project(":feature:main"))
     implementation(project(":feature:about"))
 

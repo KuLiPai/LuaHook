@@ -1,4 +1,4 @@
-package com.kulipai.luahook.feature.about
+package com.kulipai.luahook.feature.about.screen
 
 import androidx.compose.runtime.Composable
 import com.kulipai.luahook.core.model.UiMode
