@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsControllerCompat
 import com.kulipai.luahook.core.model.ColorMode
-import com.kulipai.luahook.core.model.ThemePreference
+import com.kulipai.luahook.core.data.model.ThemeSettings
 import com.materialkolor.dynamiccolor.ColorSpec
 import top.yukonga.miuix.kmp.theme.ColorSchemeMode
 import top.yukonga.miuix.kmp.theme.MiuixTheme
@@ -27,7 +27,7 @@ import top.yukonga.miuix.kmp.theme.ThemePaletteStyle
 
 @Composable
 fun MiuixLuaHookTheme(
-    themePreference: ThemePreference,
+    themePreference: ThemeSettings,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current

@@ -4,7 +4,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.kulipai.luahook.core.navigation.Route
-import com.kulipai.luahook.feature.main.MainScreen
+import com.kulipai.luahook.feature.main.screen.MainScreen
 
 /**
  * 主模块导航图
@@ -18,4 +18,6 @@ fun EntryProviderScope<NavKey>.mainGraph(
     entry<Route.Main> {
         MainScreen()
     }
+
+
 }

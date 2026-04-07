@@ -6,27 +6,27 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
-import com.kulipai.luahook.core.model.ThemePreference
+import com.kulipai.luahook.core.data.model.ThemeSettings
 import com.kulipai.luahook.core.model.UiMode
 
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun LuaHookTheme(
-    themePreference: ThemePreference = LocalThemePreference.current,
+    themeSettings: ThemeSettings = LocalThemePreference.current,
     content: @Composable () -> Unit
 ) {
     CompositionLocalProvider(
-        LocalThemePreference provides themePreference,
+        LocalThemePreference provides themeSettings,
     ) {
-        when (themePreference.uiMode) {
+        when (themeSettings.uiMode) {
             UiMode.Miuix -> MiuixLuaHookTheme(
-                themePreference = themePreference,
+                themePreference = themeSettings,
                 content = content
             )
 
             UiMode.Material -> MaterialLuaHookTheme(
-                themePreference = themePreference,
+                themePreference = themeSettings,
                 content = content
             )
         }

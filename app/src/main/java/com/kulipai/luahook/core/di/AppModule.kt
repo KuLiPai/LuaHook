@@ -1,10 +1,9 @@
 package com.kulipai.luahook.core.di
 
-import com.kulipai.luahook.core.data.datastore.UserPreferencesDataSource
+import com.kulipai.luahook.core.data.datastore.UserSettingsDataSource
 import com.kulipai.luahook.core.data.repository.SettingsRepositoryImpl
 import com.kulipai.luahook.core.data.repository.SettingsRepository
-import com.kulipai.luahook.core.theme.ThemePreferenceManager
-import com.kulipai.luahook.feature.main.pager.setting.SettingsViewModel
+import com.kulipai.luahook.feature.main.screen.setting.SettingsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -15,13 +14,13 @@ import org.koin.dsl.module
 
 val appModule = module {
 
-    single { UserPreferencesDataSource(get()) }
+    // TODO)) 注入在各个模块中具体实现
+    single { UserSettingsDataSource(get()) }
 
     single<SettingsRepository> {
         SettingsRepositoryImpl(get())
     }
 
-    single { ThemePreferenceManager(get()) }
 
     viewModel {
         SettingsViewModel(get())

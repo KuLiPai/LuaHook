@@ -1,61 +1,62 @@
 package com.kulipai.luahook.core.data.repository
 
-import com.kulipai.luahook.core.data.datastore.UserPreferencesDataSource
-import com.kulipai.luahook.core.data.model.asExternalModel
+import com.kulipai.luahook.core.data.datastore.UserSettingsDataSource
+import com.kulipai.luahook.core.data.model.UserSettings
 import com.kulipai.luahook.core.model.ColorMode
 import com.kulipai.luahook.core.model.UiMode
-import com.kulipai.luahook.core.model.UserSettings
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 
 class SettingsRepositoryImpl(
-    private val userPreferencesDataSource: UserPreferencesDataSource,
+    private val userSettingsDataSource: UserSettingsDataSource,
 ) : SettingsRepository {
 
-    override val userSettings: Flow<UserSettings> = userPreferencesDataSource.userPreferences
-        .map { preferences -> preferences.asExternalModel() }
+    override val userSettings: Flow<UserSettings> = userSettingsDataSource.userSettings
         .distinctUntilChanged()
 
     override suspend fun setUiMode(uiMode: UiMode) {
-        userPreferencesDataSource.setUiMode(uiMode)
+        userSettingsDataSource.setUiMode(uiMode)
     }
 
     override suspend fun setColorMode(colorMode: ColorMode) {
-        userPreferencesDataSource.setColorMode(colorMode)
+        userSettingsDataSource.setColorMode(colorMode)
     }
 
     override suspend fun setUseMiuixMonet(useMiuixMonet: Boolean) {
-        userPreferencesDataSource.setUseMiuixMonet(useMiuixMonet)
+        userSettingsDataSource.setUseMiuixMonet(useMiuixMonet)
     }
 
     override suspend fun setKeyColor(keyColor: Int) {
-        userPreferencesDataSource.setKeyColor(keyColor)
+        userSettingsDataSource.setKeyColor(keyColor)
     }
 
     override suspend fun setPaletteStyle(paletteStyle: PaletteStyle) {
-        userPreferencesDataSource.setPaletteStyle(paletteStyle)
+        userSettingsDataSource.setPaletteStyle(paletteStyle)
     }
 
     override suspend fun setColorSpec(colorSpec: ColorSpec.SpecVersion) {
-        userPreferencesDataSource.setColorSpec(colorSpec)
+        userSettingsDataSource.setColorSpec(colorSpec)
     }
 
     override suspend fun setEnableBlur(enableBlur: Boolean) {
-        userPreferencesDataSource.setEnableBlur(enableBlur)
+        userSettingsDataSource.setEnableBlur(enableBlur)
     }
 
     override suspend fun setEnableFloatingBottomBar(enableFloatingBottomBar: Boolean) {
-        userPreferencesDataSource.setEnableFloatingBottomBar(enableFloatingBottomBar)
+        userSettingsDataSource.setEnableFloatingBottomBar(enableFloatingBottomBar)
     }
 
     override suspend fun setEnableFloatingBottomBarBlur(enableFloatingBottomBarBlur: Boolean) {
-        userPreferencesDataSource.setEnableFloatingBottomBarBlur(enableFloatingBottomBarBlur)
+        userSettingsDataSource.setEnableFloatingBottomBarBlur(enableFloatingBottomBarBlur)
     }
 
     override suspend fun setPageScale(pageScale: Float) {
-        userPreferencesDataSource.setPageScale(pageScale)
+        userSettingsDataSource.setPageScale(pageScale)
+    }
+
+    override suspend fun setLanguage(language: String) {
+        userSettingsDataSource.setLanguage(language)
     }
 }

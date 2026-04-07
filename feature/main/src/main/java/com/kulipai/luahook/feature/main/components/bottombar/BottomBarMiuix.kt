@@ -33,13 +33,11 @@ import androidx.compose.ui.unit.sp
 import com.kulipai.luahook.core.theme.currentEnableBlur
 import com.kulipai.luahook.core.theme.currentEnableFloatingBottomBar
 import com.kulipai.luahook.core.theme.currentEnableFloatingBottomBarBlur
+import com.kulipai.luahook.feature.main.R
 import com.kyant.backdrop.Backdrop
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.hazeEffect
-import com.kulipai.luahook.feature.main.R
-
-
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.NavigationBar
 import top.yukonga.miuix.kmp.basic.NavigationBarItem
@@ -60,6 +58,7 @@ fun BottomBarMiuix(
     val enableBlur = currentEnableBlur()
     val enableFloatingBottomBar = currentEnableFloatingBottomBar()
     val enableFloatingBottomBarBlur = currentEnableFloatingBottomBarBlur()
+
 
     val items = BottomBarDestination.entries.map { destination ->
         NavigationItem(

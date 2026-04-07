@@ -4,13 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.kulipai.luahook.core.model.ColorMode
-import com.kulipai.luahook.core.model.ThemePreference
+import com.kulipai.luahook.core.data.model.ThemeSettings
 
-val LocalThemePreference = staticCompositionLocalOf { ThemePreference() }
+val LocalThemePreference = staticCompositionLocalOf { ThemeSettings() }
 
 @Composable
 @ReadOnlyComposable
-fun currentThemePreference(): ThemePreference = LocalThemePreference.current
+fun currentThemePreference(): ThemeSettings = LocalThemePreference.current
 
 @Composable
 @ReadOnlyComposable

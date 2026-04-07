@@ -1,28 +1,3 @@
 <resources>
     <string name="app_name">LuaHook</string>
-
-    <string name="home">Home</string>
-    <string name="superuser">Superuser</string>
-    <string name="module">Module</string>
-    <string name="settings">Settings</string>
-
-    <!-- Preference framework strings. -->
-    <string name="ok">OK</string>
-    <!-- Preference framework strings. -->
-    <string name="cancel">Cancel</string>
-
-    <string name="settings_page_scale">Page Scale</string>
-
-    <string name="home_learn_luahook">了解 LuaHook</string>
-    <string name="home_learn_luahook_url">https://luahook.kulipai.top/</string>
-    <string name="home_click_to_learn_luahook">了解如何安装 LuaHook 以及如何开发脚本.</string>
-    <string name="home_support_title">支持开发</string>
-    <string name="home_support_content">LuaHook 将保持免费开源，向开发者捐赠以表示支持</string>
-
-
-    <string name="home_kernel">内核版本</string>
-    <string name="home_manager_version">管理器版本</string>
-    <string name="home_fingerprint">系统指纹</string>
-    <string name="home_selinux_status">SELinux 状态</string>
-
 </resources>

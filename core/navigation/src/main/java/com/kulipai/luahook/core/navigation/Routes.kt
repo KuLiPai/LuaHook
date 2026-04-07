@@ -45,6 +45,22 @@ sealed interface Route : NavKey, Parcelable {
 
     @Parcelize
     @Serializable
+    data class ScriptManager(val packageName: String) : Route
+
+    @Parcelize
+    @Serializable
+    data class ScriptEditor(val packageName: String, val scriptId: String) : Route
+
+    @Parcelize
+    @Serializable
+    data class ModuleEditor(val moduleId: String) : Route
+
+    @Parcelize
+    @Serializable
+    data object Logcat : Route
+
+    @Parcelize
+    @Serializable
     data object ColorPalette : Route
 
     @Parcelize

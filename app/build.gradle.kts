@@ -1,12 +1,6 @@
 plugins {
-//    alias(libs.plugins.android.application)
-//    alias(libs.plugins.kotlin.compose)
-//    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.luahook.android.application.compose)
     alias(libs.plugins.luahook.koin)
-//    id("kotlin-parcelize")
-
-
 }
 
 android {
@@ -25,6 +19,7 @@ android {
 
 androidComponents {
     onVariants(selector().withBuildType("release")) {
+        // TODO)) api101 入口是否会被删除？
         it.packaging.resources.excludes.addAll(listOf("META-INF/**", "kotlin/**", "org/**", "**.bin"))
     }
 }
@@ -40,7 +35,6 @@ dependencies {
 
     // 导航
     implementation(libs.androidx.navigation3.runtime)
-//    implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 
     implementation(project(":core:data"))

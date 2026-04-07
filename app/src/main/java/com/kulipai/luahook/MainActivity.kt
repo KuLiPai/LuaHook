@@ -10,8 +10,8 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kulipai.luahook.core.data.repository.SettingsRepository
 import com.kulipai.luahook.navigation.AppNavHost
-import com.kulipai.luahook.core.theme.ThemePreferenceManager
 import org.koin.compose.koinInject
 
 /**
@@ -29,17 +29,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val themePreferenceManager = koinInject<ThemePreferenceManager>()
-            val themePreference by themePreferenceManager.themePreference.collectAsStateWithLifecycle()
-            val isThemeReady by themePreferenceManager.isReady.collectAsStateWithLifecycle()
+            val settingsRepository = koinInject<SettingsRepository>()
+
+            val userSettings by settingsRepository.userSettings
+                .collectAsStateWithLifecycle(initialValue = null)
+
+            val isReady = userSettings != null
 
             splashScreen.setKeepOnScreenCondition {
-                !isThemeReady
+                !isReady
             }
 
-            if (!isThemeReady) return@setContent
+            if (!isReady) return@setContent
 
-            AppNavHost(themePreference = themePreference)
+            AppNavHost(themeSettings= userSettings!!.theme)
         }
     }
 }

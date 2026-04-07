@@ -23,14 +23,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowInsetsControllerCompat
-import com.kulipai.luahook.core.model.ThemePreference
+import com.kulipai.luahook.core.data.model.ThemeSettings
 import com.materialkolor.rememberDynamicColorScheme
 
 @RequiresApi(Build.VERSION_CODES.S)
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MaterialLuaHookTheme(
-    themePreference: ThemePreference,
+    themePreference: ThemeSettings,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current

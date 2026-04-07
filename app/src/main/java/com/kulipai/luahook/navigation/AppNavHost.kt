@@ -11,15 +11,13 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.kulipai.luahook.core.model.ThemePreference
+import com.kulipai.luahook.core.data.model.ThemeSettings
 import com.kulipai.luahook.core.model.UiMode
 import com.kulipai.luahook.core.navigation.LocalNavigator
 import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.core.theme.LuaHookTheme
 import com.kulipai.luahook.core.theme.currentUiMode
 import com.kulipai.luahook.feature.about.navigation.aboutGraph
-import com.kulipai.luahook.feature.about.screen.AboutScreen
-import com.kulipai.luahook.feature.main.MainScreen
 import com.kulipai.luahook.feature.main.navigation.mainGraph
 import com.kulipai.luahook.rememberNavigator
 
@@ -28,14 +26,14 @@ import com.kulipai.luahook.rememberNavigator
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AppNavHost(
-    themePreference: ThemePreference,
+    themeSettings: ThemeSettings,
 ) {
     val navigator = rememberNavigator(Route.Main)
 
     CompositionLocalProvider(
         LocalNavigator provides navigator,
     ) {
-        LuaHookTheme(themePreference = themePreference) {
+        LuaHookTheme(themeSettings = themeSettings) {
             val uiMode = currentUiMode()
             val navDisplay = @Composable {
                 SharedTransitionLayout {
@@ -49,12 +47,6 @@ fun AppNavHost(
                             navigator.pop()
                         },
                         entryProvider = appEntryProvider(this@SharedTransitionLayout),
-//                    entryProvider = entryProvider {
-//                        entry<Route.Main> { MainScreen() }
-//                        entry<Route.About> { AboutScreen() }
-//
-//                    }
-
                     )
                 }
             }
