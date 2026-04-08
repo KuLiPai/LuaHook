@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.luahook.android.library)
+    alias(libs.plugins.luahook.koin)
 }
 
 android {

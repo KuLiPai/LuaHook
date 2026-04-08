@@ -3,7 +3,14 @@ plugins {
 }
 android {
     namespace = "com.kulipai.luahook.feature.main"
+
+
 }
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll("-XXLanguage:+ContextParameters")
+    }
+}
 dependencies {
 }

@@ -43,3 +43,4 @@ include(":core:model")
 include(":feature:main")
 
 include(":feature:about")
+include(":core:common")

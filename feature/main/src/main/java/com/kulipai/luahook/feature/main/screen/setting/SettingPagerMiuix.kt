@@ -68,7 +68,7 @@ fun SettingPagerMiuix(
     bottomInnerPadding: Dp
 ) {
 
-    val viewModel: SettingsViewModel = koinViewModel()
+    val viewModel: SettingPagerViewModel = koinViewModel()
     val uiState by viewModel.settingsUiState.collectAsStateWithLifecycle()
     val themePreference = currentThemePreference()
 

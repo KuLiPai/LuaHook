@@ -4,7 +4,7 @@
 
 
     <string name="home">首页</string>
-    <string name="superuser">脚本</string>
+    <string name="apps">应用</string>
     <string name="module">模块</string>
     <string name="settings">设置</string>
 
@@ -21,12 +21,26 @@
     <string name="home_support_title">支持开发</string>
     <string name="home_support_content">LuaHook 将保持免费开源，向开发者捐赠以表示支持</string>
 
-    <string name="settings_page_scale">Page Scale</string>
+
+    <string name="settings_page_scale">界面缩放</string>
 
 
-    <!-- Preference framework strings. -->
     <string name="ok">OK</string>
-    <!-- Preference framework strings. -->
-    <string name="cancel">Cancel</string>
+    <string name="cancel">取消</string>
+
+
+    <string name="show_only_primary_user_apps">只显示主用户应用</string>
+    <string name="show_system_apps">显示系统应用</string>
+    <string name="group_contains_apps">包含 %d 个应用</string>
+
+
+
+    <string name="refresh_pulling">下拉刷新</string>
+    <string name="refresh_release">松开刷新</string>
+    <string name="refresh_refresh">正在刷新…</string>
+    <string name="refresh_complete">刷新成功</string>
+
+
+
 
 </resources>

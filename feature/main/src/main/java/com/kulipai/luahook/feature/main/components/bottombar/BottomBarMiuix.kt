@@ -140,7 +140,7 @@ enum class BottomBarDestination(
     val icon: ImageVector,
 ) {
     Home(R.string.home, Icons.Rounded.Cottage),
-    SuperUser(R.string.superuser, Icons.Rounded.Security),
+    SuperUser(R.string.apps, Icons.Rounded.Security),
     Module(R.string.module, Icons.Rounded.Extension),
     Setting(R.string.settings, Icons.Rounded.Settings)
 }

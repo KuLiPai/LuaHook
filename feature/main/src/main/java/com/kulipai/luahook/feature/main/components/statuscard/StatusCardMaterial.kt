@@ -174,7 +174,7 @@ fun StatusCardMaterial(
                         .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.superuser),
+                        text = stringResource(R.string.apps),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Spacer(Modifier.height(4.dp))

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class SettingsViewModel(
+class SettingPagerViewModel(
     private val repo: SettingsRepository
 ) : ViewModel() {
     val settingsUiState = repo.userSettings
