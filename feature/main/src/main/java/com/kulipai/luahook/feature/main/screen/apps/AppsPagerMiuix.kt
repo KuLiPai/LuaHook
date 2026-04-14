@@ -1,6 +1,5 @@
 package com.kulipai.luahook.feature.main.screen.apps
 
-
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import androidx.compose.animation.AnimatedVisibility

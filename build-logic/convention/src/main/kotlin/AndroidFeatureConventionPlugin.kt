@@ -33,6 +33,10 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             pluginManager.apply {
                 apply("com.kulipai.luahook.android.library.compose") // 应用Android库和Compose配置
             }
+            pluginManager.apply {
+                apply("com.kulipai.luahook.koin") // Koin配置
+            }
+
 
             // 配置Android库扩展
             // buildConfig 配置已在 configureKotlinAndroid 中统一处理
@@ -50,12 +54,6 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
 //                "implementation"(project(":core:result")) // 结果处理\
                 "implementation"(project(":core:theme")) // 主题模块
 
-                // Koin 依赖注入
-                "implementation"(platform(libs.findLibrary("koin.bom").get()))
-                "implementation"(libs.findLibrary("koin.core").get())
-                "implementation"(libs.findLibrary("koin.android").get())
-                "implementation"(libs.findLibrary("koin.androidx.compose").get())
-                "implementation"(libs.findLibrary("koin.compose.viewmodel").get())
 
                 // 液态玻璃和毛玻璃模糊等
                 "implementation"(libs.findLibrary("backdrop").get())

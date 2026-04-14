@@ -1,4 +1,4 @@
-plugins {
+ plugins {
     alias(libs.plugins.luahook.android.feature)
 }
 android {

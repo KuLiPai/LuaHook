@@ -33,8 +33,8 @@ okhttp = "5.3.2"
 materialKolor = "4.1.1"
 backdrop = "1.0.6"
 capsule = "2.1.3"
-material3 = "1.5.0-alpha16"
-navigation3 = "1.1.0-rc01"
+material3 = "1.5.0-alpha17"
+navigation3 = "1.1.0"
 haze = "1.7.2"
 koinBom = "4.2.0"
 
@@ -44,10 +44,7 @@ material = "1.13.0"
 
 # KSP (Kotlin Symbol Processing): https://github.com/google/ksp
 # 说明: Kotlin 注解处理器，用于代码生成
-ksp = "2.3.4"
-junit = "4.13.2"
-junitVersion = "1.3.0"
-espressoCore = "3.7.0"
+ksp = "2.3.6"
 
 
 [libraries]
@@ -105,11 +102,8 @@ material = { group = "com.google.android.material", name = "material", version.r
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle-api", version.ref = "agp" }
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 
-# 依赖注入相关库
+# ksp
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 
 [bundles]
