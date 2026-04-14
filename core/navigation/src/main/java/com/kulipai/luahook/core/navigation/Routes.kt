@@ -29,7 +29,7 @@ sealed interface Route : NavKey, Parcelable {
 
     @Parcelize
     @Serializable
-    data object SuperUser : Route
+    data object Apps : Route
 
     @Parcelize
     @Serializable

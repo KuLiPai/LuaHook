@@ -46,6 +46,7 @@ dependencies {
 
     implementation(project(":feature:main"))
     implementation(project(":feature:about"))
+    implementation(project(":feature:app"))
 
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.datastore.preferences)

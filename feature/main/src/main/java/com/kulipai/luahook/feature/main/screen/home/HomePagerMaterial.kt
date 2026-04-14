@@ -30,14 +30,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
+import com.kulipai.luahook.core.ui.component.bottombar.LocalMainPagerState
+import com.kulipai.luahook.core.ui.component.statuscard.StatusCard
+import com.kulipai.luahook.core.ui.component.topbar.TopBar
+import com.kulipai.luahook.core.ui.component.warningcard.WarningCard
+import com.kulipai.luahook.core.ui.component.infocard.InfoCard
+import com.kulipai.luahook.core.ui.component.donatecard.DonateCard
+import com.kulipai.luahook.core.ui.component.learnmorecard.LearnMoreCard
+
 import com.kulipai.luahook.feature.main.R
-import com.kulipai.luahook.feature.main.components.bottombar.LocalMainPagerState
-import com.kulipai.luahook.feature.main.components.donatecard.DonateCard
-import com.kulipai.luahook.feature.main.components.infocard.InfoCard
-import com.kulipai.luahook.feature.main.components.learnmorecard.LearnMoreCard
-import com.kulipai.luahook.feature.main.components.statuscard.StatusCard
-import com.kulipai.luahook.feature.main.components.topbar.TopBar
-import com.kulipai.luahook.feature.main.components.warningcard.WarningCard
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")

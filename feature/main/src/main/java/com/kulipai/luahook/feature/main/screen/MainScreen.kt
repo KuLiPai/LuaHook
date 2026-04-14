@@ -34,11 +34,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import com.kulipai.luahook.feature.main.components.bottombar.BottomBar
-import com.kulipai.luahook.feature.main.components.bottombar.LocalMainPagerState
-import com.kulipai.luahook.feature.main.components.bottombar.MainPagerState
-import com.kulipai.luahook.feature.main.components.bottombar.SideRail
-import com.kulipai.luahook.feature.main.components.bottombar.rememberMainPagerState
 import com.kulipai.luahook.core.model.UiMode
 import com.kulipai.luahook.core.navigation.LocalNavigator
 import com.kulipai.luahook.core.navigation.Navigator
@@ -48,6 +43,11 @@ import com.kulipai.luahook.feature.main.screen.module.ModulePager
 import com.kulipai.luahook.feature.main.screen.setting.SettingPager
 import com.kulipai.luahook.feature.main.screen.apps.AppsPager
 import com.kulipai.luahook.core.theme.currentThemePreference
+import com.kulipai.luahook.core.ui.component.bottombar.BottomBar
+import com.kulipai.luahook.core.ui.component.bottombar.LocalMainPagerState
+import com.kulipai.luahook.core.ui.component.bottombar.MainPagerState
+import com.kulipai.luahook.core.ui.component.bottombar.SideRail
+import com.kulipai.luahook.core.ui.component.bottombar.rememberMainPagerState
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import dev.chrisbanes.haze.HazeState

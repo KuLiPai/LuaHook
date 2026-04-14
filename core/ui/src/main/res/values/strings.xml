@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LuaHook</string>
+
+
+    <string name="home">首页</string>
+    <string name="apps">应用</string>
+    <string name="module">模块</string>
+    <string name="settings">设置</string>
+
+
+    <string name="home_kernel">内核版本</string>
+    <string name="home_manager_version">管理器版本</string>
+    <string name="home_fingerprint">系统指纹</string>
+    <string name="home_selinux_status">SELinux 状态</string>
+
+
+    <string name="home_learn_luahook">了解 LuaHook</string>
+    <string name="home_learn_luahook_url">https://luahook.kulipai.top/</string>
+    <string name="home_click_to_learn_luahook">了解如何安装 LuaHook 以及如何开发脚本.</string>
+    <string name="home_support_title">支持开发</string>
+    <string name="home_support_content">LuaHook 将保持免费开源，向开发者捐赠以表示支持</string>
+
+
+    <string name="settings_page_scale">界面缩放</string>
+
+
+    <string name="ok">OK</string>
+    <string name="cancel">取消</string>
+
+
+    <string name="show_only_primary_user_apps">只显示主用户应用</string>
+    <string name="show_system_apps">显示系统应用</string>
+    <string name="group_contains_apps">包含 %d 个应用</string>
+
+
+
+    <string name="refresh_pulling">下拉刷新</string>
+    <string name="refresh_release">松开刷新</string>
+    <string name="refresh_refresh">正在刷新…</string>
+    <string name="refresh_complete">刷新成功</string>
+
+
+
+
+</resources>

@@ -1,0 +1,69 @@
+package com.kulipai.luahook.core.ui.component.infocard
+
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import com.kulipai.luahook.core.ui.R
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
+
+
+
+@Composable
+fun InfoCardMiuix(/*systemInfo: SystemInfo = rememberSystemInfo()*/) {
+    @Composable
+    fun InfoText(
+        title: String,
+        content: String,
+        bottomPadding: Dp = 24.dp
+    ) {
+        Text(
+            text = title,
+            fontSize = MiuixTheme.textStyles.headline1.fontSize,
+            fontWeight = FontWeight.Medium,
+            color = colorScheme.onSurface
+        )
+        Text(
+            text = content,
+            fontSize = MiuixTheme.textStyles.body2.fontSize,
+            color = colorScheme.onSurfaceVariantSummary,
+            modifier = Modifier.padding(top = 2.dp, bottom = bottomPadding)
+        )
+    }
+    Card {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+
+            // TODO)) 获取真实信息
+            InfoText(
+                title = stringResource(R.string.home_kernel),
+                content = "6.1.111111-android18-kulipai-mi"
+            )
+            InfoText(
+                title = stringResource(R.string.home_manager_version),
+                content = "v10086 (10012398)"
+            )
+            InfoText(
+                title = stringResource(R.string.home_fingerprint),
+                content = "XiaoMi/NB/666"
+            )
+            InfoText(
+                title = stringResource(R.string.home_selinux_status),
+                content = "强制执行",
+                bottomPadding = 0.dp
+            )
+        }
+    }
+}
