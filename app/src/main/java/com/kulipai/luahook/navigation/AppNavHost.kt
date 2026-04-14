@@ -18,8 +18,8 @@ import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.core.theme.LuaHookTheme
 import com.kulipai.luahook.core.theme.currentUiMode
 import com.kulipai.luahook.feature.about.navigation.aboutGraph
+import com.kulipai.luahook.feature.app.navigation.appGraph
 import com.kulipai.luahook.feature.main.navigation.mainGraph
-import com.kulipai.luahook.rememberNavigator
 
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -71,6 +71,7 @@ fun AppNavHost(
 private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {
     mainGraph()
     aboutGraph()
+    appGraph()
 //    mainGraph(sharedTransitionScope)
 //    goodsGraph()
 //    authGraph()

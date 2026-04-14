@@ -46,7 +46,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 // 项目内基础模块依赖
                 "implementation"(project(":core:navigation")) // 导航模块
 //                "implementation"(project(":core:designsystem")) // 设计系统
-//                "implementation"(project(":core:ui")) // UI组件库
+                "implementation"(project(":core:ui")) // UI组件库
 //                "implementation"(project(":core:util")) // 工具类
                 "implementation"(project(":core:data")) // 数据
                 "implementation"(project(":core:common")) // 公共
@@ -55,13 +55,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
                 "implementation"(project(":core:theme")) // 主题模块
 
 
-                // 液态玻璃和毛玻璃模糊等
-                "implementation"(libs.findLibrary("backdrop").get())
-                "implementation"(libs.findLibrary("capsule").get())
-                "implementation"(libs.findLibrary("haze").get())
 
-                // material 图标扩展
-                "implementation"(libs.findLibrary("androidx.compose.material.icons.extended").get())
 
 
             }

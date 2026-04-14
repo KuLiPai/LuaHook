@@ -67,11 +67,11 @@ import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
 import com.kulipai.luahook.core.theme.currentEnableBlur
 import com.kulipai.luahook.core.theme.isInDarkTheme
+import com.kulipai.luahook.core.ui.component.appiconimage.AppIconImage
+import com.kulipai.luahook.core.ui.component.searchbar.SearchBox
+import com.kulipai.luahook.core.ui.component.searchbar.SearchPager
+import com.kulipai.luahook.core.ui.component.statustag.StatusTag
 import com.kulipai.luahook.feature.main.R
-import com.kulipai.luahook.feature.main.components.appiconimage.AppIconImage
-import com.kulipai.luahook.feature.main.components.searchbar.SearchBox
-import com.kulipai.luahook.feature.main.components.searchbar.SearchPager
-import com.kulipai.luahook.feature.main.components.statustag.StatusTag
 import com.kyant.capsule.ContinuousRoundedRectangle
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
@@ -517,7 +517,7 @@ private fun GroupItem(
             ) {
                 Text(
                     text = if (group.apps.size > 1)
-                        with(LocalContext.current) { ownerNameForUid(group.uid) } else group.primary.label,
+                        with(LocalContext.current) { ownerNameForUid(group.uid, group.apps) } else group.primary.label,
                     modifier = Modifier.basicMarquee(),
                     fontWeight = FontWeight(550),
                     color = colorScheme.onSurface,
@@ -579,9 +579,9 @@ private data class StatusMeta(
 val ownerNameCache = ConcurrentHashMap<Int, String>()
 
 context(context: Context)
-fun ownerNameForUid(uid: Int, appSource: List<AppInfo>? = null): String {
+fun ownerNameForUid(uid: Int, appSource: List<AppInfo>): String {
     ownerNameCache[uid]?.let { return it.ifEmpty { uid.toString() } }
-    val apps = (appSource ?: AppsPagerViewModel.apps).filter { it.uid == uid }
+    val apps = appSource.filter { it.uid == uid }
     val labeledApp = apps.firstOrNull { it.packageInfo.sharedUserLabel != 0 }
     val name = if (labeledApp != null) {
         val pm = context.packageManager

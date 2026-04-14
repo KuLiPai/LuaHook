@@ -60,16 +60,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kulipai.luahook.core.model.AppInfo
 import com.kulipai.luahook.core.navigation.Navigator
 import com.kulipai.luahook.core.navigation.Route
+import com.kulipai.luahook.core.ui.component.appiconimage.AppIconImage
+import com.kulipai.luahook.core.ui.component.material.SearchAppBar
+import com.kulipai.luahook.core.ui.component.material.SegmentedLazyColumn
+import com.kulipai.luahook.core.ui.component.material.SegmentedListItem
+import com.kulipai.luahook.core.ui.component.statustag.StatusTag
 import com.kulipai.luahook.feature.main.R
-import com.kulipai.luahook.feature.main.components.appiconimage.AppIconImage
-import com.kulipai.luahook.feature.main.components.material.SearchAppBar
-import com.kulipai.luahook.feature.main.components.material.SegmentedLazyColumn
-import com.kulipai.luahook.feature.main.components.material.SegmentedListItem
-import com.kulipai.luahook.feature.main.components.statustag.StatusTag
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -403,7 +402,7 @@ private fun GroupItem(
         headlineContent = {
             Text(
                 text = if (group.apps.size > 1)
-                    with(LocalContext.current) { ownerNameForUid(group.uid) } else group.primary.label,
+                    with(LocalContext.current) { ownerNameForUid(group.uid, group.apps) } else group.primary.label,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1
             )

@@ -5,12 +5,15 @@ import com.kulipai.luahook.feature.main.screen.setting.SettingPagerViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
+/**
+ * @author kulipai
+ * @date 2026/4/14
+ */
 
 val mainModule = module {
 
-
     viewModel {
-        AppsPagerViewModel(get(),get())
+        AppsPagerViewModel(get(), get())
     }
     viewModel {
         SettingPagerViewModel(get())

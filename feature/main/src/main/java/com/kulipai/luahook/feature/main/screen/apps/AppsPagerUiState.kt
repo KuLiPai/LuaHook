@@ -2,7 +2,7 @@ package com.kulipai.luahook.feature.main.screen.apps
 
 import androidx.compose.runtime.Immutable
 import com.kulipai.luahook.core.model.AppInfo
-import com.kulipai.luahook.feature.main.components.searchstatus.SearchStatus
+import com.kulipai.luahook.core.ui.component.searchstatus.SearchStatus
 
 @Immutable
 data class GroupedApps(

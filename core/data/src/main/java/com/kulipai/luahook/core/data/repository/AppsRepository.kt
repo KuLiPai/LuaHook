@@ -1,9 +1,19 @@
 package com.kulipai.luahook.core.data.repository
 
 import com.kulipai.luahook.core.model.AppInfo
+import kotlinx.coroutines.flow.StateFlow
+
+data class AppsRepositoryState(
+    val apps: List<AppInfo> = emptyList(),
+    val userIds: List<Int> = emptyList(),
+    val isLoaded: Boolean = false,
+    val error: Throwable? = null,
+)
 
 interface AppsRepository {
-    suspend fun getAppList(): Result<Pair<List<AppInfo>, List<Int>>>
-    suspend fun refreshProfiles(currentApps: List<AppInfo>): Result<List<AppInfo>>
+    val state: StateFlow<AppsRepositoryState>
 
+    suspend fun loadApps(force: Boolean = false): Result<AppsRepositoryState>
+
+    suspend fun refreshProfiles(): Result<AppsRepositoryState>
 }

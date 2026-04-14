@@ -55,6 +55,15 @@ internal fun Project.configureAndroidCompose(
         "implementation"(libs.findLibrary("androidx.navigation3.runtime").get())
         "implementation"(libs.findLibrary("androidx.lifecycle.viewmodel.navigation3").get())
 
+        // 液态玻璃和毛玻璃模糊等
+        "implementation"(libs.findLibrary("backdrop").get())
+        "implementation"(libs.findLibrary("capsule").get())
+        "implementation"(libs.findLibrary("haze").get())
+
+        // material 图标扩展
+        "implementation"(libs.findLibrary("androidx.compose.material.icons.extended").get())
+
+
 
     }
 }

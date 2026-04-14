@@ -37,10 +37,11 @@ include(":core:theme")
 include(":core:navigation")
 include(":core:data")
 include(":core:model")
+include(":core:common")
 
 
 // feature 功能模块
 include(":feature:main")
-
 include(":feature:about")
-include(":core:common")
+include(":feature:app")
+include(":core:ui")

@@ -1,4 +1,4 @@
-package com.kulipai.luahook
+package com.kulipai.luahook.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable

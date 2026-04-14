@@ -1,7 +1,7 @@
 package com.kulipai.luahook
 
 import android.app.Application
-import com.kulipai.luahook.di.appModule
+import com.kulipai.luahook.di.LuaHookModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -15,7 +15,7 @@ class MyApplication : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@MyApplication)
-            modules(appModule)
+            modules(LuaHookModule)
         }
     }
 }
