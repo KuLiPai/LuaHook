@@ -20,7 +20,7 @@ android {
     defaultConfig {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 42
         versionName = "4.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
