@@ -29,7 +29,7 @@ fun DonateCardMaterial() {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    uriHandler.openUri("https://patreon.com/weishu")
+                    uriHandler.openUri("https://github.com/KuLiPai/LuaHook")
                 }
                 .padding(24.dp), verticalAlignment = Alignment.CenterVertically
         ) {

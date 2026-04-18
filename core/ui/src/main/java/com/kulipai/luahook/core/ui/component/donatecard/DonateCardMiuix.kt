@@ -35,7 +35,7 @@ fun DonateCardMiuix() {
                 )
             },
             onClick = {
-                uriHandler.openUri("https://patreon.com/weishu")
+                uriHandler.openUri("https://github.com/KuLiPai/LuaHook")
             },
             insideMargin = PaddingValues(18.dp)
         )
