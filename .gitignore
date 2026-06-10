@@ -19,3 +19,5 @@ local.properties
 # Release outputs
 /app/release/*.apk
 /app/release/*.aab
+/.antigravitycli
+/docs
