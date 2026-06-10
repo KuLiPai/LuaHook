@@ -94,7 +94,7 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TopAppBar
 import top.yukonga.miuix.kmp.basic.rememberPullToRefreshState
-import top.yukonga.miuix.kmp.extra.SuperListPopup
+import top.yukonga.miuix.kmp.overlay.OverlayListPopup
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.basic.ArrowRight
 import top.yukonga.miuix.kmp.icon.extended.MoreCircle
@@ -170,8 +170,8 @@ fun AppsPagerMiuix(
                     title = stringResource(R.string.apps),
                     actions = {
                         val showTopPopup = remember { mutableStateOf(false) }
-                        SuperListPopup(
-                            show = showTopPopup,
+                        OverlayListPopup(
+                            show = showTopPopup.value,
                             popupPositionProvider = ListPopupDefaults.ContextMenuPositionProvider,
                             alignment = PopupPositionProvider.Align.TopEnd,
                             onDismissRequest = {

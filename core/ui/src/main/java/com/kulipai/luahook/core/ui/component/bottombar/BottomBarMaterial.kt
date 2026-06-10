@@ -64,10 +64,10 @@ fun BottomBarMaterial() {
                 icon = {
                     Icon(
                         if (selected) selectedIcon else unselectedIcon,
-                        label as? String ?: stringResource(label.toInt())
+                        stringResource(label)
                     )
                 },
-                label = { Text(label as? String ?: stringResource(label.toInt())) }
+                label = { Text(stringResource(label)) }
             )
         }
     }

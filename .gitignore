@@ -8,5 +8,9 @@
 .cxx
 local.properties
 .idea
-/docs
 /.kotlin
+/.antigravitycli
+
+
+/docs
+

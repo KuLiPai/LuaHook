@@ -332,7 +332,7 @@ fun SearchBarMiuix(
             .padding(horizontal = 12.dp)
             .padding(top = searchBarTopPadding, bottom = 6.dp)
             .focusRequester(focusRequester),
-        onSearch = { it },
+        onSearch = {  },
         expanded = searchStatus.shouldExpand(),
         onExpandedChange = {
             onSearchStatusChange(

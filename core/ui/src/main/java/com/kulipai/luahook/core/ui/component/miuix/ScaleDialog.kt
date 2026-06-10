@@ -28,7 +28,7 @@ import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
-import top.yukonga.miuix.kmp.extra.SuperDialog
+import top.yukonga.miuix.kmp.overlay.OverlayDialog
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 
 @Composable
@@ -37,10 +37,10 @@ fun ScaleDialog(
     volumeState: () -> Float,
     onVolumeChange: (Float) -> Unit,
 ) {
-    SuperDialog(
+    OverlayDialog(
         title = stringResource(R.string.settings_page_scale),
         summary = "80% - 110%",
-        show = showDialog,
+        show = showDialog.value,
         onDismissRequest = { showDialog.value = false },
     ) {
         var text by remember(showDialog.value) {

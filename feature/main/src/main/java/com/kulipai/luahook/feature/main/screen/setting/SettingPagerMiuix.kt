@@ -54,9 +54,9 @@ import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.TopAppBar
-import top.yukonga.miuix.kmp.extra.SuperArrow
-import top.yukonga.miuix.kmp.extra.SuperDropdown
-import top.yukonga.miuix.kmp.extra.SuperSwitch
+import top.yukonga.miuix.kmp.preference.ArrowPreference
+import top.yukonga.miuix.kmp.preference.OverlayDropdownPreference
+import top.yukonga.miuix.kmp.preference.SwitchPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme.colorScheme
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.yukonga.miuix.kmp.utils.scrollEndHaptic
@@ -120,7 +120,7 @@ fun SettingPagerMiuix(
                         .padding(top = 12.dp)
                         .fillMaxWidth(),
                 ) {
-                    SuperSwitch(
+                    SwitchPreference(
                         title = "settings_check_update",
                         summary = "settings_check_update_summary",
                         startAction = {
@@ -137,7 +137,7 @@ fun SettingPagerMiuix(
                         }
                     )
 
-                    SuperSwitch(
+                    SwitchPreference(
                         title = "settings_module_check_update",
                         summary = "settings_check_update_summary",
                         startAction = {
@@ -162,7 +162,7 @@ fun SettingPagerMiuix(
                         .fillMaxWidth(),
                 ) {
                     val uiModeItems = listOf(UiMode.Miuix.name, UiMode.Material.name)
-                    SuperDropdown(
+                    OverlayDropdownPreference(
                         title = "settings_ui_mode",
                         summary = "settings_ui_mode_summary",
                         items = uiModeItems,
@@ -179,7 +179,7 @@ fun SettingPagerMiuix(
                             viewModel.setUiMode(if (index == 0) UiMode.Miuix else UiMode.Material)
                         }
                     )
-                    SuperArrow(
+                    ArrowPreference(
                         title = "settings_theme",
                         summary = "settings_theme_summary",
                         startAction = {
@@ -202,7 +202,7 @@ fun SettingPagerMiuix(
                         .fillMaxWidth(),
                 ) {
                     val profileTemplate = "settings_profile_template"
-                    SuperArrow(
+                    ArrowPreference(
                         title = profileTemplate,
                         summary = "settings_profile_template_summary",
                         startAction = {
@@ -237,7 +237,7 @@ fun SettingPagerMiuix(
                         "managed" -> "feature_status_managed_summary"
                         else -> "settings_sucompat_summary"
                     }
-                    SuperDropdown(
+                    OverlayDropdownPreference(
                         title = "settings_sucompat",
                         summary = suSummary,
                         items = suCompatModeItems,
@@ -261,7 +261,7 @@ fun SettingPagerMiuix(
                         "managed" -> "feature_status_managed_summary"
                         else -> "settings_kernel_umount_summary"
                     }
-                    SuperSwitch(
+                    SwitchPreference(
                         title = "settings_kernel_umount",
                         summary = umountSummary,
                         startAction = {
@@ -279,7 +279,7 @@ fun SettingPagerMiuix(
                         }
                     )
 
-                    SuperSwitch(
+                    SwitchPreference(
                         title = "settings_umount_modules_default",
                         summary = "settings_umount_modules_default_summary",
                         startAction = {
@@ -296,7 +296,7 @@ fun SettingPagerMiuix(
                         }
                     )
 
-                    SuperSwitch(
+                    SwitchPreference(
                         title = "enable_web_debugging",
                         summary = "enable_web_debugging_summary",
                         startAction = {
@@ -312,7 +312,7 @@ fun SettingPagerMiuix(
 //                                viewModel.setEnableWebDebugging(it)
                         }
                     )
-                    SuperSwitch(
+                    SwitchPreference(
                         title = "settings_auto_jailbreak",
                         summary = "settings_auto_jailbreak_summary",
                         startAction = {
@@ -339,7 +339,7 @@ fun SettingPagerMiuix(
                 ) {
                     if (uiState.isLkmMode) {
                         val uninstall = "settings_uninstall"
-                        SuperArrow(
+                        ArrowPreference(
                             title = uninstall,
                             startAction = {
                                 Icon(
@@ -363,7 +363,7 @@ fun SettingPagerMiuix(
                         .padding(vertical = 12.dp)
                         .fillMaxWidth(),
                 ) {
-                    SuperArrow(
+                    ArrowPreference(
                         title = "send_log",
                         startAction = {
                             Icon(
@@ -379,7 +379,7 @@ fun SettingPagerMiuix(
                     )
 //                    SendLogDialogMiuix(showSendLogDialog, loadingDialog)
                     val about = "about"
-                    SuperArrow(
+                    ArrowPreference(
                         title = about,
                         startAction = {
                             Icon(
