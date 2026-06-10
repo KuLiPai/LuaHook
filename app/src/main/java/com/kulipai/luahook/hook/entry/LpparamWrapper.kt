@@ -20,7 +20,7 @@ import top.sacz.xphelper.XpHelper
 import top.sacz.xphelper.dexkit.DexFinder
 
 /**
- * 统一抽象化api100和低于100的hook的部分接口
+ * 统一抽象化api101和低于101的hook的部分接口
  */
 
 lateinit var LPParam_processName: String
@@ -41,7 +41,7 @@ class LoadPackageParamWrapper(val origin: LoadPackageParam) : LPParam {
     override val isFirstApplication: Boolean get() = origin.isFirstApplication
 }
 
-class ModuleInterfaceParamWrapper(val origin: XposedModuleInterface.PackageLoadedParam) : LPParam {
+class ModuleInterfaceParamWrapper(val origin: XposedModuleInterface.PackageReadyParam) : LPParam {
     override val packageName get() = origin.packageName
     override val classLoader get() = origin.classLoader
     override val appInfo: ApplicationInfo get() = origin.applicationInfo

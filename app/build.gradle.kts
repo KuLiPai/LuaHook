@@ -21,8 +21,8 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 37
-        versionCode = 42
-        versionName = "4.1.0"
+        versionCode = 43
+        versionName = "4.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -37,7 +37,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true // 启用代码压缩
-            isShrinkResources = false // 启用资源压缩
+            isShrinkResources = true // 启用资源压缩
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -68,8 +68,8 @@ android {
 
     }
     kotlin {
-        jvmToolchain(17)
         compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
             freeCompilerArgs.add("-XXLanguage:+ContextParameters")
         }
     }
@@ -117,9 +117,9 @@ dependencies {
     implementation(libs.sora.editor.language.textmate)
     implementation(project(":androlua"))
 
-    //Xposed service 100
-    compileOnly(project(":libxposed:api"))
-    implementation(project(":libxposed:service"))
+    //Xposed service 101
+    compileOnly("io.github.libxposed:api:101.0.1")
+    implementation("io.github.libxposed:service:101.0.0")
 
     //coil3 加载图片
     implementation(libs.coil)

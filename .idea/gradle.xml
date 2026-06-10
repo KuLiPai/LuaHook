@@ -12,11 +12,6 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/androlua" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/libxposed" />
-            <option value="$PROJECT_DIR$/libxposed/api" />
-            <option value="$PROJECT_DIR$/libxposed/checks" />
-            <option value="$PROJECT_DIR$/libxposed/interface" />
-            <option value="$PROJECT_DIR$/libxposed/service" />
           </set>
         </option>
       </GradleProjectSettings>

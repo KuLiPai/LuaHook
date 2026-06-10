@@ -34,8 +34,3 @@ rootProject.name = "LuaHook"
 include(":app")
 include(":androlua")
 
-include(":libxposed:interface")
-
-include(":libxposed:service")
-include(":libxposed:api")
-include(":libxposed:checks")

@@ -3,14 +3,9 @@ package com.kulipai.luahook.core.xposed
 import android.content.Context
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import top.sacz.xphelper.util.ActivityTools
 
 /**
- * api100有的模块作用域管理
+ * api101+模块作用域管理
  */
 
 object XposedScope {
@@ -24,69 +19,35 @@ object XposedScope {
     fun requestScope(context: Context, pkg: String) {
         withService {
             if (!it.scope.contains(pkg)) {
-                it.requestScope(pkg, object : XposedService.OnScopeEventListener {})
+                it.requestScope(listOf(pkg), object : XposedService.OnScopeEventListener {})
             }
         }
     }
 
-
-    @OptIn(DelicateCoroutinesApi::class)
     fun requestManyScope(context: Context, pkgList: MutableList<String>, index: Int) {
-        var pkg = ""
         withService {
-            pkgList -= it.scope
-            if (index<pkgList.size){
-                pkg = pkgList[index]
-
-                it.requestScope(pkg,
-                    object : XposedService.OnScopeEventListener {
-//                        override fun onScopeRequestPrompted(packageName: String) {
-//                            runOnUiThread {
-//
-//                            }
-//                        }
-
-                        override fun onScopeRequestApproved(packageName: String) {
-                            ActivityTools.runOnUiThread {
-                                GlobalScope.launch {
-                                    delay(200)
-                                    requestManyScope(context, pkgList, index + 1)
-                                }
-                            }
-                        }
-
-//                        override fun onScopeRequestDenied(packageName: String) {
-//                            runOnUiThread {
-//                            }
-//                        }
-//
-//                        override fun onScopeRequestTimeout(packageName: String) {
-//                            runOnUiThread {
-//                            }
-//                        }
-//
-//                        override fun onScopeRequestFailed(packageName: String, message: String) {
-//                            runOnUiThread {
-//
-//                            }
-//                        }
+            val toRequest = pkgList.filter { pkg -> !it.scope.contains(pkg) }
+            if (toRequest.isNotEmpty()) {
+                it.requestScope(toRequest, object : XposedService.OnScopeEventListener {
+                    override fun onScopeRequestApproved(approved: List<String>) {
+                        // Batch request approved
                     }
 
-                )
-
+                    override fun onScopeRequestFailed(message: String) {
+                        // Batch request failed
+                    }
+                })
             }
         }
     }
-
 
     fun removeScope(context: Context, pkg: String) {
         withService {
             if (it.scope.contains(pkg)) {
-                it.removeScope(pkg)
+                it.removeScope(listOf(pkg))
             }
         }
     }
-
 
     fun init() {
         XposedServiceHelper.registerListener(object : XposedServiceHelper.OnServiceListener {
@@ -99,5 +60,4 @@ object XposedScope {
             }
         })
     }
-
 }

@@ -13,11 +13,10 @@ import org.luaj.LuaValue
 import top.sacz.xphelper.XpHelper
 
 /**
- * api100专用新hook入口
+ * api101专用新hook入口
  */
 
-class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedParam) :
-    XposedModule(base, param) {
+class NewHook : XposedModule() {
     companion object {
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
         const val PATH = "/data/local/tmp/LuaHook"
@@ -31,21 +30,14 @@ class NewHook(base: XposedInterface, param: XposedModuleInterface.ModuleLoadedPa
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
 
-    //api 100
-    init {
-        LPParam_processName = param.processName
-    }
-
-
     @SuppressLint("DiscouragedPrivateApi")
-    override fun onPackageLoaded(lpparam: XposedModuleInterface.PackageLoadedParam) {
-        super.onPackageLoaded(lpparam)
-        suparam = createStartupParam(this.applicationInfo.sourceDir)
+    override fun onPackageReady(lpparam: XposedModuleInterface.PackageReadyParam) {
+        super.onPackageReady(lpparam)
+        LPParam_processName = lpparam.applicationInfo.processName ?: lpparam.packageName
+        suparam = createStartupParam(this.moduleApplicationInfo.sourceDir)
         XpHelper.initZygote(suparam)
 
         luaHookInit(ModuleInterfaceParamWrapper(lpparam))
-
-
     }
 
 
