@@ -1,68 +1,69 @@
 # LuaHook
 
-**A module for writing Xposed scripts via Lua**
+<p align="center">
+  <img src="docs/logo.png" alt="LuaHook Logo" width="550"/>
+</p>
 
-**一个使用 Lua 编写 Xposed 模块的框架**
+<p align="center">
+  <b>A Lua-powered Xposed scripting framework</b>
+</p>
 
-This is a module under active development that allows you to write powerful Xposed scripts using the lightweight and flexible Lua language.
+[简体中文](README_ZH.md) | English
 
-这是一个正在积极开发中的模块，旨在让你能够使用轻巧灵活的 Lua 语言来编写强大的 Xposed 脚本。
+---
 
-**Key Features (Under Development)**
+## 📖 Introduction
 
-* **Lua Script Support:** Hook Android applications using your familiar Lua syntax.
-* **Xposed Integration:** Seamlessly integrates with the Xposed framework to achieve various hooking functionalities.
-* **Dynamic Loading:** Load and apply Lua scripts without recompiling and reinstalling the APK.
-* **[More features coming soon...]**
+LuaHook is an actively developed framework that enables developers to write powerful Xposed modules using the lightweight and flexible Lua language.
 
-**主要特性 (开发中)**
+It simplifies Android hooking by removing the need for full Java/Kotlin build cycles, allowing faster development and iteration.
 
-* **Lua 脚本支持:** 使用你熟悉的 Lua 语法来hook Android 应用。
-* **Xposed 集成:** 无缝对接 Xposed 框架，实现各种 Hook 功能。
-* **动态加载:** 无需重新编译安装 APK，即可加载和应用 Lua 脚本。
-* **[更多特性敬请期待...]**
+---
 
-**Important Notice**
+## ✨ Features
 
-This module is still in the early stages of development and may contain various issues and shortcomings. I sincerely apologize if you encounter any errors during use.
+- **Lua Script Support**  
+  Write hook logic using concise and expressive Lua syntax.
 
-**重要提示**
+- **Seamless Xposed Integration**  
+  Deep integration with the Xposed framework for robust hooking capabilities.
 
-本模块尚处于早期开发阶段，可能存在各种问题和不足。如果你在使用过程中遇到任何错误，我深感抱歉。
+- **Dynamic Script Loading**  
+  Load and apply scripts without recompiling or reinstalling the APK.
 
-**Contact**
+- **Rapid Prototyping**  
+  Iterate faster compared to traditional Xposed module development.
 
-Welcome to join our Telegram channel for communication and feedback: [Telegram Channel](https://t.me/LuaXposed)[QQ](https://qm.qq.com/q/Qt3yKDzCeG)
+- **More Features Coming Soon...**
 
-Alternatively, you can directly submit issues and suggestions on the project's Issue page. I will actively respond and do my best to resolve them.
+---
 
-**联系方式**
+## ⚠️ Project Status
 
-欢迎加入我们的 Telegram 频道进行交流和反馈：[Telegram频道](https://t.me/LuaXposed),[QQ](https://qm.qq.com/q/Qt3yKDzCeG)
+This project is currently in an early development stage. Bugs, incomplete features, and breaking changes may occur.
 
-或者，你也可以直接在本项目的 Issue 页面提交问题和建议，我会积极回复并尽力解决。
+---
 
-**Thank you for your attention and support!**
+## 📬 Contact
 
-**感谢你的关注和支持！**
+- Telegram: https://t.me/LuaXposed  
+- QQ: https://qm.qq.com/q/Qt3yKDzCeG  
 
-**致谢/Thanks**
+You are welcome to submit issues, suggestions, or bug reports via GitHub Issues.
 
-[DexKit](https://github.com/LuckyPray/DexKit)
+---
 
-[XpHelper](https://github.com/suzhelan/XPHelper)
+## 🙏 Acknowledgements
 
-[NeLuaJ](https://github.com/znzsofficial/NeLuaJ)
+- DexKit  
+- XpHelper  
+- NeLuaJ  
+- sora-editor  
+- sora-editor-with-androlua  
 
-[sora-editor](https://github.com/Rosemoe/sora-editor)
+---
 
-[sora-editor-with-androlua](https://github.com/dingyi222666/sora-editor-with-androlua)
-
-**支持/Support**
-
-微信赞赏方式
-
-使用LuaHook勾选微信增加脚本
+## 💡 Example
 
 ```lua
 imports "top.sacz.xphelper.dexkit.FieldFinder"
@@ -79,10 +80,12 @@ hook {
     local loader = invoke(it.thisObject, "getClassLoader")
     local dexFinder = DexFinder.INSTANCE
     dexFinder.create(lpparam.appInfo.sourceDir)
+
     local method = MethodInfo() {
       UsedString = { "MicroMsg.QRCodeHandler", "qbar_string_scan_source" },
       ParamCount = 2,
     }.generate().firstOrNull()
+
     hook {
       method=method,
       before=function(it)
@@ -93,26 +96,31 @@ hook {
 }
 ```
 
-打开微信扫一扫，扫描下面二维码进行赞赏:)
+## 💰 Support
+### WeChat
+Scan the QR code below after enabling LuaHook in WeChat:
 
-![wechat](app/src/main/res/drawable/wechat_qr.png)
+<p align="center"> <img src="app/src/main/res/drawable/wechat_qr.png" width="220"/> </p>
 
-其他赞赏方式/Other Ways
+### Other Methods
 
-Ton
+TON
+
 ```text
 UQCT4SxRvop52iLADb8_TcuoGFlr8UqC4QNTlIraRcljm-Us
 ```
 
-USDT(TRC20)
+USDT (TRC20)
+
 ```text
 TLhumaxCuCJYddWwfAyS9ZyVWeFbwUfydm
 ```
 
-TRX(TRC20)
+TRX (TRC20)
+
 ```text
 TGGvqp4zx9VNT6HaijAQxQT8uFibs1etxt
 ```
 
-
-
+## ⭐ Support the Project
+If you find this project useful, consider giving it a ⭐ on GitHub.
