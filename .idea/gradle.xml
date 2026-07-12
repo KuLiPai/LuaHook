@@ -4,13 +4,34 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook" name="libluahook">
+                <projects>
+                  <project path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook" />
+                  <project path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/androlua" />
+                  <project path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-core" />
+                  <project path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-ext-dexkit" />
+                  <project path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-ext-layout" />
+                  <project path="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-ext-native" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="jbr-21" />
         <option name="modules">
           <set>
+            <option value="$USER_HOME$/Projects/AndroidStudioProjects/libluahook" />
+            <option value="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/androlua" />
+            <option value="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-core" />
+            <option value="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-ext-dexkit" />
+            <option value="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-ext-layout" />
+            <option value="$USER_HOME$/Projects/AndroidStudioProjects/libluahook/luahook-ext-native" />
             <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/androlua" />
             <option value="$PROJECT_DIR$/app" />
           </set>
         </option>

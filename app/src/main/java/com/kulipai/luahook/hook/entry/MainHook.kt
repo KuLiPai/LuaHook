@@ -1,25 +1,17 @@
 package com.kulipai.luahook.hook.entry
 
-import com.kulipai.luahook.hook.api.HookLib
-import com.kulipai.luahook.hook.api.LuaActivity
-import com.kulipai.luahook.hook.api.LuaImport
-import com.kulipai.luahook.hook.api.LuaUtil
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage
+import io.github.kulipai.luahook.hook.entry.LuaHookEngine
+import io.github.kulipai.luahook.ext.layout.registerLayout
+import io.github.kulipai.luahook.ext.dexkit.registerDexKit
+import io.github.kulipai.luahook.ext.nativelib.registerNative
 import org.json.JSONArray
 import org.luaj.Globals
-import org.luaj.LuaValue
-import org.luaj.lib.jse.CoerceJavaToLua
-import org.luaj.lib.jse.JsePlatform
-import org.luckypray.dexkit.DexKitBridge
 import top.sacz.xphelper.XpHelper
-import top.sacz.xphelper.dexkit.DexFinder
-import kotlin.collections.iterator
 
 /**
  * MainHook是用于xposed api小于100的hook主类
@@ -45,10 +37,20 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        luaHookInit(LoadPackageParamWrapper(lpparam))
+        LuaHookEngine.init(this, lpparam, suparam)
+        luaHookInit(lpparam)
     }
 
-    fun luaHookInit(lpparam: LPParam) {
+    private fun registerExtensions(globals: Globals, projectName: String = "") {
+        globals.registerLayout()
+        globals.registerDexKit()
+        globals.registerNative()
+        if (projectName.isNotEmpty()) {
+            com.kulipai.luahook.hook.api.LuaProject(projectName).registerTo(globals)
+        }
+    }
+
+    fun luaHookInit(lpparam: XC_LoadPackage.LoadPackageParam) {
         // 读取luahook启用的app
         selectAppsString = WorkspaceFileManager.read("/apps.txt").replace("\n", "")
         // 读取全局脚本
@@ -63,16 +65,12 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         try {
             // 排除模块自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue = createGlobals(this,lpparam,suparam, "[GLOBAL]").load(luaScript)
-                chunk.call()
+                val globals = LuaHookEngine.load(luaScript, this, "[GLOBAL]")
+                registerExtensions(globals)
             }
         } catch (e: Exception) {
-            // 捕获错误并美化输出
-            val err = LuaUtil.simplifyLuaError(e.toString())
-            "${lpparam.packageName}:[GLOBAL]:$err".e()
+            "${lpparam.packageName}:[GLOBAL]:${e.message}".e()
         }
-
-
 
         // app单独脚本
         if (lpparam.packageName in selectAppsList) {
@@ -80,21 +78,17 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             // 读取已保存的宿主app脚本的map
             for ((scriptName, v) in WorkspaceFileManager.readMap("/${WorkspaceFileManager.AppConf}/${lpparam.packageName}.txt")) {
                 try {
-
                     if (v is Boolean) { // 兼容旧版luahook的存储格式
-                        createGlobals(this,lpparam,suparam, scriptName)
-                            .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
-                            .call()
+                        val globals = LuaHookEngine.load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"), this, scriptName)
+                        registerExtensions(globals)
                     } else if ((v is JSONArray)) { // 新的格式，包含是否启用，描述和版本信息
-                        if (v[0] as Boolean) {
-                            createGlobals(this,lpparam,suparam, scriptName)
-                                .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
-                                .call()
+                        if (v.optBoolean(0, false)) {
+                            val globals = LuaHookEngine.load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"), this, scriptName)
+                            registerExtensions(globals)
                         }
                     }
                 } catch (e: Exception) {
-                    val err = LuaUtil.simplifyLuaError(e.toString())
-                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
+                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: ${e.message}").e()
                 }
             }
         }
@@ -105,15 +99,10 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             for ((projectName, isEnabled) in projectInfo) {
                  if (isEnabled == true) {
                       try {
-
-                           // Use a temporary global for verifying scope to avoid polluting the main context if we reuse it?
-                           // Actually we create new globals for each script execution, so it's fine.
-                           val tempGlobals = createGlobals(this,lpparam,suparam, projectName,projectName)
                            val projectDir = "/Project/$projectName"
                            val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
                            
-                           // Execute init.lua to populate variables
-                           tempGlobals.load(initScript).call()
+                           val tempGlobals = LuaHookEngine.load(initScript, this, projectName)
                            
                            val scope = tempGlobals.get("scope")
                            var shouldRun = false
@@ -131,27 +120,32 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                            }
                            
                            if (shouldRun) {
+                                val rawScript = WorkspaceFileManager.read("$projectDir/main.lua")
+                                val absProjectDir = WorkspaceFileManager.DIR + projectDir
+                                val wrappedScript = """
+                                    package.path = package.path .. ';${absProjectDir}/?.lua'
+                                    local oldLoadDex = loadDex
+                                    if oldLoadDex then
+                                        loadDex = function(path)
+                                            if string.sub(path, 1, 1) ~= "/" then
+                                                path = "${absProjectDir}/" .. path
+                                            end
+                                            return oldLoadDex(path)
+                                        end
+                                    end
+                                """.trimIndent() + "\n" + rawScript
 
-                                val mainScript = WorkspaceFileManager.read("$projectDir/main.lua")
-                                // Load main.lua (we can reuse tempGlobals or create new one)
-                                // Standard practice: if init.lua defines configs that main.lua needs, stick to same globals.
-                                // If init.lua is just metadata, maybe clean globals? 
-                                // User said "load init.lua... then name=... lua variables to store".
-                                // And "main.lua" is the code.
-                                // Usually main.lua might expect those variables.
-                                tempGlobals.load(mainScript).call()
+                                val globals = LuaHookEngine.load(wrappedScript, this, projectName)
+                                registerExtensions(globals, projectName)
                            }
                       } catch (e: Exception) {
-                           val err = LuaUtil.simplifyLuaError(e.toString())
-                           "${lpparam.packageName}:[Project:$projectName]:$err".e()
+                           "${lpparam.packageName}:[Project:$projectName]:${e.message}".e()
                       }
                  }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
-
     }
 
 }

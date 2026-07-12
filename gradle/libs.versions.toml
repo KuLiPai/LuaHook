@@ -1,5 +1,5 @@
 [versions]
-agp = "8.11.2"
+agp = "9.2.1"
 annotation = "1.10.0"
 apiVersion = "13.1.5"
 core = "6.0.0"
@@ -29,6 +29,7 @@ coil = "3.4.0"
 compileSdk = "37"
 minSdk = "28"
 buildToolsVersion = "35.0.0"
+libluahook = "master-SNAPSHOT"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -68,6 +69,10 @@ coil = { module = "io.coil-kt.coil3:coil", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
 coil-svg = { module = "io.coil-kt.coil3:coil-svg", version.ref = "coil" }
+libluahook-core = { module = "com.github.KuLiPai.libluahook:luahook-core", version.ref = "libluahook" }
+libluahook-ext-layout = { module = "com.github.KuLiPai.libluahook:luahook-ext-layout", version.ref = "libluahook" }
+libluahook-ext-dexkit = { module = "com.github.KuLiPai.libluahook:luahook-ext-dexkit", version.ref = "libluahook" }
+libluahook-ext-native = { module = "com.github.KuLiPai.libluahook:luahook-ext-native", version.ref = "libluahook" }
 
 [plugins]
 agp-lib = { id = "com.android.library", version.ref = "agp" }

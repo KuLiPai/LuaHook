@@ -2,7 +2,6 @@ import org.gradle.kotlin.dsl.support.kotlinCompilerOptions
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 
 }
 
@@ -115,8 +114,10 @@ dependencies {
     implementation(platform(libs.sora.editor.bom))
     implementation(libs.sora.editor)
     implementation(libs.sora.editor.language.textmate)
-    implementation(project(":androlua"))
-
+    implementation(libs.libluahook.core)
+    implementation(libs.libluahook.ext.layout)
+    implementation(libs.libluahook.ext.dexkit)
+    implementation(libs.libluahook.ext.native)
     //Xposed service 101
     compileOnly("io.github.libxposed:api:101.0.1")
     implementation("io.github.libxposed:service:101.0.0")

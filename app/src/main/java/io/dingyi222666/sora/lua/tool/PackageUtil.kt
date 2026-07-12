@@ -8,7 +8,7 @@ import android.text.TextPaint
 import android.text.style.UnderlineSpan
 import dalvik.system.DexFile
 import io.kulipai.sora.luaj.CompletionName
-import io.dingyi222666.sora.lua.R
+import com.kulipai.luahook.R
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import org.json.JSONObject
 import java.io.File

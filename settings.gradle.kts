@@ -32,5 +32,22 @@ dependencyResolutionManagement {
 
 rootProject.name = "LuaHook"
 include(":app")
-include(":androlua")
 
+val localPropsFile = file("local.properties")
+val localProps = java.util.Properties()
+if (localPropsFile.exists()) {
+    localProps.load(java.io.FileInputStream(localPropsFile))
+}
+
+// 只有在 local.properties 中配置了 useLocalLibLuaHook=true 才会使用本地源码替换，
+// 这样你推代码上去时，只要别人没有加这个配置，就不会走本地构建，也就不会报错！
+if (localProps.getProperty("useLocalLibLuaHook") == "true") {
+    includeBuild("/home/kulipai/Projects/AndroidStudioProjects/libluahook") {
+        dependencySubstitution {
+            substitute(module("com.github.KuLiPai.libluahook:luahook-core")).using(project(":luahook-core"))
+            substitute(module("com.github.KuLiPai.libluahook:luahook-ext-dexkit")).using(project(":luahook-ext-dexkit"))
+            substitute(module("com.github.KuLiPai.libluahook:luahook-ext-layout")).using(project(":luahook-ext-layout"))
+            substitute(module("com.github.KuLiPai.libluahook:luahook-ext-native")).using(project(":luahook-ext-native"))
+        }
+    }
+}

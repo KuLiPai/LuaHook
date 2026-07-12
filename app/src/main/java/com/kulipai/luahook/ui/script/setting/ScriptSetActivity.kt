@@ -3,12 +3,12 @@ package com.kulipai.luahook.ui.script.setting
 import android.view.LayoutInflater
 import android.view.View
 import com.kulipai.luahook.core.base.BaseActivity
-import com.kulipai.luahook.core.androlua.LuaScriptUtils
+import io.github.kulipai.luahook.core.androlua.LuaScriptUtils
 import com.kulipai.luahook.core.log.e
 import com.kulipai.luahook.databinding.ActivityScriptSetBinding
-import com.kulipai.luahook.hook.api.LuaActivity
-import com.kulipai.luahook.hook.api.LuaImport
-import com.kulipai.luahook.hook.api.LuaUtil
+import io.github.kulipai.luahook.hook.api.LuaActivity
+import io.github.kulipai.luahook.hook.api.LuaImport
+import io.github.kulipai.luahook.hook.api.LuaUtil
 import org.luaj.Globals
 import org.luaj.LuaValue
 import org.luaj.lib.ZeroArgFunction
@@ -68,7 +68,7 @@ class ScriptSetActivity : BaseActivity<ActivityScriptSetBinding>() {
         LuaImport(
             this::class.java.classLoader!!,
             this::class.java.classLoader!!
-        ).registerTo(globals, packageName)
+        ).registerTo(globals)
         LuaUtil.shell(globals)
         return globals
     }

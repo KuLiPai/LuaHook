@@ -3,13 +3,15 @@ package com.kulipai.luahook.hook.entry
 import android.annotation.SuppressLint
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
-import com.kulipai.luahook.hook.api.LuaUtil
 import de.robv.android.xposed.IXposedHookZygoteInit
-import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
+import io.github.kulipai.luahook.hook.entry.LuaHookEngine
+import io.github.kulipai.luahook.ext.layout.registerLayout
+import io.github.kulipai.luahook.ext.dexkit.registerDexKit
+import io.github.kulipai.luahook.ext.nativelib.registerNative
 import org.json.JSONArray
-import org.luaj.LuaValue
+import org.luaj.Globals
 import top.sacz.xphelper.XpHelper
 
 /**
@@ -22,29 +24,34 @@ class NewHook : XposedModule() {
         const val PATH = "/data/local/tmp/LuaHook"
     }
 
-
     lateinit var luaScript: String
     lateinit var selectAppsString: String
-
     lateinit var selectAppsList: MutableList<String>
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
-
 
     @SuppressLint("DiscouragedPrivateApi")
     override fun onPackageReady(lpparam: XposedModuleInterface.PackageReadyParam) {
         super.onPackageReady(lpparam)
-        LPParam_processName = lpparam.applicationInfo.processName ?: lpparam.packageName
+        // LPParam_processName = lpparam.applicationInfo.processName ?: lpparam.packageName
         suparam = createStartupParam(this.moduleApplicationInfo.sourceDir)
         XpHelper.initZygote(suparam)
 
-        luaHookInit(ModuleInterfaceParamWrapper(lpparam))
+        LuaHookEngine.init(this, lpparam, suparam)
+        luaHookInit(lpparam)
     }
 
+    private fun registerExtensions(globals: Globals, projectName: String = "") {
+        globals.registerLayout()
+        globals.registerDexKit()
+        globals.registerNative()
+        if (projectName.isNotEmpty()) {
+            com.kulipai.luahook.hook.api.LuaProject(projectName).registerTo(globals)
+        }
+    }
 
-    fun luaHookInit(lpparam: LPParam) {
+    fun luaHookInit(lpparam: XposedModuleInterface.PackageReadyParam) {
 
         selectAppsString = WorkspaceFileManager.read("/apps.txt").replace("\n", "")
-
         luaScript = WorkspaceFileManager.read("/global.lua")
 
         selectAppsList = if (selectAppsString.isNotEmpty() && selectAppsString != "") {
@@ -53,43 +60,31 @@ class NewHook : XposedModule() {
             mutableListOf()
         }
 
-
         //全局脚本
         try {
             //排除自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val chunk: LuaValue =
-                    createGlobals(this, lpparam, suparam, "[GLOBAL]").load(luaScript)
-                chunk.call()
+                val globals = LuaHookEngine.load(luaScript, this, "[GLOBAL]")
+                registerExtensions(globals)
             }
         } catch (e: Exception) {
-            val err = LuaUtil.simplifyLuaError(e.toString())
-            "${lpparam.packageName}:[GLOBAL]:$err".e()
+            "${lpparam.packageName}:[GLOBAL]:${e.message}".e()
         }
-
-
-//        app单独脚本
-
 
         // app单独脚本
         if (lpparam.packageName in selectAppsList) {
-
             for ((scriptName, v) in WorkspaceFileManager.readMap("/${WorkspaceFileManager.AppConf}/${lpparam.packageName}.txt")) {
                 try {
-                    if (v is Boolean) {  // 兼容旧版luahook的存储格式
-                        createGlobals(this, lpparam, suparam, scriptName)
-                            .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
-                            .call()
-                    } else if ((v is JSONArray)) {
-                        if (v[0] as Boolean) {
-                            createGlobals(this, lpparam, suparam, scriptName)
-                                .load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"))
-                                .call()
-                        }
+                    val scriptText = WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua")
+                    if (v is Boolean && v) {
+                        val globals = LuaHookEngine.load(scriptText, this, scriptName)
+                        registerExtensions(globals)
+                    } else if (v is JSONArray && v.optBoolean(0, false)) {
+                        val globals = LuaHookEngine.load(scriptText, this, scriptName)
+                        registerExtensions(globals)
                     }
                 } catch (e: Exception) {
-                    val err = LuaUtil.simplifyLuaError(e.toString())
-                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: $err").e()
+                    ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: ${e.message}").e()
                 }
             }
         }
@@ -100,12 +95,10 @@ class NewHook : XposedModule() {
             for ((projectName, isEnabled) in projectInfo) {
                 if (isEnabled == true) {
                     try {
-                        val tempGlobals =
-                            createGlobals(this, lpparam, suparam, projectName, projectName)
                         val projectDir = "/Project/$projectName"
                         val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
 
-                        tempGlobals.load(initScript).call()
+                        val tempGlobals = LuaHookEngine.load(initScript, this, projectName)
 
                         val scope = tempGlobals.get("scope")
                         var shouldRun = false
@@ -123,22 +116,33 @@ class NewHook : XposedModule() {
                         }
 
                         if (shouldRun) {
-                            val mainScript = WorkspaceFileManager.read("$projectDir/main.lua")
-                            tempGlobals.load(mainScript).call()
+                            val rawScript = WorkspaceFileManager.read("$projectDir/main.lua")
+                            val absProjectDir = WorkspaceFileManager.DIR + projectDir
+                            val wrappedScript = """
+                                package.path = package.path .. ';${absProjectDir}/?.lua'
+                                local oldLoadDex = loadDex
+                                if oldLoadDex then
+                                    loadDex = function(path)
+                                        if string.sub(path, 1, 1) ~= "/" then
+                                            path = "${absProjectDir}/" .. path
+                                        end
+                                        return oldLoadDex(path)
+                                    end
+                                end
+                            """.trimIndent() + "\n" + rawScript
+
+                            val globals = LuaHookEngine.load(wrappedScript, this, projectName)
+                            registerExtensions(globals, projectName)
                         }
                     } catch (e: Exception) {
-                        val err = LuaUtil.simplifyLuaError(e.toString())
-                        "${lpparam.packageName}:[Project:$projectName]:$err".e()
+                        "${lpparam.packageName}:[Project:$projectName]:${e.message}".e()
                     }
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
-
     }
-
 
     fun createStartupParam(modulePath: String): IXposedHookZygoteInit.StartupParam {
         val clazz = IXposedHookZygoteInit.StartupParam::class.java
@@ -153,6 +157,4 @@ class NewHook : XposedModule() {
 
         return instance
     }
-
-
 }
