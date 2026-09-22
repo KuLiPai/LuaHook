@@ -45,6 +45,8 @@ class McpForegroundService : Service() {
         handler.removeCallbacks(watchdog)
         server?.stop()
         server = null
+        boundPort = -1
+        setListening(0)
         super.onDestroy()
     }
 
@@ -60,6 +62,7 @@ class McpForegroundService : Service() {
             server?.stop()
             server = null
             boundPort = -1
+            setListening(0)
             stopSelf()
             return
         }
@@ -71,9 +74,11 @@ class McpForegroundService : Service() {
             next.start(5_000, false)
             server = next
             boundPort = port
+            setListening(port)
             startInForeground(port)
         } catch (e: Exception) {
             next.stop()
+            setListening(0)
             Log.e("LuaXposed", "mcp bind $port", e)
         }
     }
@@ -105,5 +110,15 @@ class McpForegroundService : Service() {
     companion object {
         private const val CHANNEL = "luahook_mcp"
         private const val NOTIFICATION_ID = 24555
+
+        @Volatile
+        var listeningPort: Int = 0
+            private set
+
+        fun isListening(): Boolean = listeningPort > 0
+
+        private fun setListening(port: Int) {
+            listeningPort = port
+        }
     }
 }

@@ -3,8 +3,10 @@ package com.kulipai.luahook.ui.home
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.kulipai.luahook.R
 import com.kulipai.luahook.core.plugin.PluginInfo
 import com.kulipai.luahook.databinding.ItemPluginCardBinding
+import com.kulipai.luahook.mcp.McpForegroundService
 
 class PluginAdapter(
     private val plugins: MutableList<PluginInfo>,
@@ -21,8 +23,13 @@ class PluginAdapter(
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val plugin = plugins[position]
+        val context = holder.itemView.context
         holder.binding.pluginName.text = plugin.name
-        holder.binding.pluginDesc.text = "0.0.0.0:${plugin.port}"
+        holder.binding.pluginDesc.text = when {
+            !plugin.enabled -> context.getString(R.string.mcp_status_off)
+            McpForegroundService.isListening() -> context.getString(R.string.mcp_status_on, plugin.port)
+            else -> context.getString(R.string.mcp_status_down, plugin.port)
+        }
         holder.binding.pluginSwitch.setOnCheckedChangeListener(null)
         holder.binding.pluginSwitch.isChecked = plugin.enabled
         holder.binding.pluginSwitch.setOnCheckedChangeListener { _, checked ->

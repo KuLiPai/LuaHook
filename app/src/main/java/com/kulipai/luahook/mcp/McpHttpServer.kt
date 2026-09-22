@@ -15,38 +15,51 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
 
     private fun onRequest(session: IHTTPSession): Response {
         if (session.method == Method.OPTIONS) {
-            return json(Status.OK, JSONObject())
+            return respond(session, Status.OK, "", "application/json")
         }
-        if (session.method == Method.GET && session.uri == "/health") {
-            return json(Status.OK, JSONObject().put("ok", true).put("port", listenPort))
+        if (session.method == Method.GET && session.uri == "/mcp") {
+            return respond(session, Status.OK, ": ok\n\n", "text/event-stream")
         }
-        if (session.method != Method.POST) {
-            return json(Status.METHOD_NOT_ALLOWED, rpcError(null, -32600, "POST JSON-RPC to /"))
+        if (session.method == Method.GET && (session.uri == "/health" || session.uri == "/mcp/health")) {
+            return respond(session, Status.OK, JSONObject().put("ok", true).put("port", listenPort).toString(), "application/json")
+        }
+        if (session.method != Method.POST || (session.uri != "/" && session.uri != "/mcp")) {
+            return respond(session, Status.METHOD_NOT_ALLOWED, rpcError(null, -32600, "POST JSON-RPC to /mcp").toString(), "application/json")
         }
         val request = try {
             JSONObject(readBody(session))
         } catch (_: Exception) {
-            return json(Status.BAD_REQUEST, rpcError(null, -32700, "parse error"))
+            return respond(session, Status.BAD_REQUEST, rpcError(null, -32700, "parse error").toString(), "application/json")
         }
         if (!request.has("id")) {
-            return json(Status.ACCEPTED, JSONObject())
+            return respond(session, Status.ACCEPTED, "", "application/json")
         }
         val id = request.get("id")
         val params = request.optJSONObject("params") ?: JSONObject()
-        return try {
+        val rpc = try {
             val result = dispatch(request.optString("method"), params)
-            json(Status.OK, JSONObject().put("jsonrpc", "2.0").put("id", id).put("result", result))
+            JSONObject().put("jsonrpc", "2.0").put("id", id).put("result", result)
         } catch (e: Exception) {
-            json(Status.OK, rpcError(id, -32000, e.message ?: "error"))
+            rpcError(id, -32000, e.message ?: "error")
+        }
+        val accept = session.headers?.get("accept").orEmpty()
+        return if (accept.contains("text/event-stream")) {
+            respond(session, Status.OK, "event: message\ndata: $rpc\n\n", "text/event-stream")
+        } else {
+            respond(session, Status.OK, rpc.toString(), "application/json")
         }
     }
 
     private fun dispatch(method: String, params: JSONObject): Any {
         return when (method) {
-            "initialize" -> JSONObject()
-                .put("protocolVersion", "2024-11-05")
-                .put("capabilities", JSONObject().put("tools", JSONObject()))
-                .put("serverInfo", JSONObject().put("name", "luahook").put("version", "4.1.1"))
+            "initialize" -> {
+                val requested = params.optString("protocolVersion")
+                val version = if (requested.isNotBlank()) requested else "2025-03-26"
+                JSONObject()
+                    .put("protocolVersion", version)
+                    .put("capabilities", JSONObject().put("tools", JSONObject()))
+                    .put("serverInfo", JSONObject().put("name", "luahook").put("version", "4.1.1"))
+            }
             "ping" -> JSONObject()
             "tools/list" -> JSONObject().put("tools", toolDefs())
             "tools/call" -> callTool(params)
@@ -126,11 +139,18 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
             .put("error", JSONObject().put("code", code).put("message", message))
     }
 
-    private fun json(status: Status, body: JSONObject): Response {
-        val response = Response.newFixedLengthResponse(status, "application/json", body.toString())
+    private fun respond(session: IHTTPSession, status: Status, body: String, contentType: String): Response {
+        val response = Response.newFixedLengthResponse(status, contentType, body)
         response.addHeader("Access-Control-Allow-Origin", "*")
-        response.addHeader("Access-Control-Allow-Headers", "Content-Type")
+        response.addHeader("Access-Control-Allow-Headers", "Content-Type, Accept, Mcp-Session-Id, MCP-Protocol-Version")
         response.addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        if (session.uri == "/mcp" || session.uri == "/") {
+            response.addHeader("Mcp-Session-Id", "luahook")
+        }
         return response
+    }
+
+    private fun json(status: Status, body: JSONObject): Response {
+        return Response.newFixedLengthResponse(status, "application/json", body.toString())
     }
 }

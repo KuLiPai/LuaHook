@@ -24,7 +24,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONArray
-import java.io.File
 
 class MultScriptAdapter(
     private val conf: MutableList<MutableMap.MutableEntry<String, Any?>>,
@@ -194,9 +193,11 @@ class MultScriptAdapter(
     }
 
     fun read(path: String): String {
-        if (File(path).exists()) {
-            return File(path).readText()
+        val relative = if (path.startsWith(WorkspaceFileManager.DIR)) {
+            path.removePrefix(WorkspaceFileManager.DIR)
+        } else {
+            path
         }
-        return ""
+        return WorkspaceFileManager.read(relative)
     }
 }

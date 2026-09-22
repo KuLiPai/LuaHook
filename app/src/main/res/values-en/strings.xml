@@ -48,6 +48,18 @@
     <string name="plugins">Plugins</string>
     <string name="mcp_port">Port</string>
     <string name="mcp_port_invalid">Port must be between 1 and 65535</string>
+    <string name="mcp_status_on">Running · 0.0.0.0:%1$d</string>
+    <string name="mcp_status_down">Not started · 0.0.0.0:%1$d</string>
+    <string name="mcp_status_off">Off</string>
+    <string name="mcp_status_line">Status: %1$s</string>
+    <string name="mcp_local">Local</string>
+    <string name="mcp_lan">LAN</string>
+    <string name="mcp_no_lan">No LAN address</string>
+    <string name="mcp_copy_ask">Copy this address?</string>
+    <string name="mcp_copy">Copy</string>
+    <string name="mcp_copied">Copied</string>
+    <string name="mcp_api_list">list_projects\nList projects\n\ncreate_project\nCreate a project. name, description, author, scope, launcher, icon\n\nset_project_enabled\nEnable or disable a project. name, enabled\n\ndelete_project\nDelete a project. name\n\nread_project_file\nRead a project file. name, file\n\nwrite_project_file\nWrite a project file. name, file, content\n\nread_global_script\nRead /global.lua\n\nwrite_global_script\nWrite /global.lua. content\n\nread_selected_apps\nRead /apps.txt\n\nwrite_selected_apps\nWrite selected apps. packages\n\nlist_app_scripts\nList scripts for one app. package\n\ncreate_app_script\nCreate an app script. package, name, description, content\n\nread_app_script\nRead an app script. package, name\n\nwrite_app_script\nReplace an app script. package, name, content\n\nset_app_script_enabled\nEnable or disable an app script. package, name, enabled\n\ndelete_app_script\nDelete an app script. package, name\n\nread_logs\nRead LuaXposed logcat. lines\n\nlist_installed_apps\nList installed apps that can be launched, for scope selection</string>
+    <string name="script_no_settings">This script has no settings page</string>
 
     <string name="appearance">Appearance</string>
     <string name="update_dialog_message">A new version is available: %s Please click the Update button to download and install.</string>

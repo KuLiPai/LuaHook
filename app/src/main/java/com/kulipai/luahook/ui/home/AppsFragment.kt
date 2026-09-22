@@ -188,6 +188,11 @@ class AppsFragment : BaseFragment<FragmentHomeAppsBinding>() {
         return FragmentHomeAppsBinding.inflate(inflater, container, false)
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (view != null) refreshData()
+    }
+
     private fun refreshData() {
         viewLifecycleOwner.lifecycleScope.launch {
             if (ShellManager.mode.value != ShellManager.Mode.NONE) {

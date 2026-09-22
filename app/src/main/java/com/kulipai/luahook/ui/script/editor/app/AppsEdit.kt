@@ -116,12 +116,8 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             title = scripName
         }
 
-        val scriptPath = "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-        if (File(scriptPath).exists()) {
-             binding.editor.setText(File(scriptPath).readText(), null)
-        } else {
-             binding.editor.setText("", null)
-        }
+        val scriptPath = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
+        binding.editor.setText(WorkspaceFileManager.read(scriptPath), null)
     }
 
     override fun initEvent() {
@@ -315,22 +311,11 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         mimeType: String = "*/*"
     ) {
         (context as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-            val originalFile = File(sourceFilePath)
-            if (!originalFile.exists() || !originalFile.canRead()) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        context,
-                        resources.getString(R.string.source_file_not_exist) + sourceFilePath,
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                return@launch
-            }
-
             val copiedFile: File? = try {
                 val cacheDir = context.cacheDir
-                val destinationFile = File(cacheDir, originalFile.name)
-                val originalContent = originalFile.readText()
+                val destinationFile = File(cacheDir, File(sourceFilePath).name)
+                val relative = sourceFilePath.removePrefix(WorkspaceFileManager.DIR)
+                val originalContent = WorkspaceFileManager.read(relative)
                 author = getSharedPreferences("conf", MODE_PRIVATE).getString("author", "").toString()
                 val headerContent = "-- name: $scripName\n-- descript: $scriptDescription\n-- package: $currentPackageName\n-- author: $author\n\n"
                 val mergedContent = headerContent + originalContent

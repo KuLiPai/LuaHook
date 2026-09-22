@@ -53,7 +53,9 @@ class MultiScriptActivity : BaseActivity<ActivityMultiScriptBinding>() {
         // Specific insets handling from original code (ignoring top/bottom padding on root)
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val nav = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
             v.setPadding(systemBars.left, 0, systemBars.right, 0)
+            binding.bottomTools.setPadding(0, 0, 0, nav.bottom + 8)
             insets
         }
 

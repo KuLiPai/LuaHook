@@ -18,8 +18,9 @@ import top.sacz.xphelper.XpHelper
  * JingMatrix LSPosed 1.11.0 on this project reports API 100 and instantiates
  * modules with `XposedModule(XposedInterface, ModuleLoadedParam)`. A class
  * compiled for the API 102 no-arg constructor cannot be constructed there, and
- * a targetApiVersion above 100 is what shows
- * "此模块是为较新的 Xposed 版本（101）设计的".
+ * a targetApiVersion above the framework API is what shows
+ * "此模块是为较新的 Xposed 版本设计的". Keep targetApiVersion at 53,
+ * the same as xposedminversion, so API 93 and API 100 do not warn.
  * [MainHook] remains the registered entry via assets/xposed_init.
  */
 
