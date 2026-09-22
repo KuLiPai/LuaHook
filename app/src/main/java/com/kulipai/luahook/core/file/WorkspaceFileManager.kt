@@ -3,6 +3,7 @@ package com.kulipai.luahook.core.file
 import android.content.Context
 import android.util.Base64
 import com.kulipai.luahook.core.log.d
+import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.core.utils.dd
@@ -183,7 +184,7 @@ object WorkspaceFileManager {
         ensureDirectoryExists(DIR + AppConf)
         ensureDirectoryExists(DIR + AppScript)
         ensureDirectoryExists(DIR + Plugin)
-        com.kulipai.luahook.core.plugin.PluginManager.ensureMcpPlugin()
+        PluginManager.ensureMcpPlugin()
     }
 
 
