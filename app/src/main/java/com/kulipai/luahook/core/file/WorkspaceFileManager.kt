@@ -3,9 +3,11 @@ package com.kulipai.luahook.core.file
 import android.content.Context
 import android.util.Base64
 import com.kulipai.luahook.core.log.d
+import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.core.utils.dd
+import com.topjohnwu.superuser.Shell
 import org.json.JSONObject
 import java.io.File
 
@@ -26,17 +28,54 @@ object WorkspaceFileManager {
         try {
             val fullPath = DIR + relativePath
             val file = File(fullPath)
-            if (file.exists() && file.canRead()) {
-                return file.readText()
+            // Host app domains (system_app / untrusted_app / system_server) are
+            // often denied search/open on /data/local/tmp (shell_data_file) even
+            // when DAC mode is 666. File.exists/canRead then fail and the script
+            // would silently become "". Prefer root cat before giving up.
+            if (file.exists()) {
+                try {
+                    if (file.canRead()) {
+                        val text = file.readText()
+                        if (text.isNotEmpty() || file.length() == 0L) {
+                            return text
+                        }
+                    }
+                } catch (_: Exception) {
+                }
             }
 
-            return when (val result = ShellManager.shell("cat \"$fullPath\"")) {
-                is ShellResult.Success -> result.stdout
-                is ShellResult.Error -> ""
+            when (val result = ShellManager.shell("cat \"$fullPath\"")) {
+                is ShellResult.Success -> return result.stdout
+                is ShellResult.Error -> Unit
             }
+            return readViaRoot(fullPath) ?: ""
         } catch (e: Exception) {
             e.printStackTrace()
             return ""
+        }
+    }
+
+    /**
+     * Read a workspace file with root. Used from hooked host processes where
+     * SELinux blocks direct access to [DIR] under /data/local/tmp.
+     */
+    private fun readViaRoot(absolutePath: String): String? {
+        try {
+            val result = Shell.cmd("cat \"$absolutePath\"").exec()
+            if (result.isSuccess && result.out.isNotEmpty()) {
+                return result.out.joinToString("\n")
+            }
+        } catch (_: Exception) {
+            // Fall through to Runtime.exec("su").
+        }
+        return try {
+            val process = ProcessBuilder("su", "-c", "cat \"$absolutePath\"")
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            if (process.waitFor() == 0 && output.isNotEmpty()) output else null
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -145,6 +184,7 @@ object WorkspaceFileManager {
         ensureDirectoryExists(DIR + AppConf)
         ensureDirectoryExists(DIR + AppScript)
         ensureDirectoryExists(DIR + Plugin)
+        PluginManager.ensureMcpPlugin()
     }
 
 

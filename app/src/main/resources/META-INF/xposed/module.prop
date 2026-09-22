@@ -1,3 +1,6 @@
+# 与 AndroidManifest 的 xposedminversion 相同。
+# 高于框架 API 时会提示「此模块是为较新的 Xposed 版本设计的」。
+# API 102 的 NewHook 不注册，102 以下走 assets/xposed_init 里的 MainHook。
 minApiVersion=53
-targetApiVersion=101
+targetApiVersion=53
 staticScope=false

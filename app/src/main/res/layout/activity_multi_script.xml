@@ -28,63 +28,61 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
     <LinearLayout
+        android:id="@+id/bottom_tools"
         android:layout_width="match_parent"
-        android:layout_height="128dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:gravity="center"
-        android:layout_marginBottom="16dp"
-        >
+        android:orientation="horizontal"
+        android:paddingBottom="8dp">
 
-
-    <com.google.android.material.floatingtoolbar.FloatingToolbarLayout
-
-        android:layout_gravity="bottom"
-        android:id="@+id/ftb"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="48dp"
-        android:layout_marginBottom="0dp"
-
-     >
-
-        <LinearLayout
-            android:layout_gravity="center"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/ftb"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="56dp"
+            android:layout_marginStart="48dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="2dp"
+            app:strokeWidth="0dp">
 
-            <Button
-                style="?attr/materialIconButtonStyle"
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:icon="@drawable/clear_day_24px" />
-            <Button
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp">
 
-                style="?attr/materialIconButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:icon="@drawable/edit_24px" />
+                <Button
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/clear_day_24px" />
 
-            <Button
+                <Button
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/edit_24px" />
 
-                style="?attr/materialIconButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:icon="@drawable/cleaning_services_24px" />
-        </LinearLayout>
+                <Button
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/cleaning_services_24px" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
-    </com.google.android.material.floatingtoolbar.FloatingToolbarLayout>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:layout_gravity="bottom"
-
-        android:id="@+id/fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginBottom="28dp"
-
-        android:contentDescription="@string/push"
-        android:src="@drawable/add_24px" />
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:contentDescription="@string/push"
+            android:src="@drawable/add_24px"
+            app:elevation="2dp"
+            app:fabCustomSize="56dp"
+            app:maxImageSize="24dp"
+            app:useCompatPadding="false" />
 
     </LinearLayout>
 

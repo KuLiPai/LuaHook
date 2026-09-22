@@ -118,9 +118,10 @@ dependencies {
     implementation(libs.libluahook.ext.layout)
     implementation(libs.libluahook.ext.dexkit)
     implementation(libs.libluahook.ext.native)
-    //Xposed service 101
-    compileOnly("io.github.libxposed:api:101.0.1")
-    implementation("io.github.libxposed:service:101.0.0")
+    // 打进 apk，不能用 compileOnly。JingMatrix 1.11.0 是 API 100，框架里没有 PackageReadyParam。
+    // LuaHookEngine.init 引用了这个类，旧入口 MainHook 也会因此在 API 100 上 ClassNotFound。
+    implementation("io.github.libxposed:api:102.0.0")
+    implementation("io.github.libxposed:service:102.0.0")
 
     //coil3 加载图片
     implementation(libs.coil)

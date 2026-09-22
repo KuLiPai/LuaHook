@@ -10,6 +10,7 @@ import android.os.RemoteException
 import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.BuildConfig
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.core.shell.ShellManager.Mode
 import com.kulipai.luahook.core.shell.ShellManager.setMode
 import com.kulipai.luahook.core.shell.ShellResult
@@ -88,6 +89,7 @@ object ShizukuApi {
                     isServiceConnected.value = true
                     setMode(Mode.SHIZUKU)
                     WorkspaceFileManager.init(context)
+                    PluginManager.onWorkspaceReady(context)
 
                     // Successful
                 }

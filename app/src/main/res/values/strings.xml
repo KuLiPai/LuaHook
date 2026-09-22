@@ -46,6 +46,20 @@
     <string name="param">参数</string>
     <string name="funcSign">方法签名</string>
     <string name="plugins">插件</string>
+    <string name="mcp_port">端口</string>
+    <string name="mcp_port_invalid">端口需要在 1 到 65535 之间</string>
+    <string name="mcp_status_on">运行中 · 0.0.0.0:%1$d</string>
+    <string name="mcp_status_down">未启动 · 0.0.0.0:%1$d</string>
+    <string name="mcp_status_off">已关闭</string>
+    <string name="mcp_status_line">状态：%1$s</string>
+    <string name="mcp_local">本地</string>
+    <string name="mcp_lan">局域网</string>
+    <string name="mcp_no_lan">没有局域网地址</string>
+    <string name="mcp_copy_ask">是否复制？</string>
+    <string name="mcp_copy">复制</string>
+    <string name="mcp_copied">已复制</string>
+    <string name="mcp_api_list">list_projects\n列出项目\n\ncreate_project\n创建项目。参数 name、description、author、scope、launcher、icon\n\nset_project_enabled\n启用或停用项目。参数 name、enabled\n\ndelete_project\n删除项目。参数 name\n\nread_project_file\n读取项目文件。参数 name、file\n\nwrite_project_file\n写入项目文件。参数 name、file、content\n\nread_global_script\n读取 /global.lua\n\nwrite_global_script\n写入 /global.lua。参数 content\n\nread_selected_apps\n读取 /apps.txt\n\nwrite_selected_apps\n写入已选应用。参数 packages\n\nlist_app_scripts\n列出某个应用的脚本。参数 package\n\ncreate_app_script\n创建应用脚本。参数 package、name、description、content\n\nread_app_script\n读取应用脚本。参数 package、name\n\nwrite_app_script\n改写应用脚本。参数 package、name、content\n\nset_app_script_enabled\n启用或停用应用脚本。参数 package、name、enabled\n\ndelete_app_script\n删除应用脚本。参数 package、name\n\nread_logs\n只读 LuaXposed 日志。参数 lines\n\nlist_installed_apps\n列出已安装且有启动入口的应用，用来选作用域</string>
+    <string name="script_no_settings">这个脚本没有设置页</string>
 
     <string name="appearance">界面外观</string>
     <string name="update_dialog_message">有新版本可用：%s  请点击更新按钮下载安装。</string>

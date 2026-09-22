@@ -3,6 +3,7 @@ package com.kulipai.luahook.core.shell
 import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.shizuku.ShizukuShellFallback
 import com.topjohnwu.superuser.Shell
@@ -47,6 +48,7 @@ object ShellManager {
                 rootShell = it
                 setMode(Mode.ROOT)
                 WorkspaceFileManager.init(context)
+               PluginManager.onWorkspaceReady(context)
 
             } else {
                 // try shizuku
@@ -78,6 +80,7 @@ object ShellManager {
         if (ShizukuApi.isServiceConnected.value != true) {
             setMode(Mode.SHIZUKU_FALLBACK)
             WorkspaceFileManager.init(context)
+            PluginManager.onWorkspaceReady(context)
         }
         ShizukuApi.bindShizuku(context)
     }

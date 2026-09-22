@@ -1,9 +1,7 @@
 package com.kulipai.luahook.hook.entry
 
-import android.annotation.SuppressLint
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
-import de.robv.android.xposed.IXposedHookZygoteInit
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.kulipai.luahook.hook.entry.LuaHookEngine
@@ -15,9 +13,14 @@ import org.luaj.Globals
 import top.sacz.xphelper.XpHelper
 
 /**
- * api101专用新hook入口
+ * 按 API 102 无参构造编译的入口。不写进 assets/xposed_init，也没有 java_init.list。
+ *
+ * JingMatrix 1.11.0 是 API 100，用的是带参构造 XposedModule(XposedInterface, ModuleLoadedParam)。
+ * LSPosed 1.9.2 大约是 API 93。这两边都不会构造这个无参类。
+ * module.prop 的 targetApiVersion 高于框架接口时，管理器会提示「为较新的 Xposed 版本设计」，
+ * 所以 min/target 保持 53，和 AndroidManifest 的 xposedminversion 一样。
+ * 102 以下实际加载的是 [MainHook]。框架能构造本类时，脚本路径和 MainHook 相同。
  */
-
 class NewHook : XposedModule() {
     companion object {
         const val MODULE_PACKAGE = "com.kulipai.luahook"  // 模块包名
@@ -27,19 +30,16 @@ class NewHook : XposedModule() {
     lateinit var luaScript: String
     lateinit var selectAppsString: String
     lateinit var selectAppsList: MutableList<String>
-    lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
-    @SuppressLint("DiscouragedPrivateApi")
+    /** API 102 的包就绪回调。记下模块 apk 路径后，按工作区加载全局脚本、应用脚本和项目。 */
     override fun onPackageReady(lpparam: XposedModuleInterface.PackageReadyParam) {
         super.onPackageReady(lpparam)
-        // LPParam_processName = lpparam.applicationInfo.processName ?: lpparam.packageName
-        suparam = createStartupParam(this.moduleApplicationInfo.sourceDir)
-        XpHelper.initZygote(suparam)
-
-        LuaHookEngine.init(this, lpparam, suparam)
+        XpHelper.moduleApkPath = moduleApplicationInfo.sourceDir
+        LuaHookEngine.init(this, lpparam)
         luaHookInit(lpparam)
     }
 
+    /** 给这次脚本补上布局、DexKit、Native。带项目名时再注册 LuaProject。 */
     private fun registerExtensions(globals: Globals, projectName: String = "") {
         globals.registerLayout()
         globals.registerDexKit()
@@ -49,6 +49,11 @@ class NewHook : XposedModule() {
         }
     }
 
+    /**
+     * 和 [MainHook.luaHookInit] 同一套规则，参数类型是 PackageReadyParam。
+     * 全局脚本排除本模块。应用脚本只在包名位于 /apps.txt 且 AppConf 启用时执行。
+     * 项目看 /Project/info.json 的开关，再按 init.lua 的 scope 决定要不要跑 main.lua。
+     */
     fun luaHookInit(lpparam: XposedModuleInterface.PackageReadyParam) {
 
         selectAppsString = WorkspaceFileManager.read("/apps.txt").replace("\n", "")
@@ -144,17 +149,4 @@ class NewHook : XposedModule() {
         }
     }
 
-    fun createStartupParam(modulePath: String): IXposedHookZygoteInit.StartupParam {
-        val clazz = IXposedHookZygoteInit.StartupParam::class.java
-        val constructor = clazz.getDeclaredConstructor()
-        constructor.isAccessible = true
-        val instance = constructor.newInstance()
-
-        // 设置字段值
-        val fieldModulePath = clazz.getDeclaredField("modulePath")
-        fieldModulePath.isAccessible = true
-        fieldModulePath.set(instance, modulePath)
-
-        return instance
-    }
 }

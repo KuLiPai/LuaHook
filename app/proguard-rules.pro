@@ -36,6 +36,11 @@
 -keep class androidx.** { *; }
 -keep class com.google.android.material.** { *; }
 -keep class io.github.libxposed.** { *; }
+-dontwarn io.github.libxposed.annotation.**
+-adaptresourcefilecontents META-INF/xposed/java_init.list
+-keep,allowoptimization,allowobfuscation public class * extends io.github.libxposed.api.XposedModule {
+    public <init>();
+}
 -dontwarn com.androlua.**
 -dontwarn kotlin.Cloneable$DefaultImpls
 -keep class org.eclipse.tm4e.languageconfiguration.internal.model.** { *; }
