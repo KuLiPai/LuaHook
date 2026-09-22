@@ -5,10 +5,10 @@ import com.kulipai.luahook.core.log.e
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.callbacks.XC_LoadPackage
-import io.github.kulipai.luahook.hook.entry.LuaHookEngine
-import io.github.kulipai.luahook.ext.layout.registerLayout
 import io.github.kulipai.luahook.ext.dexkit.registerDexKit
+import io.github.kulipai.luahook.ext.layout.registerLayout
 import io.github.kulipai.luahook.ext.nativelib.registerNative
+import io.github.kulipai.luahook.hook.entry.LuaHookEngine
 import org.json.JSONArray
 import org.luaj.Globals
 import top.sacz.xphelper.XpHelper
@@ -74,8 +74,9 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             // 排除模块自己
             if (lpparam.packageName != MODULE_PACKAGE) {
                 if (luaScript.isNotBlank()) {
-                    val globals = LuaHookEngine.load(luaScript, this, "[GLOBAL]")
+                    val globals = LuaHookEngine.load(this, "[GLOBAL]")
                     registerExtensions(globals)
+                    LuaHookEngine.run(globals, luaScript)
                 }
             }
         } catch (e: Exception) {
@@ -88,13 +89,18 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
             // 读取已保存的宿主app脚本的map
             for ((scriptName, v) in WorkspaceFileManager.readMap("/${WorkspaceFileManager.AppConf}/${lpparam.packageName}.txt")) {
                 try {
+                    val luaScript =
+                        WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua")
                     if (v is Boolean) { // 兼容旧版luahook的存储格式
-                        val globals = LuaHookEngine.load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"), this, scriptName)
+                        val globals = LuaHookEngine.load(this, scriptName)
                         registerExtensions(globals)
+                        LuaHookEngine.run(globals, luaScript)
+
                     } else if ((v is JSONArray)) { // 新的格式，包含是否启用，描述和版本信息
                         if (v.optBoolean(0, false)) {
-                            val globals = LuaHookEngine.load(WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua"), this, scriptName)
+                            val globals = LuaHookEngine.load(this, scriptName)
                             registerExtensions(globals)
+                            LuaHookEngine.run(globals, luaScript)
                         }
                     }
                 } catch (e: Exception) {
@@ -102,37 +108,37 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                 }
             }
         }
-        
+
         // Project Hooks
         try {
             val projectInfo = WorkspaceFileManager.readMap("/Project/info.json")
             for ((projectName, isEnabled) in projectInfo) {
-                 if (isEnabled == true) {
-                      try {
-                           val projectDir = "/Project/$projectName"
-                           val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
-                           
-                           val tempGlobals = LuaHookEngine.load(initScript, this, projectName)
-                           
-                           val scope = tempGlobals.get("scope")
-                           var shouldRun = false
-                           
-                           if (scope.isstring() && scope.tojstring() == "all") {
-                                shouldRun = true
-                           } else if (scope.istable()) {
-                                val len = scope.length()
-                                for (i in 1..len) {
-                                    if (scope.get(i).tojstring() == lpparam.packageName) {
-                                         shouldRun = true
-                                         break
-                                    }
+                if (isEnabled == true) {
+                    try {
+                        val projectDir = "/Project/$projectName"
+                        val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
+
+                        val tempGlobals = LuaHookEngine.load(this, projectName)
+                        LuaHookEngine.run(tempGlobals,initScript)
+                        val scope = tempGlobals.get("scope")
+                        var shouldRun = false
+
+                        if (scope.isstring() && scope.tojstring() == "all") {
+                            shouldRun = true
+                        } else if (scope.istable()) {
+                            val len = scope.length()
+                            for (i in 1..len) {
+                                if (scope.get(i).tojstring() == lpparam.packageName) {
+                                    shouldRun = true
+                                    break
                                 }
-                           }
-                           
-                           if (shouldRun) {
-                                val rawScript = WorkspaceFileManager.read("$projectDir/main.lua")
-                                val absProjectDir = WorkspaceFileManager.DIR + projectDir
-                                val wrappedScript = """
+                            }
+                        }
+
+                        if (shouldRun) {
+                            val rawScript = WorkspaceFileManager.read("$projectDir/main.lua")
+                            val absProjectDir = WorkspaceFileManager.DIR + projectDir
+                            val wrappedScript = """
                                     package.path = package.path .. ';${absProjectDir}/?.lua'
                                     local oldLoadDex = loadDex
                                     if oldLoadDex then
@@ -145,13 +151,14 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                                     end
                                 """.trimIndent() + "\n" + rawScript
 
-                                val globals = LuaHookEngine.load(wrappedScript, this, projectName)
-                                registerExtensions(globals, projectName)
-                           }
-                      } catch (e: Exception) {
-                           "${lpparam.packageName}:[Project:$projectName]:${e.message}".e()
-                      }
-                 }
+                            val globals = LuaHookEngine.load( this, projectName)
+                            registerExtensions(globals, projectName)
+                            LuaHookEngine.run(globals,wrappedScript)
+                        }
+                    } catch (e: Exception) {
+                        "${lpparam.packageName}:[Project:$projectName]:${e.message}".e()
+                    }
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()

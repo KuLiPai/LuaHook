@@ -69,8 +69,9 @@ class NewHook : XposedModule() {
         try {
             //排除自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val globals = LuaHookEngine.load(luaScript, this, "[GLOBAL]")
+                val globals = LuaHookEngine.load(this, "[GLOBAL]")
                 registerExtensions(globals)
+                LuaHookEngine.run(globals,luaScript)
             }
         } catch (e: Exception) {
             "${lpparam.packageName}:[GLOBAL]:${e.message}".e()
@@ -82,11 +83,13 @@ class NewHook : XposedModule() {
                 try {
                     val scriptText = WorkspaceFileManager.read("/${WorkspaceFileManager.AppScript}/${lpparam.packageName}/$scriptName.lua")
                     if (v is Boolean && v) {
-                        val globals = LuaHookEngine.load(scriptText, this, scriptName)
+                        val globals = LuaHookEngine.load(this, scriptName)
                         registerExtensions(globals)
+                        LuaHookEngine.run(globals,scriptText)
                     } else if (v is JSONArray && v.optBoolean(0, false)) {
-                        val globals = LuaHookEngine.load(scriptText, this, scriptName)
+                        val globals = LuaHookEngine.load(this, scriptName)
                         registerExtensions(globals)
+                        LuaHookEngine.run(globals,scriptText)
                     }
                 } catch (e: Exception) {
                     ("[Error] | Package: ${lpparam.packageName} | Script: $scriptName | Message: ${e.message}").e()
@@ -103,8 +106,8 @@ class NewHook : XposedModule() {
                         val projectDir = "/Project/$projectName"
                         val initScript = WorkspaceFileManager.read("$projectDir/init.lua")
 
-                        val tempGlobals = LuaHookEngine.load(initScript, this, projectName)
-
+                        val tempGlobals = LuaHookEngine.load(this, projectName)
+                        LuaHookEngine.run(tempGlobals,initScript)
                         val scope = tempGlobals.get("scope")
                         var shouldRun = false
 
@@ -136,8 +139,9 @@ class NewHook : XposedModule() {
                                 end
                             """.trimIndent() + "\n" + rawScript
 
-                            val globals = LuaHookEngine.load(wrappedScript, this, projectName)
+                            val globals = LuaHookEngine.load(this, projectName)
                             registerExtensions(globals, projectName)
+                            LuaHookEngine.run(globals,wrappedScript)
                         }
                     } catch (e: Exception) {
                         "${lpparam.packageName}:[Project:$projectName]:${e.message}".e()
