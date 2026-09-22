@@ -66,12 +66,7 @@ android {
 //        isCoreLibraryDesugaringEnabled = true
 
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-            freeCompilerArgs.add("-XXLanguage:+ContextParameters")
-        }
-    }
+
 
     aaptOptions {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
@@ -82,6 +77,13 @@ android {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        freeCompilerArgs.add("-XXLanguage:+ContextParameters")
     }
 }
 
