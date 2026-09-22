@@ -20,6 +20,7 @@ object PluginManager {
     const val DEFAULT_PORT = 24555
     private const val MCP_ID = "mcp"
 
+    /** 没有 /Plugin/mcp/init.lua 时写一份默认配置：启用，端口 24555，entry 必须是 mcp。 */
     fun ensureMcpPlugin() {
         val relative = "${WorkspaceFileManager.Plugin}/$MCP_ID/init.lua"
         val existing = WorkspaceFileManager.read(relative)
@@ -40,6 +41,7 @@ object PluginManager {
         )
     }
 
+    /** 用 Lua 执行 init.lua，读出名称、开关和端口。文件空或语法坏就当没有这个插件。 */
     fun mcpPlugin(): PluginInfo? {
         val text = WorkspaceFileManager.read("${WorkspaceFileManager.Plugin}/$MCP_ID/init.lua")
         if (text.isBlank()) return null
@@ -59,20 +61,24 @@ object PluginManager {
         }
     }
 
+    /** 只有 enabled 且 entry 为 mcp 才启动服务。 */
     fun isMcpEnabled(): Boolean {
         val plugin = mcpPlugin() ?: return false
         return plugin.enabled && plugin.entry == "mcp"
     }
 
+    /** 端口必须在 1 到 65535，否则退回 24555。 */
     fun mcpPort(): Int {
         val port = mcpPlugin()?.port ?: DEFAULT_PORT
         return if (port in 1..65535) port else DEFAULT_PORT
     }
 
+    /** Shell 和工作区都准备好之后再启动 MCP，避免插件文件还没读到就判断未启用。 */
     fun onWorkspaceReady(context: Context) {
         apply(context)
     }
 
+    /** 改开关和端口，写回 init.lua。端口非法直接失败。 */
     fun update(enabled: Boolean, port: Int): Boolean {
         if (port !in 1..65535) return false
         val current = mcpPlugin()
@@ -93,6 +99,7 @@ object PluginManager {
         )
     }
 
+    /** 按当前配置启动或停掉前台服务。 */
     fun apply(context: Context) {
         val intent = Intent(context, McpForegroundService::class.java)
         if (!isMcpEnabled()) {

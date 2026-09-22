@@ -14,10 +14,10 @@ import org.luaj.Globals
 import top.sacz.xphelper.XpHelper
 
 /**
- * MainHook是用于xposed api小于100的hook主类
- * 加载lua脚本hook宿主
+ * API 100 以下的入口，类名写在 assets/xposed_init。
+ * LSPosed 1.9.2（约 API 93）和 JingMatrix 1.11.0（API 100）都走这里。
+ * [NewHook] 是 API 102 的无参类，不注册，避免管理器提示模块为较新版本设计。
  */
-
 class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
 
     companion object {
@@ -31,16 +31,19 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
     lateinit var selectAppsList: MutableList<String>
     lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
+    /** Zygote 阶段记下启动参数，后面加载脚本要模块路径。 */
     override fun initZygote(startupParam: IXposedHookZygoteInit.StartupParam) {
         XpHelper.initZygote(startupParam)
         suparam = startupParam
     }
 
+    /** 每个被勾选的包都会进来。先接上引擎，再按工作区决定跑哪些脚本。 */
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         LuaHookEngine.init(this, lpparam, suparam)
         luaHookInit(lpparam)
     }
 
+    /** 给这次脚本补上布局、DexKit、Native。带项目名时再注册 LuaProject。 */
     private fun registerExtensions(globals: Globals, projectName: String = "") {
         globals.registerLayout()
         globals.registerDexKit()
@@ -50,6 +53,11 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         }
     }
 
+    /**
+     * 读 /global.lua、/apps.txt、AppConf 和 /Project/info.json。
+     * 全局脚本排除本模块。读出来是空的会打日志，用来区分 SELinux 没读到和脚本本身为空。
+     * 应用脚本只在包名位于 apps.txt，且配置为启用时执行。
+     */
     fun luaHookInit(lpparam: XC_LoadPackage.LoadPackageParam) {
         // 读取luahook启用的app
         selectAppsString = WorkspaceFileManager.read("/apps.txt").replace("\n", "")

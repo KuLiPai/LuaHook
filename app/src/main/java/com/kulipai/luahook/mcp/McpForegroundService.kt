@@ -17,6 +17,9 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.ui.home.MainActivity
 
+/**
+ * 插件启用后才拉起的前台服务。每 15 秒看一次端口，init.lua 改了端口就重新绑定。
+ */
 class McpForegroundService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var server: McpHttpServer? = null
@@ -57,6 +60,7 @@ class McpForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /** 插件关掉就停服务。端口没变且还活着就不动。绑定失败把监听端口记成 0。 */
     private fun ensureServer() {
         if (!PluginManager.isMcpEnabled()) {
             server?.stop()
@@ -115,6 +119,7 @@ class McpForegroundService : Service() {
         var listeningPort: Int = 0
             private set
 
+        /** 插件页用这个判断「运行中」还是「未启动」。 */
         fun isListening(): Boolean = listeningPort > 0
 
         private fun setListening(port: Int) {

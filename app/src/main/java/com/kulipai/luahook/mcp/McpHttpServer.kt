@@ -8,11 +8,19 @@ import org.nanohttpd.protocols.http.request.Method
 import org.nanohttpd.protocols.http.response.Response
 import org.nanohttpd.protocols.http.response.Status
 
+/**
+ * 绑定 0.0.0.0 的 JSON-RPC。Cursor 用 POST /mcp。
+ * Accept 含 text/event-stream 时，响应是 `event: message` 的 SSE；否则是普通 JSON。
+ */
 class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPort) {
     init {
         setHTTPHandler { session -> onRequest(session) }
     }
 
+    /**
+     * GET /mcp 回一段 SSE 保活；GET /health 和 /mcp/health 回端口。
+     * 没有 id 的通知回 202 空体。initialize 会回显客户端的 protocolVersion。
+     */
     private fun onRequest(session: IHTTPSession): Response {
         if (session.method == Method.OPTIONS) {
             return respond(session, Status.OK, "", "application/json")
@@ -50,6 +58,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
         }
     }
 
+    /** JSON-RPC 方法：initialize、ping、tools/list、tools/call。 */
     private fun dispatch(method: String, params: JSONObject): Any {
         return when (method) {
             "initialize" -> {
@@ -67,6 +76,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
         }
     }
 
+    /** 把工具名转到 McpStore。结果包成 MCP 的 content 文本。 */
     private fun callTool(params: JSONObject): JSONObject {
         val name = params.optString("name")
         val args = params.optJSONObject("arguments") ?: JSONObject()
@@ -96,6 +106,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
             .put("isError", payload.optBoolean("ok", true).not() && payload.has("error"))
     }
 
+    /** tools/list 里的 18 个工具，和插件页说明一一对应。 */
     private fun toolDefs(): JSONArray {
         fun tool(name: String, description: String, vararg fields: String): JSONObject {
             val props = JSONObject()
@@ -126,12 +137,14 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
             .put(tool("list_installed_apps", "List installed apps for scope selection"))
     }
 
+    /** NanoHTTPD 把 POST 正文放在 parseBody 的 postData 里。 */
     private fun readBody(session: IHTTPSession): String {
         val files = HashMap<String, String>()
         session.parseBody(files)
         return files["postData"].orEmpty()
     }
 
+    /** JSON-RPC 错误体。解析失败用 -32700，未知方法用 -32000。 */
     private fun rpcError(id: Any?, code: Int, message: String): JSONObject {
         return JSONObject()
             .put("jsonrpc", "2.0")
@@ -139,6 +152,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
             .put("error", JSONObject().put("code", code).put("message", message))
     }
 
+    /** 补上 CORS，并在 / 和 /mcp 上带固定会话头 Mcp-Session-Id: luahook。 */
     private fun respond(session: IHTTPSession, status: Status, body: String, contentType: String): Response {
         val response = Response.newFixedLengthResponse(status, contentType, body)
         response.addHeader("Access-Control-Allow-Origin", "*")

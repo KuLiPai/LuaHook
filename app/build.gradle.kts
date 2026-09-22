@@ -118,9 +118,8 @@ dependencies {
     implementation(libs.libluahook.ext.layout)
     implementation(libs.libluahook.ext.dexkit)
     implementation(libs.libluahook.ext.native)
-    // Packaged, not compileOnly: JingMatrix LSPosed 1.11.0 is API 100 and does
-    // not contain PackageReadyParam. LuaHookEngine.init references that class,
-    // so the legacy entry crashes unless the type is inside the module dex.
+    // 打进 apk，不能用 compileOnly。JingMatrix 1.11.0 是 API 100，框架里没有 PackageReadyParam。
+    // LuaHookEngine.init 引用了这个类，旧入口 MainHook 也会因此在 API 100 上 ClassNotFound。
     implementation("io.github.libxposed:api:102.0.0")
     implementation("io.github.libxposed:service:102.0.0")
 

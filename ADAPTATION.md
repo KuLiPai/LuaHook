@@ -9,7 +9,7 @@ After one reboot (clears ephemeral `magiskpolicy --live`) and launching Settings
 09-22 10:37:17.528  9074  9074 D LuaXposed: LUAHHOOK_LOAD_OK com.android.settings
 ```
 
-Legacy entry `assets/xposed_init` → `com.kulipai.luahook.hook.entry.MainHook` remains the manager entry so the "designed for Xposed 101" warning stays gone (`java_init.list` removed; `module.prop` targetApiVersion=100 is unused without that list).
+Legacy entry `assets/xposed_init` → `com.kulipai.luahook.hook.entry.MainHook` remains the manager entry so the "designed for Xposed 101" warning stays gone (`java_init.list` removed). `module.prop` keeps `minApiVersion=53` and `targetApiVersion=53`, matching `xposedminversion`. A target above the framework API is what shows the warning on API 93 and API 100. `NewHook` is the API 102 no-arg class and is not registered.
 
 ## Root causes
 

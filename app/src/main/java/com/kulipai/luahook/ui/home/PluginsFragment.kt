@@ -65,6 +65,7 @@ class PluginsFragment : BaseFragment<FragmentHomePluginsBinding>() {
         adapter.submit(listOfNotNull(plugin))
     }
 
+    /** 点卡片或齿轮：运行状态、本地和局域网的 /mcp 地址，以及 18 个接口说明。 */
     private fun showStatus(plugin: PluginInfo) {
         val status = when {
             !plugin.enabled -> getString(R.string.mcp_status_off)
@@ -91,6 +92,7 @@ class PluginsFragment : BaseFragment<FragmentHomePluginsBinding>() {
             .show()
     }
 
+    /** 一行地址加可见的复制按钮。没有局域网地址时不给复制。 */
     private fun addressRow(title: String, shown: String, copyUrl: String? = shown): LinearLayout {
         val text = label("$title\n$shown").apply {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -118,6 +120,7 @@ class PluginsFragment : BaseFragment<FragmentHomePluginsBinding>() {
         }
     }
 
+    /** 先问是否复制，再写入剪贴板。 */
     private fun confirmCopy(url: String) {
         MaterialAlertDialogBuilder(requireContext())
             .setMessage(getString(R.string.mcp_copy_ask) + "\n" + url)
@@ -130,6 +133,7 @@ class PluginsFragment : BaseFragment<FragmentHomePluginsBinding>() {
             .show()
     }
 
+    /** 第一块已启用、非回环、非链路本地的 IPv4。 */
     private fun lanAddress(): String? {
         val interfaces = NetworkInterface.getNetworkInterfaces() ?: return null
         for (intf in interfaces) {
