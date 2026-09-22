@@ -2,10 +2,11 @@
 
 ## Goal verified
 
-After launching Settings (`com.android.settings/.MiuiSettings`), logcat shows:
+After one reboot (clears ephemeral `magiskpolicy --live`) and launching Settings
+(`com.android.settings/.MiuiSettings`), logcat shows:
 
 ```text
-D LuaXposed: LUAHHOOK_LOAD_OK com.android.settings
+09-22 10:37:17.528  9074  9074 D LuaXposed: LUAHHOOK_LOAD_OK com.android.settings
 ```
 
 Legacy entry `assets/xposed_init` → `com.kulipai.luahook.hook.entry.MainHook` remains the manager entry so the "designed for Xposed 101" warning stays gone (`java_init.list` removed; `module.prop` targetApiVersion=100 is unused without that list).
