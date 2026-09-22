@@ -1,9 +1,7 @@
 package com.kulipai.luahook.hook.entry
 
-import android.annotation.SuppressLint
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
-import de.robv.android.xposed.IXposedHookZygoteInit
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
 import io.github.kulipai.luahook.hook.entry.LuaHookEngine
@@ -15,7 +13,14 @@ import org.luaj.Globals
 import top.sacz.xphelper.XpHelper
 
 /**
- * api101专用新hook入口
+ * libxposed entry compiled against API 102.
+ *
+ * JingMatrix LSPosed 1.11.0 on this project reports API 100 and instantiates
+ * modules with `XposedModule(XposedInterface, ModuleLoadedParam)`. A class
+ * compiled for the API 102 no-arg constructor cannot be constructed there, and
+ * a targetApiVersion above 100 is what shows
+ * "此模块是为较新的 Xposed 版本（101）设计的".
+ * [MainHook] remains the registered entry via assets/xposed_init.
  */
 
 class NewHook : XposedModule() {
@@ -27,16 +32,11 @@ class NewHook : XposedModule() {
     lateinit var luaScript: String
     lateinit var selectAppsString: String
     lateinit var selectAppsList: MutableList<String>
-    lateinit var suparam: IXposedHookZygoteInit.StartupParam
 
-    @SuppressLint("DiscouragedPrivateApi")
     override fun onPackageReady(lpparam: XposedModuleInterface.PackageReadyParam) {
         super.onPackageReady(lpparam)
-        // LPParam_processName = lpparam.applicationInfo.processName ?: lpparam.packageName
-        suparam = createStartupParam(this.moduleApplicationInfo.sourceDir)
-        XpHelper.initZygote(suparam)
-
-        LuaHookEngine.init(this, lpparam, suparam)
+        XpHelper.moduleApkPath = moduleApplicationInfo.sourceDir
+        LuaHookEngine.init(this, lpparam)
         luaHookInit(lpparam)
     }
 
@@ -144,17 +144,4 @@ class NewHook : XposedModule() {
         }
     }
 
-    fun createStartupParam(modulePath: String): IXposedHookZygoteInit.StartupParam {
-        val clazz = IXposedHookZygoteInit.StartupParam::class.java
-        val constructor = clazz.getDeclaredConstructor()
-        constructor.isAccessible = true
-        val instance = constructor.newInstance()
-
-        // 设置字段值
-        val fieldModulePath = clazz.getDeclaredField("modulePath")
-        fieldModulePath.isAccessible = true
-        fieldModulePath.set(instance, modulePath)
-
-        return instance
-    }
 }

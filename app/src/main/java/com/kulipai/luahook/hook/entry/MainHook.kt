@@ -65,8 +65,12 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         try {
             // 排除模块自己
             if (lpparam.packageName != MODULE_PACKAGE) {
-                val globals = LuaHookEngine.load(luaScript, this, "[GLOBAL]")
-                registerExtensions(globals)
+                if (luaScript.isBlank()) {
+                    "${lpparam.packageName}:[GLOBAL]:empty script (SELinux/read failed?)".e()
+                } else {
+                    val globals = LuaHookEngine.load(luaScript, this, "[GLOBAL]")
+                    registerExtensions(globals)
+                }
             }
         } catch (e: Exception) {
             "${lpparam.packageName}:[GLOBAL]:${e.message}".e()

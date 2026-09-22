@@ -6,6 +6,7 @@ import com.kulipai.luahook.core.log.d
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.core.utils.dd
+import com.topjohnwu.superuser.Shell
 import org.json.JSONObject
 import java.io.File
 
@@ -26,9 +27,15 @@ object WorkspaceFileManager {
         try {
             val fullPath = DIR + relativePath
             val file = File(fullPath)
+            // Host app domains (system_app / untrusted_app / system_server) are
+            // often denied search/open on /data/local/tmp (shell_data_file) even
+            // when DAC mode is 666. File.exists/canRead then fail and the script
+            // would silently become "". Prefer root cat before giving up.
             if (file.exists() && file.canRead()) {
                 return file.readText()
             }
+
+            readViaRoot(fullPath)?.let { return it }
 
             return when (val result = ShellManager.shell("cat \"$fullPath\"")) {
                 is ShellResult.Success -> result.stdout
@@ -37,6 +44,30 @@ object WorkspaceFileManager {
         } catch (e: Exception) {
             e.printStackTrace()
             return ""
+        }
+    }
+
+    /**
+     * Read a workspace file with root. Used from hooked host processes where
+     * SELinux blocks direct access to [DIR] under /data/local/tmp.
+     */
+    private fun readViaRoot(absolutePath: String): String? {
+        try {
+            val result = Shell.cmd("cat \"$absolutePath\"").exec()
+            if (result.isSuccess) {
+                return result.out.joinToString("\n")
+            }
+        } catch (_: Exception) {
+            // Fall through to Runtime.exec("su").
+        }
+        return try {
+            val process = ProcessBuilder("su", "-c", "cat \"$absolutePath\"")
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            if (process.waitFor() == 0) output else null
+        } catch (_: Exception) {
+            null
         }
     }
 

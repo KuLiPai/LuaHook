@@ -118,9 +118,11 @@ dependencies {
     implementation(libs.libluahook.ext.layout)
     implementation(libs.libluahook.ext.dexkit)
     implementation(libs.libluahook.ext.native)
-    //Xposed service 101
-    compileOnly("io.github.libxposed:api:101.0.1")
-    implementation("io.github.libxposed:service:101.0.0")
+    // Packaged, not compileOnly: JingMatrix LSPosed 1.11.0 is API 100 and does
+    // not contain PackageReadyParam. LuaHookEngine.init references that class,
+    // so the legacy entry crashes unless the type is inside the module dex.
+    implementation("io.github.libxposed:api:102.0.0")
+    implementation("io.github.libxposed:service:102.0.0")
 
     //coil3 加载图片
     implementation(libs.coil)

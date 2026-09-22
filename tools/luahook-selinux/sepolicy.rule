@@ -1,0 +1,21 @@
+# Allow host apps / system_server to read LuaHook workspace under
+# /data/local/tmp (shell_data_file). JingMatrix LSPosed API 100 hosts
+# otherwise get empty scripts and never emit LUAHHOOK_LOAD_OK.
+allow system_app shell_data_file dir { search getattr open read }
+allow system_app shell_data_file file { open read getattr map }
+allow platform_app shell_data_file dir { search getattr open read }
+allow platform_app shell_data_file file { open read getattr map }
+allow priv_app shell_data_file dir { search getattr open read }
+allow priv_app shell_data_file file { open read getattr map }
+allow untrusted_app shell_data_file dir { search getattr open read }
+allow untrusted_app shell_data_file file { open read getattr map }
+allow untrusted_app_27 shell_data_file dir { search getattr open read }
+allow untrusted_app_27 shell_data_file file { open read getattr map }
+allow untrusted_app_29 shell_data_file dir { search getattr open read }
+allow untrusted_app_29 shell_data_file file { open read getattr map }
+allow untrusted_app_30 shell_data_file dir { search getattr open read }
+allow untrusted_app_30 shell_data_file file { open read getattr map }
+allow untrusted_app_32 shell_data_file dir { search getattr open read }
+allow untrusted_app_32 shell_data_file file { open read getattr map }
+allow system_server shell_data_file dir { search getattr open read }
+allow system_server shell_data_file file { open read getattr map }
