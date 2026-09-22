@@ -88,6 +88,7 @@ object ShizukuApi {
                     isServiceConnected.value = true
                     setMode(Mode.SHIZUKU)
                     WorkspaceFileManager.init(context)
+                    com.kulipai.luahook.core.plugin.PluginManager.onWorkspaceReady(context)
 
                     // Successful
                 }

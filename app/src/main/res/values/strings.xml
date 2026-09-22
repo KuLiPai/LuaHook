@@ -46,6 +46,8 @@
     <string name="param">参数</string>
     <string name="funcSign">方法签名</string>
     <string name="plugins">插件</string>
+    <string name="mcp_port">端口</string>
+    <string name="mcp_port_invalid">端口需要在 1 到 65535 之间</string>
 
     <string name="appearance">界面外观</string>
     <string name="update_dialog_message">有新版本可用：%s  请点击更新按钮下载安装。</string>

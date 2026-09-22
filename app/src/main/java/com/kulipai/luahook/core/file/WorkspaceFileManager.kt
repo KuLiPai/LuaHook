@@ -31,16 +31,23 @@ object WorkspaceFileManager {
             // often denied search/open on /data/local/tmp (shell_data_file) even
             // when DAC mode is 666. File.exists/canRead then fail and the script
             // would silently become "". Prefer root cat before giving up.
-            if (file.exists() && file.canRead()) {
-                return file.readText()
+            if (file.exists()) {
+                try {
+                    if (file.canRead()) {
+                        val text = file.readText()
+                        if (text.isNotEmpty() || file.length() == 0L) {
+                            return text
+                        }
+                    }
+                } catch (_: Exception) {
+                }
             }
 
-            readViaRoot(fullPath)?.let { return it }
-
-            return when (val result = ShellManager.shell("cat \"$fullPath\"")) {
-                is ShellResult.Success -> result.stdout
-                is ShellResult.Error -> ""
+            when (val result = ShellManager.shell("cat \"$fullPath\"")) {
+                is ShellResult.Success -> return result.stdout
+                is ShellResult.Error -> Unit
             }
+            return readViaRoot(fullPath) ?: ""
         } catch (e: Exception) {
             e.printStackTrace()
             return ""
@@ -54,7 +61,7 @@ object WorkspaceFileManager {
     private fun readViaRoot(absolutePath: String): String? {
         try {
             val result = Shell.cmd("cat \"$absolutePath\"").exec()
-            if (result.isSuccess) {
+            if (result.isSuccess && result.out.isNotEmpty()) {
                 return result.out.joinToString("\n")
             }
         } catch (_: Exception) {
@@ -65,7 +72,7 @@ object WorkspaceFileManager {
                 .redirectErrorStream(true)
                 .start()
             val output = process.inputStream.bufferedReader().use { it.readText() }
-            if (process.waitFor() == 0) output else null
+            if (process.waitFor() == 0 && output.isNotEmpty()) output else null
         } catch (_: Exception) {
             null
         }
@@ -176,6 +183,7 @@ object WorkspaceFileManager {
         ensureDirectoryExists(DIR + AppConf)
         ensureDirectoryExists(DIR + AppScript)
         ensureDirectoryExists(DIR + Plugin)
+        com.kulipai.luahook.core.plugin.PluginManager.ensureMcpPlugin()
     }
 
 

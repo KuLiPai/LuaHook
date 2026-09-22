@@ -25,6 +25,6 @@ Legacy entry `assets/xposed_init` → `com.kulipai.luahook.hook.entry.MainHook` 
 - Optional APatch/Magisk module under `tools/luahook-selinux/` (`sepolicy.rule`) permanently allows host apps to read `shell_data_file` so direct File reads also work after reboot.
 - Load-test script: `scripts/load-test.lua` → `/data/local/tmp/LuaHook/global.lua`.
 
-## Not started yet
+## MCP
 
-MCP server on `0.0.0.0:24555` (read-only logs + project/script CRUD) starts only after the hook log proof above.
+插件 `mcp` 在工作区就绪后按 `Plugin/mcp/init.lua` 的 `port` 监听，默认 `0.0.0.0:24555`。工具和验证见 `MCP.md`。

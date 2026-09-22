@@ -46,6 +46,8 @@
     <string name="param">Parameter</string>
     <string name="funcSign">Method signature</string>
     <string name="plugins">Plugins</string>
+    <string name="mcp_port">Port</string>
+    <string name="mcp_port_invalid">Port must be between 1 and 65535</string>
 
     <string name="appearance">Appearance</string>
     <string name="update_dialog_message">A new version is available: %s Please click the Update button to download and install.</string>

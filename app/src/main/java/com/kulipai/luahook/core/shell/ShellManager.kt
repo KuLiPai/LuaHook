@@ -47,6 +47,7 @@ object ShellManager {
                 rootShell = it
                 setMode(Mode.ROOT)
                 WorkspaceFileManager.init(context)
+                com.kulipai.luahook.core.plugin.PluginManager.onWorkspaceReady(context)
 
             } else {
                 // try shizuku
@@ -78,6 +79,7 @@ object ShellManager {
         if (ShizukuApi.isServiceConnected.value != true) {
             setMode(Mode.SHIZUKU_FALLBACK)
             WorkspaceFileManager.init(context)
+            com.kulipai.luahook.core.plugin.PluginManager.onWorkspaceReady(context)
         }
         ShizukuApi.bindShizuku(context)
     }
