@@ -51,10 +51,14 @@
     <string name="mcp_status_on">运行中 · 0.0.0.0:%1$d</string>
     <string name="mcp_status_down">未启动 · 0.0.0.0:%1$d</string>
     <string name="mcp_status_off">已关闭</string>
+    <string name="mcp_status_lan_blocked">运行中 · 仅限本机（未授予局域网权限）</string>
     <string name="mcp_status_line">状态：%1$s</string>
     <string name="mcp_local">本地</string>
     <string name="mcp_lan">局域网</string>
     <string name="mcp_no_lan">没有局域网地址</string>
+    <string name="mcp_lan_permission_required">需要授予局域网访问权限</string>
+    <string name="mcp_lan_permission_denied">未授予局域网权限，MCP 目前只能从本机访问</string>
+    <string name="mcp_grant_lan_permission">授予局域网权限</string>
     <string name="mcp_copy_ask">是否复制？</string>
     <string name="mcp_copy">复制</string>
     <string name="mcp_copied">已复制</string>

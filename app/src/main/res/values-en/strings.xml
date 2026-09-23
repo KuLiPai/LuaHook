@@ -51,10 +51,14 @@
     <string name="mcp_status_on">Running · 0.0.0.0:%1$d</string>
     <string name="mcp_status_down">Not started · 0.0.0.0:%1$d</string>
     <string name="mcp_status_off">Off</string>
+    <string name="mcp_status_lan_blocked">Running · local only (LAN permission not granted)</string>
     <string name="mcp_status_line">Status: %1$s</string>
     <string name="mcp_local">Local</string>
     <string name="mcp_lan">LAN</string>
     <string name="mcp_no_lan">No LAN address</string>
+    <string name="mcp_lan_permission_required">Local network permission is required</string>
+    <string name="mcp_lan_permission_denied">LAN permission was not granted; MCP is available only on this device</string>
+    <string name="mcp_grant_lan_permission">Grant LAN access</string>
     <string name="mcp_copy_ask">Copy this address?</string>
     <string name="mcp_copy">Copy</string>
     <string name="mcp_copied">Copied</string>
