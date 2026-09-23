@@ -9,7 +9,6 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -22,24 +21,12 @@ import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.databinding.FragmentHomePluginsBinding
 import com.kulipai.luahook.mcp.McpForegroundService
-import com.kulipai.luahook.mcp.McpNetworkAccess
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
 class PluginsFragment : BaseFragment<FragmentHomePluginsBinding>() {
 
     private lateinit var adapter: PluginAdapter
-    private var requestedLanPermission = false
-    private val lanPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            context?.let(PluginManager::apply)
-        } else if (isAdded) {
-            toast(R.string.mcp_lan_permission_denied)
-        }
-        load()
-    }
 
     override fun inflateBinding(
         inflater: LayoutInflater,
@@ -76,55 +63,33 @@ class PluginsFragment : BaseFragment<FragmentHomePluginsBinding>() {
         if (view == null) return
         val plugin = PluginManager.mcpPlugin()
         adapter.submit(listOfNotNull(plugin))
-        if (plugin?.enabled == true && McpNetworkAccess.needsPermission(requireContext())) {
-            requestLanPermissionOnce()
-        }
     }
 
     /** 点卡片或齿轮：运行状态、本地和局域网的 /mcp 地址，以及 18 个接口说明。 */
     private fun showStatus(plugin: PluginInfo) {
         val status = when {
             !plugin.enabled -> getString(R.string.mcp_status_off)
-            !McpForegroundService.isListening() -> getString(R.string.mcp_status_down, plugin.port).substringBefore(" ·")
-            McpNetworkAccess.needsPermission(requireContext()) -> getString(R.string.mcp_status_lan_blocked)
-            else -> getString(R.string.mcp_status_on, plugin.port).substringBefore(" ·")
+            McpForegroundService.isListening() -> getString(R.string.mcp_status_on, plugin.port).substringBefore(" ·")
+            else -> getString(R.string.mcp_status_down, plugin.port).substringBefore(" ·")
         }
         val localUrl = "http://127.0.0.1:${plugin.port}/mcp"
-        val hasLanAccess = McpNetworkAccess.isGranted(requireContext())
-        val lanIp = if (hasLanAccess) lanAddress() else null
+        val lanIp = lanAddress()
         val lanUrl = lanIp?.let { "http://$it:${plugin.port}/mcp" }
         val content = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 16, 48, 8)
             addView(label(getString(R.string.mcp_status_line, status)))
             addView(addressRow(getString(R.string.mcp_local), localUrl))
-            val lanStatus = when {
-                !hasLanAccess -> getString(R.string.mcp_lan_permission_required)
-                lanUrl == null -> getString(R.string.mcp_no_lan)
-                else -> lanUrl
-            }
-            addView(addressRow(getString(R.string.mcp_lan), lanStatus, lanUrl))
+            addView(addressRow(getString(R.string.mcp_lan), lanUrl ?: getString(R.string.mcp_no_lan), lanUrl))
             addView(label("\n" + getString(R.string.mcp_api_list)))
         }
         val scroll = ScrollView(requireContext()).apply { addView(content) }
-        val dialog = MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle(plugin.name)
             .setView(scroll)
             .setPositiveButton(R.string.mcp_port) { _, _ -> showPortDialog(plugin) }
             .setNegativeButton(R.string.cancel, null)
-        if (!hasLanAccess) {
-            dialog.setNeutralButton(R.string.mcp_grant_lan_permission) { _, _ ->
-                lanPermissionLauncher.launch(McpNetworkAccess.PERMISSION)
-            }
-        }
-        dialog.show()
-    }
-
-    /** 插件页首次发现 Android 17 的局域网权限缺失时发起一次系统授权。 */
-    private fun requestLanPermissionOnce() {
-        if (requestedLanPermission) return
-        requestedLanPermission = true
-        lanPermissionLauncher.launch(McpNetworkAccess.PERMISSION)
+            .show()
     }
 
     /** 一行地址加可见的复制按钮。没有局域网地址时不给复制。 */

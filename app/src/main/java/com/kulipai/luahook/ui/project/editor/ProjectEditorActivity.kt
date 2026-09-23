@@ -67,7 +67,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         val tool = listOf(
             R.string.gen_hook_code,
-            R.string.funcSign)
+            R.string.funcSign,
+
+        )
 
         binding.toolRec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
@@ -148,7 +150,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         // Handle Back Press for Drawer
         onBackPressedDispatcher.addCallback(
-            this, object : androidx.activity.OnBackPressedCallback(true) {
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
                         binding.drawerLayout.closeDrawer(GravityCompat.START)
@@ -248,13 +251,17 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         val input = view.findViewById<android.widget.TextView>(R.id.edit)
         input.hint = getString(R.string.hint_name)
 
-        MaterialAlertDialogBuilder(this).setTitle(title).setView(view)
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setView(view)
             .setPositiveButton(getString(R.string.action_create)) { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isNotEmpty()) {
                     createItem(name, isFolder)
                 }
-            }.setNegativeButton("Cancel", null).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun createItem(name: String, isFolder: Boolean) {
@@ -266,7 +273,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 loadFileList()
             } else {
                 Toast.makeText(
-                    this, getString(R.string.msg_folder_create_failed), Toast.LENGTH_SHORT
+                    this,
+                    getString(R.string.msg_folder_create_failed),
+                    Toast.LENGTH_SHORT
                 ).show()
             }
         } else {
@@ -328,14 +337,20 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             Toast.makeText(this, getString(R.string.msg_exporting), Toast.LENGTH_SHORT).show()
             Thread {
                 val success = com.kulipai.luahook.core.project.ProjectManager.exportProject(
-                    this, projectName, it
+                    this,
+                    projectName,
+                    it
                 )
                 runOnUiThread {
                     if (success) Toast.makeText(
-                        this, getString(R.string.msg_export_success), Toast.LENGTH_SHORT
+                        this,
+                        getString(R.string.msg_export_success),
+                        Toast.LENGTH_SHORT
                     ).show()
                     else Toast.makeText(
-                        this, getString(R.string.msg_export_failed), Toast.LENGTH_SHORT
+                        this,
+                        getString(R.string.msg_export_failed),
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }.start()
@@ -354,7 +369,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         val outValue = android.util.TypedValue()
         theme.resolveAttribute(
-            androidx.appcompat.R.attr.selectableItemBackgroundBorderless, outValue, true
+            androidx.appcompat.R.attr.selectableItemBackgroundBorderless,
+            outValue,
+            true
         )
         runView.setBackgroundResource(outValue.resourceId)
         runView.contentDescription = getString(R.string.action_run)
@@ -429,7 +446,10 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
                     // 删除全部内容 (从 0,0 到 最后一行,最后一列)
                     content.delete(
-                        0, 0, content.lineCount - 1, content.getColumnCount(content.lineCount - 1)
+                        0,
+                        0,
+                        content.lineCount - 1,
+                        content.getColumnCount(content.lineCount - 1)
                     )
 
                     // 插入格式化后的代码
@@ -451,7 +471,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
                 } catch (e: Exception) {
                     Toast.makeText(
-                        this, getString(R.string.msg_format_failed, e.message), Toast.LENGTH_SHORT
+                        this,
+                        getString(R.string.msg_format_failed, e.message),
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
 
@@ -498,7 +520,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         dialogView.addView(
             scroll, android.widget.LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
         )
 
@@ -521,14 +544,18 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             }
         }.start()
 
-        MaterialAlertDialogBuilder(this).setTitle(getString(R.string.title_select_launch_app))
-            .setView(dialogView).setPositiveButton(getString(R.string.action_run)) { _, _ ->
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.title_select_launch_app))
+            .setView(dialogView)
+            .setPositiveButton(getString(R.string.action_run)) { _, _ ->
                 val pkg = input.text.toString().trim()
                 if (pkg.isNotEmpty()) {
                     saveCurrentFile()
                     runProject(pkg)
                 }
-            }.setNegativeButton("Cancel", null).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun runProject(launcherPackage: String? = null) {
@@ -578,12 +605,17 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                         }
                     } else {
                         Toast.makeText(
-                            this, getString(R.string.msg_no_launcher_defined), Toast.LENGTH_SHORT
-                        ).show()
+                            this,
+                            getString(R.string.msg_no_launcher_defined),
+                            Toast.LENGTH_SHORT
+                        )
+                            .show()
                     }
                 } else {
                     Toast.makeText(
-                        this, getString(R.string.msg_project_info_not_found), Toast.LENGTH_SHORT
+                        this,
+                        getString(R.string.msg_project_info_not_found),
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }
@@ -599,7 +631,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 data class FileItem(val name: String, val path: String, val isDirectory: Boolean)
 
 class FileListAdapter(
-    private val files: MutableList<FileItem>, private val onClick: (FileItem) -> Unit
+    private val files: MutableList<FileItem>,
+    private val onClick: (FileItem) -> Unit
 ) : androidx.recyclerview.widget.RecyclerView.Adapter<FileListAdapter.ViewHolder>() {
 
     class ViewHolder(view: android.view.View) :
