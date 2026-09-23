@@ -149,11 +149,13 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
                                             return oldLoadDex(path)
                                         end
                                     end
-                                """.trimIndent() + "\n" + rawScript
+                                """.trimIndent()
+
 
                             val globals = LuaHookEngine.load( this, projectName)
-                            registerExtensions(globals, projectName)
                             LuaHookEngine.run(globals,wrappedScript)
+                            registerExtensions(globals, projectName)
+                            LuaHookEngine.run(globals,rawScript)
                         }
                     } catch (e: Exception) {
                         "${lpparam.packageName}:[Project:$projectName]:${e.message}".e()
