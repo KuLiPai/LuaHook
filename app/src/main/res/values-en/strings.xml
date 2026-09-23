@@ -217,4 +217,5 @@
     <string name="eleven_contribute">Translation</string>
     <string name="padi_contribute">Native features, test development, publicity</string>
     <string name="california_contribute">Translation, part of the interface design</string>
+    <string name="feature">Feature</string>
 </resources>

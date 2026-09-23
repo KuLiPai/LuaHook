@@ -218,4 +218,5 @@
     <string name="eleven_contribute">翻译</string>
     <string name="padi_contribute">Native 功能,测试开发,宣传</string>
     <string name="california_contribute">翻译,部分界面设计</string>
+    <string name="feature">功能</string>
 </resources>

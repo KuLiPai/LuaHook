@@ -14,11 +14,10 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import android.util.Log
 import com.kulipai.luahook.R
-import com.kulipai.luahook.core.plugin.PluginManager
 import com.kulipai.luahook.ui.home.MainActivity
 
 /**
- * 插件启用后才拉起的前台服务。每 15 秒看一次端口，init.lua 改了端口就重新绑定。
+ * MCP 启用后拉起的前台服务。每 15 秒检查一次，配置改了端口就重新绑定。
  */
 class McpForegroundService : Service() {
     private val handler = Handler(Looper.getMainLooper())
@@ -33,13 +32,13 @@ class McpForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        startInForeground(PluginManager.mcpPort())
+        startInForeground(McpManager.mcpPort(this))
         ensureServer()
         handler.postDelayed(watchdog, 15_000)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startInForeground(PluginManager.mcpPort())
+        startInForeground(McpManager.mcpPort(this))
         ensureServer()
         return START_STICKY
     }
@@ -60,9 +59,9 @@ class McpForegroundService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /** 插件关掉就停服务。端口没变且还活着就不动。绑定失败把监听端口记成 0。 */
+    /** MCP 关掉就停服务。端口没变且还活着就不动。绑定失败把监听端口记成 0。 */
     private fun ensureServer() {
-        if (!PluginManager.isMcpEnabled()) {
+        if (!McpManager.isMcpEnabled(this)) {
             server?.stop()
             server = null
             boundPort = -1
@@ -70,7 +69,7 @@ class McpForegroundService : Service() {
             stopSelf()
             return
         }
-        val port = PluginManager.mcpPort()
+        val port = McpManager.mcpPort(this)
         if (server?.isAlive == true && boundPort == port) return
         server?.stop()
         val next = McpHttpServer(port)
