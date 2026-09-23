@@ -24,6 +24,7 @@ import com.kulipai.luahook.databinding.ActivityProjectEditorBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
 import com.kulipai.luahook.ui.script.editor.SymbolAdapter
+import com.kulipai.luahook.ui.script.editor.ToolAdapter
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
 import com.myopicmobile.textwarrior.common.LuaParser
@@ -62,6 +63,17 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         binding.symbolRecyclerView.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.symbolRecyclerView.adapter = SymbolAdapter(binding.editor)
+
+
+        val tool = listOf(
+            R.string.gen_hook_code,
+            R.string.funcSign,
+
+        )
+
+        binding.toolRec.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        binding.toolRec.adapter = ToolAdapter(tool, binding.editor, this)
 
         // SoraEditor integration
         initLuaEditor(binding.editor, binding.errorMessage)
@@ -232,7 +244,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     private fun showCreateDialog(isFolder: Boolean) {
-        val title = if (isFolder) getString(R.string.title_create_folder) else getString(R.string.title_create_file)
+        val title =
+            if (isFolder) getString(R.string.title_create_folder) else getString(R.string.title_create_file)
 
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
         val input = view.findViewById<android.widget.TextView>(R.id.edit)
@@ -255,10 +268,15 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         if (isFolder) {
             val fullPath = "$currentExplorerPath/$name"
             if (WorkspaceFileManager.ensureDirectoryExists(fullPath)) {
-                Toast.makeText(this, getString(R.string.msg_folder_created), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_folder_created), Toast.LENGTH_SHORT)
+                    .show()
                 loadFileList()
             } else {
-                Toast.makeText(this, getString(R.string.msg_folder_create_failed), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    getString(R.string.msg_folder_create_failed),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         } else {
             // WorkspaceFileManager.write expects path relative to DIR, starting with /
@@ -266,10 +284,12 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             val relPath = "$relDir/$name"
 
             if (WorkspaceFileManager.write(relPath, "")) {
-                Toast.makeText(this, getString(R.string.msg_file_created), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_file_created), Toast.LENGTH_SHORT)
+                    .show()
                 loadFileList()
             } else {
-                Toast.makeText(this, getString(R.string.msg_file_create_failed), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_file_create_failed), Toast.LENGTH_SHORT)
+                    .show()
             }
         }
     }
@@ -310,14 +330,28 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         )
     }
 
-    private val exportLauncher = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+    private val exportLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
         uri?.let {
             Toast.makeText(this, getString(R.string.msg_exporting), Toast.LENGTH_SHORT).show()
             Thread {
-                val success = com.kulipai.luahook.core.project.ProjectManager.exportProject(this, projectName, it)
+                val success = com.kulipai.luahook.core.project.ProjectManager.exportProject(
+                    this,
+                    projectName,
+                    it
+                )
                 runOnUiThread {
-                    if (success) Toast.makeText(this, getString(R.string.msg_export_success), Toast.LENGTH_SHORT).show()
-                    else Toast.makeText(this, getString(R.string.msg_export_failed), Toast.LENGTH_SHORT).show()
+                    if (success) Toast.makeText(
+                        this,
+                        getString(R.string.msg_export_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    else Toast.makeText(
+                        this,
+                        getString(R.string.msg_export_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }.start()
         }
@@ -359,9 +393,12 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 3, 0, getString(R.string.action_redo))?.setIcon(R.drawable.redo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 4, 0, getString(R.string.action_format))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 5, 0, getString(R.string.action_logcat))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
-        menu?.add(0, 6, 0, getString(R.string.action_export))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 4, 0, getString(R.string.action_format))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 5, 0, getString(R.string.action_logcat))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 6, 0, getString(R.string.action_export))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
 
         return true
     }
@@ -433,7 +470,11 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
 
                 } catch (e: Exception) {
-                    Toast.makeText(this, getString(R.string.msg_format_failed, e.message), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.msg_format_failed, e.message),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
 
                 true
@@ -563,11 +604,19 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                             ).show()
                         }
                     } else {
-                        Toast.makeText(this, getString(R.string.msg_no_launcher_defined), Toast.LENGTH_SHORT)
+                        Toast.makeText(
+                            this,
+                            getString(R.string.msg_no_launcher_defined),
+                            Toast.LENGTH_SHORT
+                        )
                             .show()
                     }
                 } else {
-                    Toast.makeText(this, getString(R.string.msg_project_info_not_found), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.msg_project_info_not_found),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }.start()

@@ -94,15 +94,14 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         initLuaEditor(binding.editor, binding.errMessage)
 
         val tool = listOf(
-            resources.getString(R.string.gen_hook_code),
-            resources.getString(R.string.funcSign),
-            resources.getString(R.string.grammer_converse)
+            R.string.gen_hook_code,
+            R.string.funcSign,
         )
 
         binding.toolRec.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.toolRec.adapter = ToolAdapter(tool, binding.editor, this)
-        
+
         initSearchPanel()
     }
 
