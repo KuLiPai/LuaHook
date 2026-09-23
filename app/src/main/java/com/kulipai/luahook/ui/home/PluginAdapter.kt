@@ -7,6 +7,7 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.core.plugin.PluginInfo
 import com.kulipai.luahook.databinding.ItemPluginCardBinding
 import com.kulipai.luahook.mcp.McpForegroundService
+import com.kulipai.luahook.mcp.McpNetworkAccess
 
 class PluginAdapter(
     private val plugins: MutableList<PluginInfo>,
@@ -27,8 +28,9 @@ class PluginAdapter(
         holder.binding.pluginName.text = plugin.name
         holder.binding.pluginDesc.text = when {
             !plugin.enabled -> context.getString(R.string.mcp_status_off)
-            McpForegroundService.isListening() -> context.getString(R.string.mcp_status_on, plugin.port)
-            else -> context.getString(R.string.mcp_status_down, plugin.port)
+            !McpForegroundService.isListening() -> context.getString(R.string.mcp_status_down, plugin.port)
+            McpNetworkAccess.needsPermission(context) -> context.getString(R.string.mcp_status_lan_blocked)
+            else -> context.getString(R.string.mcp_status_on, plugin.port)
         }
         holder.binding.pluginSwitch.setOnCheckedChangeListener(null)
         holder.binding.pluginSwitch.isChecked = plugin.enabled
