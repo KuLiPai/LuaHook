@@ -1,6 +1,0 @@
-id=luahook_selinux
-name=LuaHook SELinux
-version=v1
-versionCode=1
-author=LuaHook
-description=Allow host apps to read /data/local/tmp/LuaHook (shell_data_file)

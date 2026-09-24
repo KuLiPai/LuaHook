@@ -1,6 +1,0 @@
-id=start-adb-tcp
-name=Start Wireless ADB
-version=v1.0
-versionCode=1
-author=LuaHook
-description=临时开机助手：设置 ADB TCP 端口 5555 并重启 adbd（不修改 ro.adb.secure，不删除 adb_keys）
