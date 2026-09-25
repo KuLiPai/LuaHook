@@ -219,4 +219,8 @@
     <string name="padi_contribute">Native 功能,测试开发,宣传</string>
     <string name="california_contribute">翻译,部分界面设计</string>
     <string name="feature">功能</string>
+    <string name="aqintrue_contribute">Native 能力, Native Hook</string>
+    <string name="expand_all_contributors">查看全部开发者 (共 %1$d 位)</string>
+    <string name="collapse_contributors">收起</string>
+    <string name="ghost_xx_contribute">MCP 能力,API 102适配</string>
 </resources>

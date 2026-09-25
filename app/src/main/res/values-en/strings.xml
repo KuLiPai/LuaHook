@@ -218,4 +218,7 @@
     <string name="padi_contribute">Native features, test development, publicity</string>
     <string name="california_contribute">Translation, part of the interface design</string>
     <string name="feature">Feature</string>
+    <string name="aqintrue_contribute">Native features, Native Hook</string>
+    <string name="expand_all_contributors">View all contributors (%1$d)</string>
+    <string name="collapse_contributors">Collapse</string>
 </resources>
