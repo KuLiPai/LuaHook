@@ -1,0 +1,98 @@
+name: Android CI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & Deploy CI APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Sign Release APK
+        id: sign_apk
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          OUTPUT_APK="LuaHook-ci-${SHORT_SHA}.apk"
+
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding keystore and signing APK..."
+            echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+
+            BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -maxdepth 1 -mindepth 1 | sort -V | tail -n 1)
+            echo "Using apksigner from $BUILD_TOOLS_DIR"
+
+            $BUILD_TOOLS_DIR/apksigner sign \
+              --ks release.jks \
+              --ks-pass pass:"$KEYSTORE_PASSWORD" \
+              --ks-key-alias "$KEY_ALIAS" \
+              --key-pass pass:"$KEY_PASSWORD" \
+              --out "$OUTPUT_APK" \
+              app/build/outputs/apk/release/app-release-unsigned.apk
+
+            $BUILD_TOOLS_DIR/apksigner verify "$OUTPUT_APK"
+            rm -f release.jks
+            echo "APK signed successfully."
+          else
+            echo "KEYSTORE_BASE64 not set, falling back to unsigned APK."
+            cp app/build/outputs/apk/release/app-release-unsigned.apk "$OUTPUT_APK"
+          fi
+
+          echo "apk_path=$OUTPUT_APK" >> $GITHUB_OUTPUT
+          echo "apk_name=$OUTPUT_APK" >> $GITHUB_OUTPUT
+          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Upload Artifact to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.sign_apk.outputs.apk_name }}
+          path: ${{ steps.sign_apk.outputs.apk_path }}
+          retention-days: 30
+
+      - name: Send APK to Telegram
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          APK_PATH: ${{ steps.sign_apk.outputs.apk_path }}
+          SHORT_SHA: ${{ steps.sign_apk.outputs.short_sha }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          AUTHOR: ${{ github.actor }}
+          REPOSITORY: ${{ github.repository }}
+        run: python3 .github/scripts/send_telegram.py

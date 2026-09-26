@@ -11,7 +11,9 @@ build/
 local.properties
 
 # IDE
-.idea/
+.idea/*
+!.idea/icon.png
+!.idea/icon.svg
 
 # macOS
 .DS_Store
