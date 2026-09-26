@@ -25,6 +25,7 @@ import androidx.core.view.isVisible
 import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.update.AppUpdater
+import com.kulipai.luahook.data.model.DeveloperInfo
 import com.kulipai.luahook.databinding.ActivityAboutBinding
 import kotlin.math.abs
 
@@ -81,29 +82,19 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
         }
     }
 
+    private lateinit var developerAdapter: DeveloperAdapter
+    private var isDevelopersExpanded = false
+    private val collapsedCount = 7
+
     override fun initEvent() {
         binding.toolbar.setNavigationOnClickListener { finish() }
 
-        // Developer cards
         val luaHookGithubUrl = "https://github.com/KuLiPai/LuaHook"
-        val kuliPaiGithubUrl = "https://github.com/KuLiPai"
-        val anotherDeveloperGithubUrl = "https://github.com/Samzhaohx"
-        val padiGithub = "https://github.com/paditianxiu"
-        val elevenGithub = "https://github.com/imconfident11"
-        val carrotGithub = "https://github.com/TrialCarrot"
-        val AQinTrueGithub = "https://github.com/AQinTrue"
-
         binding.githubCard.setOnClickListener { openGithubUrl(luaHookGithubUrl) }
-        binding.developerKuliPaiRow.setOnClickListener { openGithubUrl(kuliPaiGithubUrl) }
-        binding.developerAnotherRow.setOnClickListener { openGithubUrl(anotherDeveloperGithubUrl) }
-        binding.padi.setOnClickListener { openGithubUrl(padiGithub) }
-        binding.eleven.setOnClickListener { openGithubUrl(elevenGithub) }
-        binding.carrot.setOnClickListener { openGithubUrl(carrotGithub) }
-        binding.AQinTrue.setOnClickListener { openGithubUrl(AQinTrueGithub) }
-
-
         binding.cardCheckUpdate.setOnClickListener { checkUpdate() }
         binding.cardDonate.setOnClickListener { showDonatePopup(it) }
+
+        setupDeveloperList()
 
         // App Logo transparency and Toolbar color fade
         binding.appBar.addOnOffsetChangedListener { appBarLayout, verticalOffset ->
@@ -158,6 +149,83 @@ class AboutActivity : BaseActivity<ActivityAboutBinding>() {
             e.printStackTrace()
         }
     }
+
+    private fun setupDeveloperList() {
+        val developers = getDevelopers()
+        developerAdapter = DeveloperAdapter { openGithubUrl(it.githubUrl) }
+        binding.rvDevelopers.adapter = developerAdapter
+
+        if (developers.size <= collapsedCount) {
+            binding.layoutToggleExpand.visibility = View.GONE
+            developerAdapter.submitList(developers)
+        } else {
+            binding.layoutToggleExpand.visibility = View.VISIBLE
+            updateDeveloperListDisplay(developers)
+            binding.layoutToggleExpand.setOnClickListener {
+                isDevelopersExpanded = !isDevelopersExpanded
+                updateDeveloperListDisplay(developers)
+                binding.ivToggleExpand.animate()
+                    .rotation(if (isDevelopersExpanded) 180f else 0f)
+                    .setDuration(200)
+                    .start()
+            }
+        }
+    }
+
+    private fun updateDeveloperListDisplay(developers: List<DeveloperInfo>) {
+        if (isDevelopersExpanded) {
+            developerAdapter.submitList(developers)
+            binding.tvToggleExpand.setText(R.string.collapse_contributors)
+        } else {
+            developerAdapter.submitList(developers.take(collapsedCount))
+            binding.tvToggleExpand.text = getString(R.string.expand_all_contributors, developers.size)
+        }
+    }
+
+    private fun getDevelopers(): List<DeveloperInfo> = listOf(
+        DeveloperInfo(
+            name = getString(R.string.KuLiPai),
+            contribution = getString(R.string.kulipai_contribute),
+            avatarRes = R.drawable.kulipai,
+            githubUrl = "https://github.com/KuLiPai"
+        ),
+        DeveloperInfo(
+            name = "California",
+            contribution = getString(R.string.california_contribute),
+            avatarRes = R.drawable.california,
+            githubUrl = "https://github.com/Samzhaohx"
+        ),
+        DeveloperInfo(
+            name = getString(R.string.paditianxiu),
+            contribution = getString(R.string.padi_contribute),
+            avatarRes = R.drawable.padi,
+            githubUrl = "https://github.com/paditianxiu"
+        ),
+        DeveloperInfo(
+            name = "Eleven",
+            contribution = getString(R.string.eleven_contribute),
+            avatarRes = R.drawable.eleven,
+            githubUrl = "https://github.com/imconfident11"
+        ),
+        DeveloperInfo(
+            name = "Carrot",
+            contribution = getString(R.string.carrot_contribute),
+            avatarRes = R.drawable.carrot,
+            githubUrl = "https://github.com/TrialCarrot"
+        ),
+        DeveloperInfo(
+            name = "AQinTrue",
+            contribution = getString(R.string.aqintrue_contribute),
+            avatarRes = R.drawable.aqintrue,
+            githubUrl = "https://github.com/AQinTrue"
+        ) ,
+        DeveloperInfo(
+            name = "Ghost-xx",
+            contribution = getString(R.string.ghost_xx_contribute),
+            avatarRes = android.R.color.transparent,
+            githubUrl = "https://github.com/ghost-xx"
+        )
+    )
 
     private fun openGithubUrl(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, url.toUri())
