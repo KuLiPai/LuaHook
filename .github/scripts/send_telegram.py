@@ -37,7 +37,12 @@ def main():
     escaped_author = html.escape(author)
     commit_url = f"https://github.com/{repository}/commit/{commit_sha}" if repository and commit_sha else ""
 
+    app_version = os.environ.get("APP_VERSION", "")
+    version_line = f"🔖 <b>Version:</b> <code>{html.escape(app_version)}</code>\n" if app_version else ""
+
     caption = (
+        f"🤖 <b>LuaHook CI 构建通知</b>\n\n"
+        f"{version_line}"
         f"📦 <b>Commit:</b> <a href=\"{commit_url}\">{short_sha}</a>\n"
         f"👤 <b>Author:</b> {escaped_author}\n"
         f"📊 <b>Size:</b> {file_size_mb:.2f} MB\n"
@@ -52,6 +57,8 @@ def main():
         else:
             escaped_msg = "..."
         caption = (
+            f"🤖 <b>LuaHook CI 构建通知</b>\n\n"
+            f"{version_line}"
             f"📦 <b>Commit:</b> <a href=\"{commit_url}\">{short_sha}</a>\n"
             f"👤 <b>Author:</b> {escaped_author}\n"
             f"📊 <b>Size:</b> {file_size_mb:.2f} MB\n"

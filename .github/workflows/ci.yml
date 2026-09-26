@@ -38,7 +38,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --stacktrace
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          ./gradlew assembleRelease -PversionSuffix="-ci-${SHORT_SHA}" --stacktrace
 
       - name: Sign Release APK
         id: sign_apk
@@ -49,7 +51,9 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
-          OUTPUT_APK="LuaHook-ci-${SHORT_SHA}.apk"
+          BASE_VERSION=$(grep -oE 'versionName = "[0-9.]+' app/build.gradle.kts | cut -d'"' -f2)
+          APP_VERSION="${BASE_VERSION}-ci-${SHORT_SHA}"
+          OUTPUT_APK="LuaHook-${APP_VERSION}.apk"
 
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "Decoding keystore and signing APK..."
@@ -77,6 +81,7 @@ jobs:
           echo "apk_path=$OUTPUT_APK" >> $GITHUB_OUTPUT
           echo "apk_name=$OUTPUT_APK" >> $GITHUB_OUTPUT
           echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
 
       - name: Upload Artifact to GitHub Actions
         uses: actions/upload-artifact@v4
@@ -91,6 +96,7 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
           APK_PATH: ${{ steps.sign_apk.outputs.apk_path }}
           SHORT_SHA: ${{ steps.sign_apk.outputs.short_sha }}
+          APP_VERSION: ${{ steps.sign_apk.outputs.app_version }}
           COMMIT_SHA: ${{ github.sha }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           AUTHOR: ${{ github.actor }}
