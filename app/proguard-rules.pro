@@ -26,6 +26,13 @@
 -keep class com.androlua.** { *; }
 -keep class com.kulipai.luahook.** {*;}
 -keepclassmembers class com.kulipai.luahook.** {*;}
+# 保留 libluahook 核心与扩展（被 C++ JNI 反射调用及 Lua 动态绑定的类）
+-keep class io.github.kulipai.luahook.** {*;}
+-keepclassmembers class io.github.kulipai.luahook.** {*;}
+# 保留所有 native 方法
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
 # 保留整个 LuaJ 库
 -keep class org.luaj.** { *; }
 -keepclassmembers class org.luaj.** { *; }
