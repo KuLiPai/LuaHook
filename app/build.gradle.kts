@@ -72,12 +72,6 @@ android {
         additionalParameters += listOf("--package-id", "0x69", "--allow-reserved-package-id")
     }
 
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
-    }
 }
 
 kotlin {

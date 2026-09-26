@@ -41,7 +41,15 @@ if (localPropsFile.exists()) {
 
 // 只有在 local.properties 中配置了 useLocalLibLuaHook=true 才会使用本地源码替换，
 if (localProps.getProperty("useLocalLibLuaHook") == "true") {
-    includeBuild("/home/kulipai/Projects/AndroidStudioProjects/libluahook") {
+    val localLibLuaHookPath = localProps.getProperty("libluahook.path")
+        ?.takeIf { it.isNotBlank() }
+        ?: error("useLocalLibLuaHook=true requires libluahook.path in local.properties")
+    val localLibLuaHookDir = file(localLibLuaHookPath)
+    check(localLibLuaHookDir.isDirectory) {
+        "libluahook.path does not point to a directory: $localLibLuaHookPath"
+    }
+
+    includeBuild(localLibLuaHookDir) {
         dependencySubstitution {
             substitute(module("com.github.KuLiPai.libluahook:luahook-core")).using(project(":luahook-core"))
             substitute(module("com.github.KuLiPai.libluahook:luahook-ext-dexkit")).using(project(":luahook-ext-dexkit"))
