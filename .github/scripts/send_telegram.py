@@ -27,11 +27,19 @@ def main():
 
     # Format commit message
     if not raw_msg or raw_msg.strip() == "":
+        try:
+            res = subprocess.run(["git", "log", "-1", "--pretty=%B"], capture_output=True, text=True)
+            if res.returncode == 0 and res.stdout.strip():
+                raw_msg = res.stdout.strip()
+        except Exception:
+            pass
+
+    if not raw_msg or raw_msg.strip() == "":
         safe_msg = "手动触发构建 (workflow_dispatch)"
     else:
-        # Take first 3 lines of commit message
+        # Take first 6 lines of commit message
         lines = [line.strip() for line in raw_msg.strip().splitlines() if line.strip()]
-        safe_msg = "\n".join(lines[:3]) if lines else "无提交信息"
+        safe_msg = "\n".join(lines[:6]) if lines else "无提交信息"
 
     escaped_msg = html.escape(safe_msg)
     escaped_author = html.escape(author)
@@ -69,10 +77,10 @@ def main():
 
     cmd = [
         "curl", "-s", "-S", "-w", "\nHTTP_STATUS:%{http_code}",
-        "-F", f"chat_id={chat_id}",
+        "--form-string", f"chat_id={chat_id}",
         "-F", f"document=@{apk_path}",
-        "-F", f"caption={caption}",
-        "-F", "parse_mode=HTML",
+        "--form-string", f"caption={caption}",
+        "--form-string", "parse_mode=HTML",
         url
     ]
 
