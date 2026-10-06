@@ -30,7 +30,7 @@ coil = "3.6.3"
 compileSdk = "37"
 minSdk = "28"
 buildToolsVersion = "35.0.0"
-libluahook = "1.0.0-alpha07"
+libluahook = "1.0.0-alpha08"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
