@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.DynamicColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.core.base.BaseActivity
@@ -31,11 +32,12 @@ class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
 
     private var selectApps = mutableListOf<String>()
     private var searchJob: Job? = null
-    private lateinit var allApps: List<AppInfo>
-    private lateinit var availableAppsToShow: List<AppInfo>
+    private var allApps: List<AppInfo> = emptyList()
+    private var availableAppsToShow: List<AppInfo> = emptyList()
     private lateinit var adapter: SelectAppsAdapter
     private var isLoaded = false
     private var showSystemApps = false
+    private var currentSortMode = AppSortMode.NAME
 
     override fun inflateBinding(inflater: LayoutInflater): ActivitySelectAppsBinding {
         return ActivitySelectAppsBinding.inflate(inflater)
@@ -70,6 +72,9 @@ class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
     }
 
     override fun initData() {
+        showSystemApps = SelectorPrefs.isShowSystemApps(this)
+        currentSortMode = SelectorPrefs.getSortMode(this)
+
         val selectedPackageNames = WorkspaceFileManager.readStringList("/apps.txt")
         selectApps = selectedPackageNames.toMutableList()
 
@@ -125,19 +130,9 @@ class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
         val selectedPackagesSet = selectApps.toSet()
         availableAppsToShow = allApps.filter { appInfo ->
             !selectedPackagesSet.contains(appInfo.packageName) &&
-                    (showSystemApps || !isSystemApp(appInfo))
-        }
-        adapter.updateData(availableAppsToShow)
-    }
-
-    private fun isSystemApp(appInfo: AppInfo): Boolean {
-        return try {
-            val pm = packageManager
-            val app = pm.getApplicationInfo(appInfo.packageName, 0)
-            (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-        } catch (e: Exception) {
-            false
-        }
+                    (showSystemApps || !appInfo.isSystemApp)
+        }.sortApps(currentSortMode)
+        filterAppList(binding.searchBarTextView.text?.toString()?.trim().orEmpty())
     }
 
     private fun filterAppList(query: String) {
@@ -164,8 +159,13 @@ class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
         return when (item.itemId) {
             R.id.action_show_system -> {
                 showSystemApps = !showSystemApps
+                SelectorPrefs.setShowSystemApps(this, showSystemApps)
                 item.isChecked = showSystemApps
                 refreshAppList()
+                true
+            }
+            R.id.action_sort -> {
+                showSortDialog()
                 true
             }
             android.R.id.home -> {
@@ -174,5 +174,29 @@ class SelectApps : BaseActivity<ActivitySelectAppsBinding>() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showSortDialog() {
+        val sortOptions = arrayOf(
+            getString(R.string.sort_by_name),
+            getString(R.string.sort_by_install_time),
+            getString(R.string.sort_by_update_time),
+            getString(R.string.sort_by_package_name)
+        )
+        val currentIndex = currentSortMode.value
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.sort_mode)
+            .setSingleChoiceItems(sortOptions, currentIndex) { dialog, which ->
+                val newMode = AppSortMode.fromValue(which)
+                if (newMode != currentSortMode) {
+                    currentSortMode = newMode
+                    SelectorPrefs.setSortMode(this, currentSortMode)
+                    refreshAppList()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 }

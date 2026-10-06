@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_sort"
+        android:title="@string/sort_mode"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_show_system"
         android:title="@string/show_system_app"
         android:checkable="true"

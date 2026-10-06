@@ -138,6 +138,11 @@
     <string name="repository">仓库</string>
     <string name="github_repo">Github开源仓库地址</string>
     <string name="show_system_app">显示系统应用</string>
+    <string name="sort_mode">排序方式</string>
+    <string name="sort_by_name">按应用名称</string>
+    <string name="sort_by_install_time">按安装时间</string>
+    <string name="sort_by_update_time">按修改/更新时间</string>
+    <string name="sort_by_package_name">按应用包名</string>
     <string name="gen_hook_code">生成hook代码</string>
     <string name="returns">返回值</string>
     <string name="change_value">修改值</string>

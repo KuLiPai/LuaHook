@@ -39,6 +39,14 @@ class SelectAppsAdapter(
     val pm: PackageManager = context.packageManager
 
 
+    private fun getAppIcon(packageName: String): android.graphics.drawable.Drawable {
+        return try {
+            pm.getApplicationIcon(packageName)
+        } catch (_: Exception) {
+            pm.defaultActivityIcon
+        }
+    }
+
     inner class AppsViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val name: TextView = itemView.findViewById(R.id.name)
         val icon: ImageView = itemView.findViewById(R.id.icon)
@@ -51,17 +59,18 @@ class SelectAppsAdapter(
 
             //跳转到app脚本编辑
             card.setOnClickListener {
+                val pos = bindingAdapterPosition
+                if (pos == RecyclerView.NO_POSITION || pos !in apps.indices) return@setOnClickListener
+                val currentPkg = apps[pos].packageName
 
-                if (apps[bindingAdapterPosition].packageName in selectApps) {
+                if (currentPkg in selectApps) {
                     card.cardElevation = 0.toFloat()
 
-
-                    val icon =
-                        pm.getApplicationIcon(pm.getApplicationInfo(apps[bindingAdapterPosition].packageName, 0))
+                    val icon = getAppIcon(currentPkg)
                     this@AppsViewHolder.icon.setImageDrawable(icon)
 //                    icon.setImageDrawable(apps[adapterPosition].icon)
                     this@AppsViewHolder.icon.setColorFilter(0)
-                    selectApps -= apps[bindingAdapterPosition].packageName
+                    selectApps -= currentPkg
                 } else {
 
                     card.cardElevation = 30.0.toFloat()
@@ -73,7 +82,7 @@ class SelectAppsAdapter(
                             androidx.appcompat.R.attr.colorPrimary
                         )
                     )
-                    selectApps += apps[bindingAdapterPosition].packageName
+                    selectApps += currentPkg
                 }
 
 
@@ -108,8 +117,7 @@ class SelectAppsAdapter(
         } else {
             holder.card.cardElevation = 0.toFloat()
 
-
-            val icon = pm.getApplicationIcon(pm.getApplicationInfo(apps[position].packageName, 0))
+            val icon = getAppIcon(apps[position].packageName)
             holder.icon.setImageDrawable(icon)
 //            holder.icon.setImageDrawable(apps[position].icon)
             holder.icon.setColorFilter(0)

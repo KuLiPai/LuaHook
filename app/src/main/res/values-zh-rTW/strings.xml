@@ -127,6 +127,11 @@ https://luahook.kulipai.top/activate.html
     <string name="repository">倉庫</string>
     <string name="github_repo">Github開源倉庫位址</string>
     <string name="show_system_app">顯示系統應用</string>
+    <string name="sort_mode">排序方式</string>
+    <string name="sort_by_name">按應用名稱</string>
+    <string name="sort_by_install_time">按安裝時間</string>
+    <string name="sort_by_update_time">按修改/更新時間</string>
+    <string name="sort_by_package_name">按應用包名</string>
     <string name="gen_hook_code">生成hook代碼</string>
     <string name="returns">返回值</string>
     <string name="change_value">修改值</string>

@@ -137,6 +137,11 @@
     <string name="repository">Repository</string>
     <string name="github_repo">Github open source repository address</string>
     <string name="show_system_app">show SystemApps</string>
+    <string name="sort_mode">Sort by</string>
+    <string name="sort_by_name">By App Name</string>
+    <string name="sort_by_install_time">By Install Time</string>
+    <string name="sort_by_update_time">By Update Time</string>
+    <string name="sort_by_package_name">By Package Name</string>
     <string name="gen_hook_code">Generate hook code</string>
     <string name="returns">Return value</string>
     <string name="change_value">Modify the value</string>

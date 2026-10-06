@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.DynamicColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.kulipai.luahook.R
 import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.core.base.BaseActivity
@@ -31,11 +32,12 @@ class ScopeSelectorActivity : BaseActivity<ActivitySelectAppsBinding>() {
 
     private var selectApps = mutableListOf<String>()
     private var searchJob: Job? = null
-    private lateinit var allApps: List<AppInfo>
-    private lateinit var availableAppsToShow: List<AppInfo>
+    private var allApps: List<AppInfo> = emptyList()
+    private var availableAppsToShow: List<AppInfo> = emptyList()
     private lateinit var adapter: SelectAppsAdapter
     private var isLoaded = false
     private var showSystemApps = false
+    private var currentSortMode = AppSortMode.NAME
 
     override fun inflateBinding(inflater: LayoutInflater): ActivitySelectAppsBinding {
         return ActivitySelectAppsBinding.inflate(inflater)
@@ -70,13 +72,15 @@ class ScopeSelectorActivity : BaseActivity<ActivitySelectAppsBinding>() {
     }
 
     override fun initData() {
+        showSystemApps = SelectorPrefs.isShowSystemApps(this)
+        currentSortMode = SelectorPrefs.getSortMode(this)
+
         // Load passed selection
         val passedSelection = intent.getStringArrayListExtra("current_scope")
         if (passedSelection != null) {
             selectApps = passedSelection.toMutableList()
         }
 
-        // Reuse SelectAppsAdapter as it handles the logic fine
         adapter = SelectAppsAdapter(emptyList(), this, selectApps)
         binding.rec.adapter = adapter
 
@@ -121,45 +125,10 @@ class ScopeSelectorActivity : BaseActivity<ActivitySelectAppsBinding>() {
     }
 
     private fun refreshAppList() {
-        // Show all apps but mark selected? 
-        // Original SelectApps filters OUT selected apps?
-        // "availableAppsToShow = allApps.filter { !selectedPackagesSet.contains(it.packageName) ... }"
-        // This implies SelectApps is for "Adding new apps" to the list, not toggling?
-        // Let's check SelectAppsAdapter.
-        // Adapter logic: "if (packageName in selectApps) ... click -> remove".
-        // Adapter logic handles toggling.
-        // But SelectApps.kt filters them OUT?
-        // "availableAppsToShow = allApps.filter { !selectedPackagesSet.contains(...) && ... }"
-        // If they are filtered out, they are NOT in the list passed to adapter.
-        // But Adapter has logic for "if in selectApps".
-        // This suggests SelectApps might be displaying *only unselected* apps to add?
-        // But then how do you unselect?
-        // Ah, `SelectApps` reads apps.txt into `selectApps`.
-        // Then it filters `allApps` against `selectedPackagesSet`.
-        // So `availableAppsToShow` only contains apps NOT in apps.txt?
-        // Then the Adapter displays `availableAppsToShow`.
-        // So you can only ADD apps?
-        // Wait, if I am selecting scope, I want to see selected ones to unselect them?
-        // Or maybe SelectApps is designed to "Add to allowed list".
-        // The user said "Separation ...".
-        
-        // I want standard Multi-select behavior.
-        // So I should NOT filter out selected apps. I should show ALL apps, and let adapter mark them selected.
-        
         availableAppsToShow = allApps.filter { appInfo ->
-             showSystemApps || !isSystemApp(appInfo)
-        }
-        adapter.updateData(availableAppsToShow)
-    }
-
-    private fun isSystemApp(appInfo: AppInfo): Boolean {
-        return try {
-            val pm = packageManager
-            val app = pm.getApplicationInfo(appInfo.packageName, 0)
-            (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-        } catch (e: Exception) {
-            false
-        }
+            showSystemApps || !appInfo.isSystemApp
+        }.sortApps(currentSortMode)
+        filterAppList(binding.searchBarTextView.text?.toString()?.trim().orEmpty())
     }
 
     private fun filterAppList(query: String) {
@@ -186,8 +155,13 @@ class ScopeSelectorActivity : BaseActivity<ActivitySelectAppsBinding>() {
         return when (item.itemId) {
             R.id.action_show_system -> {
                 showSystemApps = !showSystemApps
+                SelectorPrefs.setShowSystemApps(this, showSystemApps)
                 item.isChecked = showSystemApps
                 refreshAppList()
+                true
+            }
+            R.id.action_sort -> {
+                showSortDialog()
                 true
             }
             android.R.id.home -> {
@@ -196,5 +170,29 @@ class ScopeSelectorActivity : BaseActivity<ActivitySelectAppsBinding>() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun showSortDialog() {
+        val sortOptions = arrayOf(
+            getString(R.string.sort_by_name),
+            getString(R.string.sort_by_install_time),
+            getString(R.string.sort_by_update_time),
+            getString(R.string.sort_by_package_name)
+        )
+        val currentIndex = currentSortMode.value
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.sort_mode)
+            .setSingleChoiceItems(sortOptions, currentIndex) { dialog, which ->
+                val newMode = AppSortMode.fromValue(which)
+                if (newMode != currentSortMode) {
+                    currentSortMode = newMode
+                    SelectorPrefs.setSortMode(this, currentSortMode)
+                    refreshAppList()
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 }

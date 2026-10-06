@@ -1,6 +1,7 @@
 package com.kulipai.luahook.core.pm
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import com.kulipai.luahook.data.model.AppInfo
 
@@ -8,7 +9,7 @@ object PackageUtils {
     fun getAppVersionName(context: Context): String {
         return try {
             val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            packageInfo.versionName!!
+            packageInfo.versionName ?: "Unknown"
         } catch (_: android.content.pm.PackageManager.NameNotFoundException) {
             "Unknown"
         }
@@ -29,27 +30,46 @@ object PackageUtils {
     fun getInstalledApps(context: Context): List<AppInfo> {
         val pm = context.packageManager
         val apps = mutableListOf<AppInfo>()
-        val packages = pm.getInstalledApplications(PackageManager.GET_META_DATA)
+        val packages = pm.getInstalledPackages(0)
 
-        for (app in packages) {
-            // 过滤掉系统应用（有启动项的）
-            if (pm.getLaunchIntentForPackage(app.packageName) != null) {
-                val appName = pm.getApplicationLabel(app).toString()
-                val packageName = app.packageName
-                pm.getApplicationIcon(app)
-
-                try {
-                    val packageInfo = pm.getPackageInfo(packageName, 0)
-                    val versionName = packageInfo.versionName ?: "N/A"
-                    val versionCode =
-                        packageInfo.longVersionCode
-
-//                apps.add(AppInfo(appName, packageName, icon, versionName, versionCode))
-                    apps.add(AppInfo(appName, packageName, versionName, versionCode))
-                } catch (_: PackageManager.NameNotFoundException) {
-                    // 忽略未找到的包
-                }
+        for (packageInfo in packages) {
+            val app = packageInfo.applicationInfo ?: try {
+                pm.getApplicationInfo(packageInfo.packageName, 0)
+            } catch (_: Exception) {
+                null
             }
+
+            val appName = if (app != null) {
+                try {
+                    pm.getApplicationLabel(app).toString()
+                } catch (_: Exception) {
+                    packageInfo.packageName
+                }
+            } else {
+                packageInfo.packageName
+            }
+
+            val packageName = packageInfo.packageName
+            val versionName = packageInfo.versionName ?: "N/A"
+            val versionCode = packageInfo.longVersionCode
+            val isSystemApp = if (app != null) {
+                (app.flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                        (app.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+            } else {
+                packageName == "android"
+            }
+
+            apps.add(
+                AppInfo(
+                    appName = appName,
+                    packageName = packageName,
+                    versionName = versionName,
+                    versionCode = versionCode,
+                    isSystemApp = isSystemApp,
+                    firstInstallTime = packageInfo.firstInstallTime,
+                    lastUpdateTime = packageInfo.lastUpdateTime
+                )
+            )
         }
 
         return apps.sortedBy { it.appName.lowercase() }

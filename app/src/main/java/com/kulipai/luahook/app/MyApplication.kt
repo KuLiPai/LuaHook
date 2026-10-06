@@ -64,12 +64,20 @@ class MyApplication : Application() {
                     val versionCode =
                         packageInfo.longVersionCode
 
+                    val isSystemApp = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                            (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+                    val firstInstallTime = packageInfo.firstInstallTime
+                    val lastUpdateTime = packageInfo.lastUpdateTime
+
                     appInfoList.add(
                         AppInfo(
                             appName = appName,
                             packageName = pkg,
                             versionName = versionName,
-                            versionCode = versionCode
+                            versionCode = versionCode,
+                            isSystemApp = isSystemApp,
+                            firstInstallTime = firstInstallTime,
+                            lastUpdateTime = lastUpdateTime
                         )
                     )
 
