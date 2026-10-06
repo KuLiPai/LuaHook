@@ -12,6 +12,7 @@ import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.util.TypedValue
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -424,6 +425,32 @@ class EditActivity : AppCompatActivity() {
 
     }
 
+    private fun searchNext() {
+        val text = etSearch.text?.toString().orEmpty()
+        if (text.isEmpty()) return
+        if (!editor.searcher.hasQuery()) {
+            editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
+        }
+        try {
+            editor.searcher.gotoNext()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun searchPrevious() {
+        val text = etSearch.text?.toString().orEmpty()
+        if (text.isEmpty()) return
+        if (!editor.searcher.hasQuery()) {
+            editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
+        }
+        try {
+            editor.searcher.gotoPrevious()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun initSearchPanel() {
         // 监听搜索框文本变化
         etSearch.addTextChangedListener(object : TextWatcher {
@@ -444,9 +471,11 @@ class EditActivity : AppCompatActivity() {
         })
 
         // 监听键盘的"搜索"按钮
-        etSearch.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                editor.searcher.gotoNext()
+        etSearch.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            ) {
+                searchNext()
                 true
             } else {
                 false
@@ -455,12 +484,12 @@ class EditActivity : AppCompatActivity() {
 
         // 上一个
         btnPrev.setOnClickListener {
-            editor.searcher.gotoPrevious()
+            searchPrevious()
         }
 
         // 下一个
         btnNext.setOnClickListener {
-            editor.searcher.gotoNext()
+            searchNext()
         }
 
         // 替换当前选中

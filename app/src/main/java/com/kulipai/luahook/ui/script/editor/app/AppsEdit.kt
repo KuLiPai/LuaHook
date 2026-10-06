@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
@@ -368,7 +369,32 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
 
 
-    // TODO)) 搜索内容空，上下寻找闪退
+    private fun searchNext() {
+        val text = binding.etSearch.text?.toString().orEmpty()
+        if (text.isEmpty()) return
+        if (!binding.editor.searcher.hasQuery()) {
+            binding.editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
+        }
+        try {
+            binding.editor.searcher.gotoNext()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun searchPrevious() {
+        val text = binding.etSearch.text?.toString().orEmpty()
+        if (text.isEmpty()) return
+        if (!binding.editor.searcher.hasQuery()) {
+            binding.editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
+        }
+        try {
+            binding.editor.searcher.gotoPrevious()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     private fun initSearchPanel() {
         // 监听搜索框文本变化
         binding.etSearch.addTextChangedListener(object : TextWatcher {
@@ -389,9 +415,11 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         })
 
         // 监听键盘的"搜索"按钮
-        binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                binding.editor.searcher.gotoNext()
+        binding.etSearch.setOnEditorActionListener { _, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
+            ) {
+                searchNext()
                 true
             } else {
                 false
@@ -400,12 +428,12 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
         // 上一个
         binding.btnSearchPrev.setOnClickListener {
-            binding.editor.searcher.gotoPrevious()
+            searchPrevious()
         }
 
         // 下一个
         binding.btnSearchNext.setOnClickListener {
-            binding.editor.searcher.gotoNext()
+            searchNext()
         }
 
         // 替换当前选中
