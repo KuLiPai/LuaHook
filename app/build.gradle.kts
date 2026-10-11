@@ -138,5 +138,8 @@ dependencies {
     implementation(libs.dialogxiosstyle)
     implementation(libs.dialogxmaterialyou)
 
+    //悬浮窗
+    implementation("io.github.petterpx:floatingx-core:3.0.0")
 
+    implementation("io.github.petterpx:floatingx-system:3.0.0")
 }

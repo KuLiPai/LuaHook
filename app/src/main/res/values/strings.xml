@@ -115,6 +115,9 @@
     <string name="restart_luahook">重启 LuaHook</string>
     <string name="send_error_massage">发送错误信息</string>
     <string name="close">关闭</string>
+    <string name="clear">Clear logs</string>
+    <string name="minimize">Minimize log window</string>
+    <string name="restore">Restore log window</string>
     <string name="KuLiPai" translatable="false">KuLiPai</string>
     <string name="trans_design">翻译、部分界面设计</string>
     <string name="paditianxiu" translatable="false">Padi</string>
