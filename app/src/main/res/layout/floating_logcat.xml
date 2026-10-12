@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="360dp"
+    android:layout_width="300dp"
     android:layout_height="420dp"
     android:orientation="vertical"
     app:cardCornerRadius="16dp"
@@ -73,9 +73,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:padding="16dp"
+            android:gravity="center"
             android:visibility="gone"
             android:text="@string/no_power"
-            android:textColor="#99FFFFFF"
+            android:textColor="?attr/colorOnSurfaceVariant"
             android:textSize="14sp" />
 
         <androidx.recyclerview.widget.RecyclerView

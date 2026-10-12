@@ -4,6 +4,7 @@ import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -15,37 +16,33 @@ import java.util.Locale
 object LogcatDelegate {
 
     suspend fun getSystemLogsByTagSince(tag: String, since: String? = null): List<String> {
+        return readSystemLogsByTagSince(tag, since).getOrDefault(emptyList()).toMutableList()
+    }
+
+    suspend fun readSystemLogsByTagSince(tag: String, since: String? = null): Result<List<String>> {
         val command = if (since.isNullOrEmpty()) {
-            "logcat -d $tag:* *:S"
+            "logcat -d -v threadtime '$tag:*' '*:S'"
         } else {
-            "logcat -d -T \"$since\" $tag:* *:S"
+            "logcat -d -v threadtime -T \"$since\" '$tag:*' '*:S'"
         }
 
         return withContext(Dispatchers.IO) {
-            when(val result = ShellManager.shell(command)) {
+            when (val result = ShellManager.shell(command)) {
                 is ShellResult.Error -> {
-                    mutableListOf()
+                    Result.failure(IOException(result.stderr.ifBlank { "Failed to read logcat" }, result.throwable))
                 }
                 is ShellResult.Success -> {
-                    result.stdout.split("\n")
+                    Result.success(result.stdout.lineSequence()
+                        .map { it.trimEnd() }
+                        .filter { it.isNotBlank() && !it.startsWith("---------") }
+                        .toList())
                 }
             }
-//            try {
-//                val (result, err) =
-//                if (err) {
-//                    result.split("\n")
-//                } else {
-//                    mutableListOf()
-//                }
-//            } catch (e: Exception) {
-////                e.printStackTrace()
-//                mutableListOf()
-//            }
         }
     }
 
     fun getCurrentLogcatTimeFormat(): String {
-        val dateFormat = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US)
         return dateFormat.format(Date())
     }
 }

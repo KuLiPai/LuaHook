@@ -33,8 +33,23 @@ class LogAdapter(private var logs: MutableList<String>) :
         return logs.size
     }
 
+    fun appendLogs(newLogs: List<String>) {
+        if (newLogs.isEmpty()) return
+        val start = logs.size
+        logs.addAll(newLogs)
+        notifyItemRangeInserted(start, newLogs.size)
+    }
+
+    fun clearLogs() {
+        val count = logs.size
+        if (count == 0) return
+        logs.clear()
+        notifyItemRangeRemoved(0, count)
+    }
+
     @SuppressLint("NotifyDataSetChanged")
     fun updateLogs(newLogs: MutableList<String>) {
+        if (logs == newLogs) return
         logs = newLogs
         notifyDataSetChanged() // 通知 RecyclerView 更新数据
     }

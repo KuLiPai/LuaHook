@@ -1,6 +1,7 @@
 [versions]
 agp = "9.4.1"
 annotation = "1.10.0"
+floatingxCore = "3.0.0"
 libxposed = "102.0.0"
 apiVersion = "13.1.5"
 core = "6.0.0"
@@ -38,6 +39,8 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragmentKtx" }
 androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
+floatingx-core = { module = "io.github.petterpx:floatingx-core", version.ref = "floatingxCore" }
+floatingx-system = { module = "io.github.petterpx:floatingx-system", version.ref = "floatingxCore" }
 libxposed-api = { module = "io.github.libxposed:api", version.ref = "libxposed" }
 libxposed-service = { module = "io.github.libxposed:service", version.ref = "libxposed" }
 core = { module = "com.github.topjohnwu.libsu:core", version.ref = "core" }

@@ -65,6 +65,8 @@
     <string name="update_dialog_message">A new version is available: %s Please click the Update button to download and install.</string>
     <string name="cant_open_links">Unable to open the link, please make sure the browser is installed</string>
     <string name="no_power">Permission denied</string>
+    <string name="logcat_empty">No logs yet. Waiting for new logs…</string>
+    <string name="logcat_read_failed">Failed to read logs: %1$s</string>
     <string name="checking">Checking...</string>
     <string name="check_update_false">Checking for updates failed, please try again later</string>
     <string name="new_version">There is a new version</string>
