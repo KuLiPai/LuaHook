@@ -101,6 +101,7 @@ object WorkspaceFileManager {
                 false
             }
             is ShellResult.Success -> {
+                WorkspaceEventManager.notifyFileChanged(file)
                 true
             }
         }
@@ -172,6 +173,7 @@ object WorkspaceFileManager {
                 false
             }
             is ShellResult.Success -> {
+                WorkspaceEventManager.notifyFileChanged(file)
                 true
             }
         }

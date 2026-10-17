@@ -228,4 +228,9 @@
     <string name="aqintrue_contribute">Native features, Native Hook</string>
     <string name="expand_all_contributors">View all contributors (%1$d)</string>
     <string name="collapse_contributors">Collapse</string>
+    <string name="msg_file_reloaded_from_disk">File updated from external change</string>
+    <string name="title_file_conflict">File Conflict</string>
+    <string name="msg_file_conflict">The file was modified externally (e.g. by MCP), but the editor has unsaved changes.\nReload the latest version from disk?</string>
+    <string name="action_reload_from_disk">Reload</string>
+    <string name="action_overwrite_disk">Keep Local and Overwrite</string>
 </resources>

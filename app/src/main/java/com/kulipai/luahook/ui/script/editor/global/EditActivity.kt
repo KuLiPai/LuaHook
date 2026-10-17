@@ -33,6 +33,9 @@ import androidx.core.net.toUri
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
@@ -43,7 +46,9 @@ import com.kulipai.luahook.ui.manual.Manual
 import com.kulipai.luahook.ui.script.editor.SymbolAdapter
 import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.file.WorkspaceEventManager
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
+import kotlinx.coroutines.launch
 import com.myopicmobile.textwarrior.common.AutoIndent
 import com.myopicmobile.textwarrior.common.Flag
 import com.myopicmobile.textwarrior.common.LuaParser
@@ -331,19 +336,63 @@ class EditActivity : AppCompatActivity() {
     companion object
 
 
+    private var lastSavedContent: String = ""
+
+    private fun isContentModified(): Boolean {
+        return editor.text.toString() != lastSavedContent
+    }
+
     fun saveScript(text: String) {
+        lastSavedContent = text
         WorkspaceFileManager.write("/global.lua", text)
     }
 
+    override fun onResume() {
+        super.onResume()
+        checkAndReloadGlobalScript()
+    }
 
     override fun onStop() {
         super.onStop()
-        saveScript(editor.text.toString())
+        if (isContentModified()) {
+            saveScript(editor.text.toString())
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        saveScript(editor.text.toString())
+        if (isContentModified()) {
+            saveScript(editor.text.toString())
+        }
+    }
+
+    private fun checkAndReloadGlobalScript() {
+        val diskText = WorkspaceFileManager.read("/global.lua")
+        if (diskText == lastSavedContent) return
+        if (!isContentModified()) {
+            val cursorLine = editor.cursor.leftLine
+            val cursorColumn = editor.cursor.leftColumn
+            val currentScrollY = editor.offsetY
+
+            lastSavedContent = diskText
+            editor.setText(diskText)
+
+            val content = editor.text
+            if (content.lineCount > 0 && cursorLine >= 0) {
+                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+                val maxCol = content.getColumnCount(targetLine)
+                val safeCol = cursorColumn.coerceIn(0, maxCol)
+                editor.setSelection(targetLine, safeCol)
+            }
+            try {
+                if (!editor.scroller.isFinished) {
+                    editor.scroller.forceFinished(true)
+                }
+                editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+            } catch (_: Exception) {}
+
+            Toast.makeText(this, getString(R.string.msg_file_reloaded_from_disk), Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -415,6 +464,17 @@ class EditActivity : AppCompatActivity() {
 
 
         editor.setText(luaScript)
+        lastSavedContent = luaScript
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                WorkspaceEventManager.fileEvents.collect { path ->
+                    if (path == "/global.lua") {
+                        checkAndReloadGlobalScript()
+                    }
+                }
+            }
+        }
 
         fab.setOnClickListener {
             saveScript(editor.text.toString())

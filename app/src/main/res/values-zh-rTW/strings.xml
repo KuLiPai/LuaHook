@@ -212,4 +212,9 @@ https://luahook.kulipai.top/activate.html
     <string name="eleven_contribute">翻譯</string>
     <string name="padi_contribute">Native 功能，測試開發，宣傳</string>
     <string name="california_contribute">翻譯，部分介面設計</string>
+    <string name="msg_file_reloaded_from_disk">檔案內容已從外部更新</string>
+    <string name="title_file_conflict">檔案外部修改衝突</string>
+    <string name="msg_file_conflict">檢測到檔案已被外部修改（如 MCP），目前編輯器存在未儲存的變更。\n是否重新載入外部最新版本？</string>
+    <string name="action_reload_from_disk">重新載入</string>
+    <string name="action_overwrite_disk">保留本地並覆蓋</string>
 </resources>

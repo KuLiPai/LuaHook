@@ -23,8 +23,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doBeforeTextChanged
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -32,6 +34,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
+import com.kulipai.luahook.core.file.WorkspaceEventManager
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.databinding.ActivityAppsEditBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
@@ -61,14 +64,60 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     private lateinit var scriptDescription: String
     private var author: String = ""
 
+    private var lastSavedContent: String = ""
+
+    private fun isContentModified(): Boolean {
+        return binding.editor.text.toString() != lastSavedContent
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkAndReloadScript()
+    }
+
     override fun onStop() {
         super.onStop()
-        saveScript(binding.editor.text.toString())
+        if (isContentModified()) {
+            saveScript(binding.editor.text.toString())
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        saveScript(binding.editor.text.toString())
+        if (isContentModified()) {
+            saveScript(binding.editor.text.toString())
+        }
+    }
+
+    private fun checkAndReloadScript() {
+        if (!::currentPackageName.isInitialized || !::scripName.isInitialized) return
+        val path = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
+        val diskText = WorkspaceFileManager.read(path)
+        if (diskText == lastSavedContent) return
+        if (!isContentModified()) {
+            val cursorLine = binding.editor.cursor.leftLine
+            val cursorColumn = binding.editor.cursor.leftColumn
+            val currentScrollY = binding.editor.offsetY
+
+            lastSavedContent = diskText
+            binding.editor.setText(diskText, null)
+
+            val content = binding.editor.text
+            if (content.lineCount > 0 && cursorLine >= 0) {
+                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+                val maxCol = content.getColumnCount(targetLine)
+                val safeCol = cursorColumn.coerceIn(0, maxCol)
+                binding.editor.setSelection(targetLine, safeCol)
+            }
+            try {
+                if (!binding.editor.scroller.isFinished) {
+                    binding.editor.scroller.forceFinished(true)
+                }
+                binding.editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+            } catch (_: Exception) {}
+
+            Toast.makeText(this, getString(R.string.msg_file_reloaded_from_disk), Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun inflateBinding(inflater: LayoutInflater): ActivityAppsEditBinding {
@@ -117,10 +166,25 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         }
 
         val scriptPath = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-        binding.editor.setText(WorkspaceFileManager.read(scriptPath), null)
+        val content = WorkspaceFileManager.read(scriptPath)
+        lastSavedContent = content
+        binding.editor.setText(content, null)
     }
 
     override fun initEvent() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                WorkspaceEventManager.fileEvents.collect { path ->
+                    if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
+                        val expected = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
+                        if (path == expected) {
+                            checkAndReloadScript()
+                        }
+                    }
+                }
+            }
+        }
+
         binding.fab.setOnClickListener {
             saveScript(binding.editor.text.toString())
             Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
@@ -145,9 +209,15 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> {
-                saveScript(binding.editor.text.toString())
-                ShellManager.shell("am force-stop $currentPackageName")
-                launchApp(this, currentPackageName)
+                if (isContentModified()) {
+                    saveScript(binding.editor.text.toString())
+                }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    ShellManager.shell("am force-stop $currentPackageName")
+                    withContext(Dispatchers.Main) {
+                        launchApp(this@AppsEdit, currentPackageName)
+                    }
+                }
                 true
             }
             1 -> {
@@ -297,10 +367,9 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
     // TODO)) 封装
     fun saveScript(script: String) {
+        lastSavedContent = script
         val path = WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
         WorkspaceFileManager.write(path, script)
-
-
     }
 
     // TODO)) 封装

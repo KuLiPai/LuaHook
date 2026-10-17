@@ -209,4 +209,9 @@
     <string name="eleven_contribute">翻译</string>
     <string name="padi_contribute">Native 功能,测试开发,宣传</string>
     <string name="california_contribute">翻译,部分界面设计</string>
+    <string name="msg_file_reloaded_from_disk">文件内容已从外部更新</string>
+    <string name="title_file_conflict">文件外部修改冲突</string>
+    <string name="msg_file_conflict">检测到文件已被外部修改（如 MCP），当前编辑器存在未保存的改动。\n是否重新加载外部最新版本？</string>
+    <string name="action_reload_from_disk">重新加载</string>
+    <string name="action_overwrite_disk">保留本地并覆盖</string>
 </resources>

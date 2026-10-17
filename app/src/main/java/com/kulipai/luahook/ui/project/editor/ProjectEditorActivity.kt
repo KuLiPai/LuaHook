@@ -30,6 +30,21 @@ import com.myopicmobile.textwarrior.common.Flag
 import com.myopicmobile.textwarrior.common.LuaParser
 import org.luaj.Globals
 import java.io.File
+import android.os.Build
+import android.os.FileObserver
+import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.kulipai.luahook.core.file.WorkspaceEventManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
@@ -37,6 +52,15 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     private lateinit var projectDir: String
     private var currentFile: String = "main.lua" // Relative path
     private val openFiles = mutableListOf<String>()
+
+    private var lastSavedContent: String = ""
+    private var conflictDialog: AlertDialog? = null
+
+    private var projectFileObserver: FileObserver? = null
+    private val fileObserverEvents = MutableSharedFlow<String?>(
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     private lateinit var fileAdapter: FileListAdapter
 
@@ -139,6 +163,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         loadFileList()
         openFile("main.lua")
+        startFileObserver()
     }
 
     // ... (rest of class)
@@ -146,6 +171,37 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     override fun initEvent() {
         binding.toolbar.setNavigationOnClickListener {
             binding.drawerLayout.openDrawer(GravityCompat.START)
+        }
+
+        // 监听工作区 MCP / 内存文件流变更
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                WorkspaceEventManager.fileEvents.collect { relativePath ->
+                    val projectPrefix = "${WorkspaceFileManager.Project}/$projectName/"
+                    if (relativePath.startsWith(projectPrefix) || relativePath == "${WorkspaceFileManager.Project}/$projectName") {
+                        loadFileList()
+                        val currentFileRelativePath = "$projectPrefix$currentFile"
+                        if (relativePath == currentFileRelativePath) {
+                            checkAndReloadCurrentFile(quiet = false)
+                        }
+                    }
+                }
+            }
+        }
+
+        // 监听外部原生文件观察器事件（基于 Flow 防抖处理）
+        @OptIn(FlowPreview::class)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                fileObserverEvents
+                    .debounce(200)
+                    .collect { path ->
+                        loadFileList()
+                        if (path == null || path == currentFile || path.endsWith(currentFile)) {
+                            checkAndReloadCurrentFile(quiet = false)
+                        }
+                    }
+            }
         }
 
         // Handle Back Press for Drawer
@@ -176,12 +232,13 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab?) {
                 tab?.text?.let { filename ->
                     if (filename.toString() != currentFile) {
-                        saveCurrentFile()
+                        if (isContentModified()) {
+                            saveCurrentFile()
+                        }
                         switchToFile(filename.toString())
                     }
                 }
             }
-
             override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
             override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab?) {}
         })
@@ -316,18 +373,123 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         switchToFile(filename)
     }
 
+    private fun isContentModified(): Boolean {
+        return binding.editor.text.toString() != lastSavedContent
+    }
+
     private fun switchToFile(filename: String) {
         currentFile = filename
         val content =
             WorkspaceFileManager.read("${WorkspaceFileManager.Project}/$projectName/$filename")
+        lastSavedContent = content
         binding.editor.setText(content)
     }
 
-    private fun saveCurrentFile() {
-        WorkspaceFileManager.write(
-            "${WorkspaceFileManager.Project}/$projectName/$currentFile",
-            binding.editor.text.toString()
-        )
+    private fun saveCurrentFile(force: Boolean = false): Boolean {
+        val currentText = binding.editor.text.toString()
+        if (!isContentModified()) {
+            return true
+        }
+
+        val path = "${WorkspaceFileManager.Project}/$projectName/$currentFile"
+        val diskContent = WorkspaceFileManager.read(path)
+        if (!force && diskContent != lastSavedContent) {
+            showConflictDialog(diskContent)
+            return false
+        }
+
+        val success = WorkspaceFileManager.write(path, currentText)
+        if (success) {
+            lastSavedContent = currentText
+        }
+        return success
+    }
+
+    private fun showConflictDialog(diskContent: String) {
+        if (conflictDialog?.isShowing == true) return
+        conflictDialog = MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.title_file_conflict))
+            .setMessage(getString(R.string.msg_file_conflict))
+            .setPositiveButton(getString(R.string.action_reload_from_disk)) { _, _ ->
+                applyNewContent(diskContent, showToast = true)
+            }
+            .setNegativeButton(getString(R.string.action_overwrite_disk)) { _, _ ->
+                saveCurrentFile(force = true)
+            }
+            .setNeutralButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun checkAndReloadCurrentFile(quiet: Boolean = false) {
+        val path = "${WorkspaceFileManager.Project}/$projectName/$currentFile"
+        val diskContent = WorkspaceFileManager.read(path)
+        if (diskContent == lastSavedContent) return
+
+        if (!isContentModified()) {
+            applyNewContent(diskContent, showToast = !quiet)
+        } else {
+            showConflictDialog(diskContent)
+        }
+    }
+
+    private fun applyNewContent(newContent: String, showToast: Boolean = false) {
+        val editor = binding.editor
+        val cursorLine = editor.cursor.leftLine
+        val cursorColumn = editor.cursor.leftColumn
+        val currentScrollY = editor.offsetY
+
+        lastSavedContent = newContent
+        editor.setText(newContent)
+
+        val content = editor.text
+        if (content.lineCount > 0 && cursorLine >= 0) {
+            val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+            val maxCol = content.getColumnCount(targetLine)
+            val safeCol = cursorColumn.coerceIn(0, maxCol)
+            editor.setSelection(targetLine, safeCol)
+        }
+
+        try {
+            if (!editor.scroller.isFinished) {
+                editor.scroller.forceFinished(true)
+            }
+            editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+        } catch (_: Exception) {}
+
+        if (showToast) {
+            Toast.makeText(this, getString(R.string.msg_file_reloaded_from_disk), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun startFileObserver() {
+        stopFileObserver()
+        try {
+            val mask = FileObserver.CLOSE_WRITE or FileObserver.CREATE or FileObserver.DELETE or FileObserver.MOVED_TO or FileObserver.MOVED_FROM
+            projectFileObserver = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                object : FileObserver(File(projectDir), mask) {
+                    override fun onEvent(event: Int, path: String?) {
+                        fileObserverEvents.tryEmit(path)
+                    }
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                object : FileObserver(projectDir, mask) {
+                    override fun onEvent(event: Int, path: String?) {
+                        fileObserverEvents.tryEmit(path)
+                    }
+                }
+            }
+            projectFileObserver?.startWatching()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopFileObserver() {
+        try {
+            projectFileObserver?.stopWatching()
+        } catch (_: Exception) {}
+        projectFileObserver = null
     }
 
     private val exportLauncher = registerForActivityResult(
@@ -335,25 +497,25 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     ) { uri ->
         uri?.let {
             Toast.makeText(this, getString(R.string.msg_exporting), Toast.LENGTH_SHORT).show()
-            Thread {
+            lifecycleScope.launch(Dispatchers.IO) {
                 val success = com.kulipai.luahook.core.project.ProjectManager.exportProject(
-                    this,
+                    this@ProjectEditorActivity,
                     projectName,
                     it
                 )
-                runOnUiThread {
+                withContext(Dispatchers.Main) {
                     if (success) Toast.makeText(
-                        this,
+                        this@ProjectEditorActivity,
                         getString(R.string.msg_export_success),
                         Toast.LENGTH_SHORT
                     ).show()
                     else Toast.makeText(
-                        this,
+                        this@ProjectEditorActivity,
                         getString(R.string.msg_export_failed),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            }.start()
+            }
         }
     }
 
@@ -377,7 +539,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         runView.contentDescription = getString(R.string.action_run)
 
         runView.setOnClickListener {
-            saveCurrentFile()
+            if (isContentModified()) {
+                saveCurrentFile()
+            }
             runProject()
         }
         runView.setOnLongClickListener {
@@ -406,14 +570,18 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> { // Run
-                saveCurrentFile()
+                if (isContentModified()) {
+                    saveCurrentFile()
+                }
                 runProject()
                 true
             }
 
             1 -> { // Save
-                saveCurrentFile()
-                Toast.makeText(this, getString(R.string.msg_saved_short), Toast.LENGTH_SHORT).show()
+                val saved = saveCurrentFile(force = true)
+                if (saved) {
+                    Toast.makeText(this, getString(R.string.msg_saved_short), Toast.LENGTH_SHORT).show()
+                }
                 true
             }
 
@@ -526,14 +694,14 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         )
 
         // Load scopes
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             val projects = com.kulipai.luahook.core.project.ProjectManager.getProjects()
             val project = projects.find { it.name == projectName }
             val scopes = project?.scope ?: emptyList()
-            runOnUiThread {
+            withContext(Dispatchers.Main) {
                 for (scope in scopes) {
                     if (scope != "all") {
-                        val chip = com.google.android.material.chip.Chip(this)
+                        val chip = com.google.android.material.chip.Chip(this@ProjectEditorActivity)
                         chip.text = scope
                         chip.setOnClickListener {
                             input.setText(scope)
@@ -542,7 +710,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     }
                 }
             }
-        }.start()
+        }
 
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.title_select_launch_app))
@@ -550,7 +718,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             .setPositiveButton(getString(R.string.action_run)) { _, _ ->
                 val pkg = input.text.toString().trim()
                 if (pkg.isNotEmpty()) {
-                    saveCurrentFile()
+                    if (isContentModified()) {
+                        saveCurrentFile()
+                    }
                     runProject(pkg)
                 }
             }
@@ -559,21 +729,20 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     private fun runProject(launcherPackage: String? = null) {
-        // Run on IO to avoid main thread block if scanning projects
-        Thread {
+        lifecycleScope.launch(Dispatchers.IO) {
             val projects = com.kulipai.luahook.core.project.ProjectManager.getProjects()
             val project = projects.find { it.name == projectName }
-            runOnUiThread {
+            withContext(Dispatchers.Main) {
                 if (project != null) {
                     var pkgToLaunch = launcherPackage ?: project.launcher
                     if (pkgToLaunch.isEmpty()) {
                         if (project.scope.contains("all")) {
                             Toast.makeText(
-                                this,
+                                this@ProjectEditorActivity,
                                 getString(R.string.msg_scope_all_no_launcher),
                                 Toast.LENGTH_LONG
                             ).show()
-                            return@runOnUiThread
+                            return@withContext
                         } else if (project.scope.isNotEmpty()) {
                             pkgToLaunch = project.scope[0]
                         }
@@ -583,48 +752,61 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                         try {
                             val launchIntent = packageManager.getLaunchIntentForPackage(pkgToLaunch)
                             if (launchIntent != null) {
-                                // Force stop before launching
-                                ShellManager.shell("am force-stop $pkgToLaunch")
-                                Thread.sleep(300) // Small delay to ensure it stopped
-
-//                                Toast.makeText(this, "Launching $pkgToLaunch...", Toast.LENGTH_SHORT).show()
+                                withContext(Dispatchers.IO) {
+                                    ShellManager.shell("am force-stop $pkgToLaunch")
+                                    delay(300)
+                                }
                                 startActivity(launchIntent)
                             } else {
                                 Toast.makeText(
-                                    this,
+                                    this@ProjectEditorActivity,
                                     getString(R.string.msg_no_launch_intent, pkgToLaunch),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
                         } catch (e: Exception) {
                             Toast.makeText(
-                                this,
+                                this@ProjectEditorActivity,
                                 getString(R.string.msg_launch_error, e.message),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
                     } else {
                         Toast.makeText(
-                            this,
+                            this@ProjectEditorActivity,
                             getString(R.string.msg_no_launcher_defined),
                             Toast.LENGTH_SHORT
-                        )
-                            .show()
+                        ).show()
                     }
                 } else {
                     Toast.makeText(
-                        this,
+                        this@ProjectEditorActivity,
                         getString(R.string.msg_project_info_not_found),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
             }
-        }.start()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadFileList()
+        checkAndReloadCurrentFile(quiet = true)
     }
 
     override fun onPause() {
         super.onPause()
-        saveCurrentFile()
+        if (isContentModified()) {
+            saveCurrentFile()
+        }
+    }
+
+    override fun onDestroy() {
+        stopFileObserver()
+        conflictDialog?.dismiss()
+        conflictDialog = null
+        super.onDestroy()
     }
 }
 

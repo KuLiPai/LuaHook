@@ -15,11 +15,19 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.kulipai.luahook.core.file.WorkspaceEventManager
+import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.project.ProjectManager
 import com.kulipai.luahook.core.base.BaseFragment
 import com.kulipai.luahook.databinding.FragmentHomeProjectBinding
 import com.kulipai.luahook.ui.project.create.CreateProjectActivity
 import com.kulipai.luahook.ui.project.editor.ProjectEditorActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
     
@@ -79,6 +87,16 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
     }
     
     override fun initEvent() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                WorkspaceEventManager.fileEvents.collect { relativePath ->
+                    if (relativePath == ProjectManager.INFO_JSON || relativePath.startsWith("${WorkspaceFileManager.Project}/")) {
+                        loadProjects()
+                    }
+                }
+            }
+        }
+
         binding.fab.setOnClickListener {
             toggleFab()
         }
@@ -160,9 +178,13 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
         super.onResume()
         loadProjects()
     }
-    
+
     private fun loadProjects() {
-        val projects = ProjectManager.getProjects()
-        adapter.updateData(projects)
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            val projects = ProjectManager.getProjects()
+            withContext(Dispatchers.Main) {
+                adapter.updateData(projects)
+            }
+        }
     }
 }
