@@ -281,7 +281,9 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             null
         }
 
-        // 2. 通过 ConnectivityManager 精准识别当前作为上行连接的 Wi-Fi 客户端网卡和对应 IP
+        // 2. 通过 ConnectivityManager 精准识别 VPN 虚拟网卡以及当前作为上行连接的 Wi-Fi 客户端网卡
+        val vpnIfaces = mutableSetOf<String>()
+        val vpnIps = mutableSetOf<String>()
         val wifiIfaces = mutableSetOf<String>()
         val wifiIps = mutableSetOf<String>()
         if (wifiStationIp != null) {
@@ -291,9 +293,17 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             val cm = getSystemService(ConnectivityManager::class.java)
             if (cm != null) {
                 for (network in cm.allNetworks) {
-                    val caps = cm.getNetworkCapabilities(network)
-                    if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-                        val props = cm.getLinkProperties(network)
+                    val caps = cm.getNetworkCapabilities(network) ?: continue
+                    val props = cm.getLinkProperties(network)
+
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                        props?.interfaceName?.let { vpnIfaces.add(it.lowercase()) }
+                        props?.linkAddresses?.forEach { linkAddr ->
+                            linkAddr.address?.hostAddress?.let { vpnIps.add(it) }
+                        }
+                    }
+
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                         props?.interfaceName?.let { wifiIfaces.add(it.lowercase()) }
                         props?.linkAddresses?.forEach { linkAddr ->
                             linkAddr.address?.hostAddress?.let { wifiIps.add(it) }
@@ -308,10 +318,15 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             if (!intf.isUp || intf.isLoopback) continue
             val name = intf.name.lowercase()
 
-            // 过滤 VPN、虚拟网卡
-            if (name.startsWith("tun") || name.startsWith("tap") || name.startsWith("ppp") ||
+            // 过滤 VPN、虚拟网卡、隧道接口及 464XLAT 接口
+            if (name in vpnIfaces ||
+                name.startsWith("tun") || name.startsWith("tap") || name.startsWith("ppp") ||
                 name.startsWith("p2p") || name.startsWith("dummy") || name.startsWith("sit") ||
-                name.startsWith("ip6tnl") || name.startsWith("veth") || name.startsWith("docker")
+                name.startsWith("ip6tnl") || name.startsWith("veth") || name.startsWith("docker") ||
+                name.startsWith("vgate") || name.startsWith("wg") || name.startsWith("clat") ||
+                name.startsWith("v4-") || name.startsWith("ipsec") || name.startsWith("tailscale") ||
+                name.startsWith("zt") || name.startsWith("utun") || name.startsWith("virbr") ||
+                name.startsWith("secbr")
             ) {
                 continue
             }
@@ -319,6 +334,7 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             for (addr in intf.inetAddresses) {
                 if (addr is Inet4Address && !addr.isLoopbackAddress && !addr.isLinkLocalAddress) {
                     val ip = addr.hostAddress ?: continue
+                    if (ip in vpnIps || ip == "192.0.0.4") continue
                     if (result.any { it.second == ip }) continue
 
                     val isStationWifi = (wifiStationIp != null && ip == wifiStationIp) ||
