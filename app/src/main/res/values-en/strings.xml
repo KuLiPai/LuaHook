@@ -55,6 +55,7 @@
     <string name="mcp_local">Local</string>
     <string name="mcp_lan">LAN</string>
     <string name="mcp_no_lan">No LAN address</string>
+    <string name="mcp_local_network_denied">Local network permission denied. LAN devices cannot reach MCP (local access still works).</string>
     <string name="mcp_copy_ask">Copy this address?</string>
     <string name="mcp_copy">Copy</string>
     <string name="mcp_copied">Copied</string>

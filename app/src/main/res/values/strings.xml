@@ -55,6 +55,7 @@
     <string name="mcp_local">本地</string>
     <string name="mcp_lan">局域网</string>
     <string name="mcp_no_lan">没有局域网地址</string>
+    <string name="mcp_local_network_denied">未授予本地网络权限，局域网设备无法访问 MCP（本机仍可用）</string>
     <string name="mcp_copy_ask">是否复制？</string>
     <string name="mcp_copy">复制</string>
     <string name="mcp_copied">已复制</string>

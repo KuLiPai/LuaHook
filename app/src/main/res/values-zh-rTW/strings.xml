@@ -223,4 +223,5 @@ https://luahook.kulipai.top/activate.html
     <string name="mcp_net_usb">USB網路共用</string>
     <string name="mcp_net_cellular">行動網路</string>
     <string name="mcp_lan_item">%1$s (%2$s)</string>
+    <string name="mcp_local_network_denied">未授予本地網路權限，區域網路裝置無法存取 MCP（本機仍可用）</string>
 </resources>

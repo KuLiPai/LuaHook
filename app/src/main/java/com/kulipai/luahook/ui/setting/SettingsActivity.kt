@@ -24,15 +24,37 @@ import com.kulipai.luahook.data.model.McpInfo
 import com.kulipai.luahook.databinding.ActivitySettingsBinding
 import com.kulipai.luahook.mcp.McpForegroundService
 import com.kulipai.luahook.mcp.McpManager
+import com.kulipai.luahook.mcp.McpNetworkAccess
 import com.kulipai.luahook.ui.about.AboutActivity
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
+import androidx.activity.result.contract.ActivityResultContracts
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
 class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
+
+    /**
+     * Android 17 起，局域网访问需要在运行时授予 ACCESS_LOCAL_NETWORK；
+     * 授权成功后直接把 MCP 打开，失败则提示并回滚开关。
+     */
+    private val localNetworkPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                val mcp = McpManager.getMcpInfo(this)
+                if (McpManager.update(true, mcp.port, this)) {
+                    McpManager.apply(this)
+                }
+            } else {
+                toast(R.string.mcp_local_network_denied)
+            }
+            updateMcpView()
+        }
+
+    /** 本次页面生命周期内是否已经主动请求过局域网权限，避免反复弹窗。 */
+    private var localNetworkRequested = false
 
     override fun inflateBinding(inflater: LayoutInflater): ActivitySettingsBinding {
         return ActivitySettingsBinding.inflate(inflater)
@@ -74,6 +96,12 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
     override fun onResume() {
         super.onResume()
         updateMcpView()
+        // 从旧版本升级过来时 MCP 已开启但还没拿到局域网权限，进设置页补一次授权请求
+        val mcp = McpManager.getMcpInfo(this)
+        if (!localNetworkRequested && mcp.enabled && McpNetworkAccess.needsPermission(this)) {
+            localNetworkRequested = true
+            localNetworkPermission.launch(McpNetworkAccess.PERMISSION)
+        }
     }
 
     private fun updateMcpView() {
@@ -90,6 +118,11 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             if (ShellManager.mode.value == ShellManager.Mode.NONE) {
                 toast(R.string.Inactive_modules)
                 updateMcpView()
+                return@setOnCheckedChangeListener
+            }
+            // Android 17 起局域网访问需要运行时授权，授权后再真正开启
+            if (isChecked && McpNetworkAccess.needsPermission(this)) {
+                localNetworkPermission.launch(McpNetworkAccess.PERMISSION)
                 return@setOnCheckedChangeListener
             }
             if (McpManager.update(isChecked, mcp.port, this)) {
