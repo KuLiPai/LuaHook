@@ -25,6 +25,10 @@ import com.kulipai.luahook.databinding.ActivitySettingsBinding
 import com.kulipai.luahook.mcp.McpForegroundService
 import com.kulipai.luahook.mcp.McpManager
 import com.kulipai.luahook.ui.about.AboutActivity
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiManager
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
@@ -151,14 +155,21 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             else -> getString(R.string.mcp_status_down, mcp.port).substringBefore(" ·")
         }
         val localUrl = "http://127.0.0.1:${mcp.port}/mcp"
-        val lanIp = lanAddress()
-        val lanUrl = lanIp?.let { "http://$it:${mcp.port}/mcp" }
+        val lanIps = getLanAddresses()
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(48, 16, 48, 8)
             addView(label(getString(R.string.mcp_status_line, status)))
             addView(addressRow(getString(R.string.mcp_local), localUrl))
-            addView(addressRow(getString(R.string.mcp_lan), lanUrl ?: getString(R.string.mcp_no_lan), lanUrl))
+            if (lanIps.isEmpty()) {
+                addView(addressRow(getString(R.string.mcp_lan), getString(R.string.mcp_no_lan), null))
+            } else {
+                for ((desc, ip) in lanIps) {
+                    val url = "http://$ip:${mcp.port}/mcp"
+                    val title = getString(R.string.mcp_lan_item, getString(R.string.mcp_lan), desc)
+                    addView(addressRow(title, url))
+                }
+            }
             addView(label("\n" + getString(R.string.mcp_api_list)))
         }
         val scroll = ScrollView(this).apply { addView(content) }
@@ -211,18 +222,92 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             .show()
     }
 
-    /** 第一块已启用、非回环、非链路本地的 IPv4。 */
-    private fun lanAddress(): String? {
-        val interfaces = NetworkInterface.getNetworkInterfaces() ?: return null
+    /** 获取合法的局域网 IPv4 地址列表，过滤掉 VPN（tun/tap）、虚拟网卡等接口。 */
+    private fun getLanAddresses(): List<Pair<String, String>> {
+        val interfaces = try {
+            NetworkInterface.getNetworkInterfaces()?.toList().orEmpty()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+        // 1. 通过 WifiManager 获取当前连接的 Wi-Fi 客户端 IPv4 地址
+        val wifiStationIp = try {
+            val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            val ipInt = wifiManager?.connectionInfo?.ipAddress ?: 0
+            if (ipInt != 0) {
+                java.lang.String.format(
+                    java.util.Locale.US,
+                    "%d.%d.%d.%d",
+                    ipInt and 0xff,
+                    ipInt shr 8 and 0xff,
+                    ipInt shr 16 and 0xff,
+                    ipInt shr 24 and 0xff
+                )
+            } else null
+        } catch (_: Exception) {
+            null
+        }
+
+        // 2. 通过 ConnectivityManager 精准识别当前作为上行连接的 Wi-Fi 客户端网卡和对应 IP
+        val wifiIfaces = mutableSetOf<String>()
+        val wifiIps = mutableSetOf<String>()
+        if (wifiStationIp != null) {
+            wifiIps.add(wifiStationIp)
+        }
+        try {
+            val cm = getSystemService(ConnectivityManager::class.java)
+            if (cm != null) {
+                for (network in cm.allNetworks) {
+                    val caps = cm.getNetworkCapabilities(network)
+                    if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
+                        val props = cm.getLinkProperties(network)
+                        props?.interfaceName?.let { wifiIfaces.add(it.lowercase()) }
+                        props?.linkAddresses?.forEach { linkAddr ->
+                            linkAddr.address?.hostAddress?.let { wifiIps.add(it) }
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+
+        val result = mutableListOf<Pair<String, String>>()
         for (intf in interfaces) {
             if (!intf.isUp || intf.isLoopback) continue
+            val name = intf.name.lowercase()
+
+            // 过滤 VPN、虚拟网卡
+            if (name.startsWith("tun") || name.startsWith("tap") || name.startsWith("ppp") ||
+                name.startsWith("p2p") || name.startsWith("dummy") || name.startsWith("sit") ||
+                name.startsWith("ip6tnl") || name.startsWith("veth") || name.startsWith("docker")
+            ) {
+                continue
+            }
+
             for (addr in intf.inetAddresses) {
                 if (addr is Inet4Address && !addr.isLoopbackAddress && !addr.isLinkLocalAddress) {
-                    return addr.hostAddress
+                    val ip = addr.hostAddress ?: continue
+                    if (result.any { it.second == ip }) continue
+
+                    val isStationWifi = (wifiStationIp != null && ip == wifiStationIp) ||
+                            name in wifiIfaces ||
+                            ip in wifiIps
+
+                    val labelRes = when {
+                        isStationWifi -> R.string.mcp_net_wifi
+                        name.startsWith("ap") || name.startsWith("softap") || name.startsWith("swlan") -> R.string.mcp_net_hotspot
+                        name.startsWith("wlan") -> R.string.mcp_net_hotspot
+                        name.startsWith("eth") -> R.string.mcp_net_ethernet
+                        name.startsWith("rndis") || name.startsWith("usb") -> R.string.mcp_net_usb
+                        name.startsWith("rmnet") || name.startsWith("ccmni") || name.startsWith("pdp") || name.startsWith("wwan") -> R.string.mcp_net_cellular
+                        ip.startsWith("192.168.43.") || ip.endsWith(".1") -> R.string.mcp_net_hotspot
+                        else -> null
+                    }
+                    val label = if (labelRes != null) getString(labelRes) else name
+                    result.add(label to ip)
                 }
             }
         }
-        return null
+        return result
     }
 
     private fun showPortDialog(mcp: McpInfo) {
