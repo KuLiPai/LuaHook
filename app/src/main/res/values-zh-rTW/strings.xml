@@ -224,4 +224,7 @@ https://luahook.kulipai.top/activate.html
     <string name="mcp_net_cellular">行動網路</string>
     <string name="mcp_lan_item">%1$s (%2$s)</string>
     <string name="mcp_local_network_denied">未授予本地網路權限，區域網路裝置無法存取 MCP（本機仍可用）</string>
+    <string name="mcp_ai_rules">AI 規則 (Skill)</string>
+    <string name="mcp_copy_ai_rules">複製 AI 規則 (.cursorrules)</string>
+    <string name="mcp_ai_rules_copied">已複製 AI 規則！可直接貼上到 Cursor / Claude / Windsurf 中使用</string>
 </resources>

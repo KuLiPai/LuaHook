@@ -203,6 +203,20 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
                     addView(addressRow(title, url))
                 }
             }
+            val skillUrl = "http://127.0.0.1:${mcp.port}/skill.md"
+            addView(addressRow(getString(R.string.mcp_ai_rules), skillUrl))
+
+            val copyRulesBtn = MaterialButton(this@SettingsActivity).apply {
+                text = getString(R.string.mcp_copy_ai_rules)
+                setOnClickListener {
+                    val rules = com.kulipai.luahook.mcp.McpStore.getFullSkillMarkdown()
+                    val clipboard = getSystemService(ClipboardManager::class.java)
+                    clipboard.setPrimaryClip(ClipData.newPlainText("luahook_ai_rules", rules))
+                    toast(R.string.mcp_ai_rules_copied)
+                }
+            }
+            addView(copyRulesBtn)
+
             addView(label("\n" + getString(R.string.mcp_api_list)))
         }
         val scroll = ScrollView(this).apply { addView(content) }

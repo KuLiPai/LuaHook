@@ -1,0 +1,7 @@
+interface:
+  display_name: "LuaHook Scripting"
+  short_description: "Write and debug LuaHook scripts with LuaJ++ awareness."
+  default_prompt: "Use $luahook-scripting to write or fix a LuaHook script for an Android app."
+
+policy:
+  allow_implicit_invocation: true

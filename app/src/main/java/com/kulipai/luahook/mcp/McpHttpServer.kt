@@ -31,6 +31,10 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
         if (session.method == Method.GET && (session.uri == "/health" || session.uri == "/mcp/health")) {
             return respond(session, Status.OK, JSONObject().put("ok", true).put("port", listenPort).toString(), "application/json")
         }
+        if (session.method == Method.GET && (session.uri == "/skill" || session.uri == "/skill.md" || session.uri == "/cursorrules")) {
+            val content = McpStore.getFullSkillMarkdown()
+            return respond(session, Status.OK, content, "text/markdown; charset=utf-8")
+        }
         if (session.method != Method.POST || (session.uri != "/" && session.uri != "/mcp")) {
             return respond(session, Status.METHOD_NOT_ALLOWED, rpcError(null, -32600, "POST JSON-RPC to /mcp").toString(), "application/json")
         }
@@ -58,7 +62,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
         }
     }
 
-    /** JSON-RPC 方法：initialize、ping、tools/list、tools/call。 */
+    /** JSON-RPC 方法：initialize、ping、tools/list、tools/call、resources/list、resources/read、prompts/list、prompts/get。 */
     private fun dispatch(method: String, params: JSONObject): Any {
         return when (method) {
             "initialize" -> {
@@ -66,12 +70,19 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
                 val version = if (requested.isNotBlank()) requested else "2025-03-26"
                 JSONObject()
                     .put("protocolVersion", version)
-                    .put("capabilities", JSONObject().put("tools", JSONObject()))
+                    .put("capabilities", JSONObject()
+                        .put("tools", JSONObject())
+                        .put("resources", JSONObject())
+                        .put("prompts", JSONObject()))
                     .put("serverInfo", JSONObject().put("name", "luahook").put("version", "4.1.1"))
             }
             "ping" -> JSONObject()
             "tools/list" -> JSONObject().put("tools", toolDefs())
             "tools/call" -> callTool(params)
+            "resources/list" -> McpStore.listResources()
+            "resources/read" -> McpStore.readResource(params.optString("uri"))
+            "prompts/list" -> McpStore.listPrompts()
+            "prompts/get" -> McpStore.getPrompt(params.optString("name"), params.optJSONObject("arguments") ?: JSONObject())
             else -> error("unknown method $method")
         }
     }
@@ -81,6 +92,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
         val name = params.optString("name")
         val args = params.optJSONObject("arguments") ?: JSONObject()
         val payload = when (name) {
+            "get_scripting_guide" -> McpStore.getScriptingGuide(args)
             "list_projects" -> JSONObject().put("projects", McpStore.listProjects())
             "create_project" -> McpStore.createProject(args)
             "set_project_enabled" -> McpStore.setProjectEnabled(args)
@@ -106,7 +118,7 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
             .put("isError", payload.optBoolean("ok", true).not() && payload.has("error"))
     }
 
-    /** tools/list 里的 18 个工具，和插件页说明一一对应。 */
+    /** tools/list 里的工具，和插件页说明一一对应。包含 get_scripting_guide 及带引导说明的写脚本工具。 */
     private fun toolDefs(): JSONArray {
         fun tool(name: String, description: String, vararg fields: String): JSONObject {
             val props = JSONObject()
@@ -117,20 +129,21 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
                 .put("inputSchema", JSONObject().put("type", "object").put("properties", props))
         }
         return JSONArray()
+            .put(tool("get_scripting_guide", "Retrieve official LuaHook scripting documentation, API syntax rules (hook, replace, lpparam, imports, LuaJ++), and code templates. Call this whenever you need to write or review LuaHook scripts.", "topic"))
             .put(tool("list_projects", "List projects"))
-            .put(tool("create_project", "Create a project", "name", "description", "author", "scope", "launcher", "icon"))
+            .put(tool("create_project", "Create a project with manifest and initial scripts", "name", "description", "author", "scope", "launcher", "icon"))
             .put(tool("set_project_enabled", "Enable or disable a project", "name", "enabled"))
             .put(tool("delete_project", "Delete a project", "name"))
             .put(tool("read_project_file", "Read a file in a project", "name", "file"))
-            .put(tool("write_project_file", "Write a file in a project", "name", "file", "content"))
+            .put(tool("write_project_file", "Write a file in a project. Note: For Lua scripts, follow LuaHook API specifications. Call 'get_scripting_guide' for syntax.", "name", "file", "content"))
             .put(tool("read_global_script", "Read /global.lua"))
-            .put(tool("write_global_script", "Write /global.lua", "content"))
+            .put(tool("write_global_script", "Write /global.lua. Note: Follow LuaHook API specifications. Call 'get_scripting_guide' for reference.", "content"))
             .put(tool("read_selected_apps", "Read /apps.txt"))
             .put(tool("write_selected_apps", "Write /apps.txt", "packages"))
             .put(tool("list_app_scripts", "List scripts for a package", "package"))
-            .put(tool("create_app_script", "Create an app script", "package", "name", "description", "content"))
+            .put(tool("create_app_script", "Create an app script. Note: LuaHook uses unique LuaJ++ hook APIs. Call 'get_scripting_guide' for syntax specifications and templates.", "package", "name", "description", "content"))
             .put(tool("read_app_script", "Read an app script", "package", "name"))
-            .put(tool("write_app_script", "Replace an app script", "package", "name", "content"))
+            .put(tool("write_app_script", "Replace an app script's content. Note: Call 'get_scripting_guide' for LuaHook API reference if needed.", "package", "name", "content"))
             .put(tool("set_app_script_enabled", "Enable or disable an app script", "package", "name", "enabled"))
             .put(tool("delete_app_script", "Delete an app script", "package", "name"))
             .put(tool("read_logs", "Read LuaXposed logcat", "lines"))

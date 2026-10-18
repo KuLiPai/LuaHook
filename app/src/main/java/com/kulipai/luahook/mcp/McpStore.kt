@@ -230,4 +230,248 @@ object McpStore {
             else -> emptyList()
         }
     }
+
+    /** 从 assets/skill 读取文档 */
+    fun readSkillAsset(path: String): String {
+        return try {
+            MyApplication.instance.assets.open("skill/$path").bufferedReader().use { it.readText() }
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    /** 获取完整的 Skill 规则 Markdown */
+    fun getFullSkillMarkdown(): String {
+        val skill = readSkillAsset("SKILL.md")
+        val core = readSkillAsset("references/core-api.md")
+        val patterns = readSkillAsset("references/patterns.md")
+        val luajpp = readSkillAsset("references/luajpp-cheatsheet.md")
+        val native = readSkillAsset("references/native-api.md")
+
+        return if (skill.isNotEmpty()) {
+            buildString {
+                append(skill)
+                append("\n\n---\n\n")
+                append(core)
+                append("\n\n---\n\n")
+                append(patterns)
+                append("\n\n---\n\n")
+                append(luajpp)
+                append("\n\n---\n\n")
+                append(native)
+            }
+        } else {
+            defaultOverview()
+        }
+    }
+
+    /** 工具 get_scripting_guide 的实现，按 topic 给出指南 */
+    fun getScriptingGuide(args: JSONObject): JSONObject {
+        val topic = args.optString("topic", "overview").lowercase()
+        val (title, content) = when (topic) {
+            "core_api", "core", "api" -> {
+                "LuaHook Core API" to readSkillAsset("references/core-api.md").ifEmpty { defaultCoreApi() }
+            }
+            "patterns", "examples", "pattern" -> {
+                "LuaHook Script Patterns" to readSkillAsset("references/patterns.md").ifEmpty { defaultPatterns() }
+            }
+            "luajpp", "syntax" -> {
+                "LuaJ++ Syntax Sugar" to readSkillAsset("references/luajpp-cheatsheet.md").ifEmpty { defaultLuajpp() }
+            }
+            "native" -> {
+                "LuaHook Native API" to readSkillAsset("references/native-api.md").ifEmpty { defaultNative() }
+            }
+            "all", "full" -> {
+                "LuaHook Scripting Guide (Full)" to getFullSkillMarkdown()
+            }
+            else -> {
+                val skill = readSkillAsset("SKILL.md")
+                val core = readSkillAsset("references/core-api.md")
+                val patterns = readSkillAsset("references/patterns.md")
+                "LuaHook Scripting Overview" to if (skill.isNotEmpty()) {
+                    "$skill\n\n---\n\n$core\n\n---\n\n$patterns"
+                } else {
+                    defaultOverview()
+                }
+            }
+        }
+        return JSONObject().put("topic", topic).put("title", title).put("guide", content)
+    }
+
+    /** MCP resources/list */
+    fun listResources(): JSONObject {
+        val array = JSONArray()
+            .put(JSONObject()
+                .put("uri", "luahook://skill/full")
+                .put("name", "LuaHook Scripting Guide (Full)")
+                .put("description", "Complete guide, rules, and best practices for authoring LuaHook scripts")
+                .put("mimeType", "text/markdown"))
+            .put(JSONObject()
+                .put("uri", "luahook://skill/core-api")
+                .put("name", "Core Hook APIs")
+                .put("description", "Core Java-layer hook APIs: hook, hookctor, replace, lpparam, imports, invoke")
+                .put("mimeType", "text/markdown"))
+            .put(JSONObject()
+                .put("uri", "luahook://skill/patterns")
+                .put("name", "Script Patterns & Templates")
+                .put("description", "Ready-to-use LuaHook script templates and real-world patterns")
+                .put("mimeType", "text/markdown"))
+            .put(JSONObject()
+                .put("uri", "luahook://skill/luajpp")
+                .put("name", "LuaJ++ Cheatsheet")
+                .put("description", "LuaJ++ syntax sugar: switch/when, lambda, optional keywords, defer")
+                .put("mimeType", "text/markdown"))
+            .put(JSONObject()
+                .put("uri", "luahook://skill/native-api")
+                .put("name", "Native Hook API")
+                .put("description", "Native C/C++ inline hooking, module base, LuaPointer, memory ops")
+                .put("mimeType", "text/markdown"))
+        return JSONObject().put("resources", array)
+    }
+
+    /** MCP resources/read */
+    fun readResource(uri: String): JSONObject {
+        val text = when (uri.trim()) {
+            "luahook://skill/full" -> getFullSkillMarkdown()
+            "luahook://skill/core-api" -> readSkillAsset("references/core-api.md").ifEmpty { defaultCoreApi() }
+            "luahook://skill/patterns" -> readSkillAsset("references/patterns.md").ifEmpty { defaultPatterns() }
+            "luahook://skill/luajpp" -> readSkillAsset("references/luajpp-cheatsheet.md").ifEmpty { defaultLuajpp() }
+            "luahook://skill/native-api" -> readSkillAsset("references/native-api.md").ifEmpty { defaultNative() }
+            else -> error("Resource not found: $uri")
+        }
+        val content = JSONObject()
+            .put("uri", uri)
+            .put("mimeType", "text/markdown")
+            .put("text", text)
+        return JSONObject().put("contents", JSONArray().put(content))
+    }
+
+    /** MCP prompts/list */
+    fun listPrompts(): JSONObject {
+        val genArgs = JSONArray()
+            .put(JSONObject()
+                .put("name", "target_class")
+                .put("description", "Full Java class name (e.g. android.app.Activity or com.example.MyClass)")
+                .put("required", true))
+            .put(JSONObject()
+                .put("name", "target_method")
+                .put("description", "Target method or constructor name (use <init> for constructor)")
+                .put("required", true))
+            .put(JSONObject()
+                .put("name", "param_types")
+                .put("description", "Comma-separated list of parameter types (e.g. java.lang.String,int). Empty for 0 params.")
+                .put("required", false))
+            .put(JSONObject()
+                .put("name", "timing")
+                .put("description", "Hook timing: 'after', 'before', or 'replace'. Default: 'after'.")
+                .put("required", false))
+
+        val array = JSONArray()
+            .put(JSONObject()
+                .put("name", "luahook_expert")
+                .put("description", "Configure the AI model with comprehensive LuaHook scripting guidelines and syntax rules")
+                .put("arguments", JSONArray()))
+            .put(JSONObject()
+                .put("name", "generate_hook_script")
+                .put("description", "Generate a complete, ready-to-paste LuaHook script for a specific Android target")
+                .put("arguments", genArgs))
+
+        return JSONObject().put("prompts", array)
+    }
+
+    /** MCP prompts/get */
+    fun getPrompt(name: String, args: JSONObject): JSONObject {
+        return when (name) {
+            "luahook_expert" -> {
+                val fullGuide = getFullSkillMarkdown()
+                val promptText = "You are an expert LuaHook script developer for Android Xposed-style modification.\n" +
+                        "When authoring or modifying LuaHook scripts, adhere strictly to the following framework conventions and syntax:\n\n" +
+                        fullGuide
+                JSONObject()
+                    .put("description", "LuaHook developer system prompt")
+                    .put("messages", JSONArray().put(
+                        JSONObject()
+                            .put("role", "user")
+                            .put("content", JSONObject().put("type", "text").put("text", promptText))
+                    ))
+            }
+            "generate_hook_script" -> {
+                val targetClass = args.optString("target_class").trim()
+                if (targetClass.isEmpty()) error("target_class is required")
+                val targetMethod = args.optString("target_method").trim()
+                if (targetMethod.isEmpty()) error("target_method is required")
+                val paramTypes = args.optString("param_types").trim().let { raw ->
+                    if (raw.isEmpty()) emptyList() else raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                }
+                val timing = args.optString("timing", "after").trim().lowercase()
+                val paramsJson = paramTypes.joinToString(", ") { "\"${it.trim()}\"" }
+
+                val promptText = "Write a production-ready LuaHook script for the following hook target:\n" +
+                        "- Target Class: $targetClass\n" +
+                        "- Target Method: $targetMethod\n" +
+                        "- Parameter Types: [$paramsJson]\n" +
+                        "- Timing: $timing\n\n" +
+                        "Requirements:\n" +
+                        "1. Use table-style hook: `hook { class = \"$targetClass\", method = \"$targetMethod\", params = {$paramsJson}, $timing = function(it) ... end }`\n" +
+                        "2. Always include `params = {$paramsJson}` explicitly (even if empty `{}`).\n" +
+                        "3. For instance methods, use `it.thisObject`. Access arguments via `it.args[0]`, `it.args[1]`.\n" +
+                        "4. Prefer `imports` for class loading.\n"
+                JSONObject()
+                    .put("description", "Generate LuaHook script for $targetClass.$targetMethod")
+                    .put("messages", JSONArray().put(
+                        JSONObject()
+                            .put("role", "user")
+                            .put("content", JSONObject().put("type", "text").put("text", promptText))
+                    ))
+            }
+            else -> error("unknown prompt $name")
+        }
+    }
+
+    private fun defaultOverview() = """
+# LuaHook Scripting Guide
+LuaHook is an Android Xposed-style framework in Lua.
+Core rules:
+- Table-style hook: hook { class = "...", method = "...", params = {...}, before/after = function(it) end }
+- Zero params: params = {} (always explicit)
+- Callbacks: it.args[0], it.result, it.thisObject
+- Classloader: lpparam.classLoader
+- Imports: imports "android.widget.Toast"
+""".trimIndent()
+
+    private fun defaultCoreApi() = """
+# LuaHook Core API
+- hook { class = "...", method = "...", params = {...}, before = function(it) end, after = function(it) end }
+- hookctor { class = "...", params = {...}, after = function(it) end }
+- replace { class = "...", method = "...", params = {...}, replace = function(it) return ... end }
+- lpparam: lpparam.classLoader, lpparam.packageName
+- imports "pkg.ClassName"
+""".trimIndent()
+
+    private fun defaultPatterns() = """
+# LuaHook Script Patterns
+imports "android.widget.Toast"
+hook {
+  class = "android.app.Activity",
+  method = "onCreate",
+  params = {"android.os.Bundle"},
+  after = function(it)
+    Toast.makeText(it.thisObject, "Hello LuaHook!", Toast.LENGTH_SHORT).show()
+  end
+}
+""".trimIndent()
+
+    private fun defaultLuajpp() = """
+# LuaJ++ Cheatsheet
+- Optional keywords: then, do, in, function
+- switch / when / case / default / end
+- lambda a,b->a+b
+- try / catch(e) / finally / end
+""".trimIndent()
+
+    private fun defaultNative() = """
+# LuaHook Native API
+- native.module_base("libxxx.so")
+- native.hook(addr, { ret = "int", onEnter = function(ctx) end, onLeave = function(ret) return ret end })
+""".trimIndent()
 }
