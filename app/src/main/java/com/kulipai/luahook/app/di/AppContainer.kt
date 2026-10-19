@@ -5,13 +5,19 @@ import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.file.WorkspaceStorage
 import com.kulipai.luahook.core.file.WorkspaceStorageImpl
+import com.kulipai.luahook.core.project.ProjectManager
 import com.kulipai.luahook.core.shell.ShellExecutor
 import com.kulipai.luahook.core.shell.ShellExecutorImpl
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shell.ShellMode
 import com.kulipai.luahook.data.repository.InstalledAppsRepository
 import com.kulipai.luahook.data.repository.InstalledAppsRepositoryImpl
+import com.kulipai.luahook.data.repository.LogcatRepository
+import com.kulipai.luahook.data.repository.LogcatRepositoryImpl
+import com.kulipai.luahook.data.repository.ProjectRepository
+import com.kulipai.luahook.data.repository.ProjectRepositoryImpl
 import com.kulipai.luahook.mcp.McpManager
+import com.kulipai.luahook.ui.logcat.LogcatDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,10 +49,20 @@ class AppContainer(private val context: Context) {
         InstalledAppsRepositoryImpl(context)
     }
 
+    val logcatRepository: LogcatRepository by lazy {
+        LogcatRepositoryImpl(shellExecutor)
+    }
+
+    val projectRepository: ProjectRepository by lazy {
+        ProjectRepositoryImpl(workspaceStorage, shellExecutor)
+    }
+
     fun initialize() {
         // 绑定遗留单例的静态委托对象
         WorkspaceFileManager.bindStorage(workspaceStorage)
         ShellManager.bindExecutor(shellExecutor)
+        LogcatDelegate.bindRepository(logcatRepository)
+        ProjectManager.bindRepository(projectRepository)
 
         // 1. 同步 Legacy ShellManager LiveData 状态
         syncLegacyShellManager()

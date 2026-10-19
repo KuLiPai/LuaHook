@@ -66,4 +66,17 @@ object WorkspaceFileManager {
     fun ensureReadable(path: String) = getStorage().ensureReadable(path)
 
     fun parseParameters(fileContent: String): FileParameters? = getStorage().parseParameters(fileContent)
+
+    fun copy(srcPath: String, destPath: String): Boolean = getStorage().copy(srcPath, destPath)
+
+    fun move(srcPath: String, destPath: String): Boolean = getStorage().move(srcPath, destPath)
+
+    fun unzip(zipPath: String, destDir: String): Boolean = getStorage().unzip(zipPath, destDir)
+
+    fun listFiles(dirPath: String): List<String> = getStorage().listFiles(dirPath)
+
+    fun delete(path: String): Boolean = getStorage().delete(path)
+
+    fun chmod(path: String, mode: String, recursive: Boolean = false): Boolean =
+        getStorage().chmod(path, mode, recursive)
 }

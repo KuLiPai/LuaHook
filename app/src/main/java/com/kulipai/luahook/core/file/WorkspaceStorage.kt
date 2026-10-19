@@ -23,7 +23,17 @@ interface WorkspaceStorage {
     fun ensureDirectoryExists(path: String): Boolean
     fun ensureReadable(path: String)
     fun parseParameters(fileContent: String): WorkspaceFileManager.FileParameters?
+
+    // 原子文件操作扩展
+    fun copy(srcPath: String, destPath: String): Boolean
+    fun move(srcPath: String, destPath: String): Boolean
+    fun unzip(zipPath: String, destDir: String): Boolean
+    fun listFiles(dirPath: String): List<String>
+    fun delete(path: String): Boolean
+    fun chmod(path: String, mode: String, recursive: Boolean = false): Boolean
 }
+
+fun String.escapeShellPath(): String = "'" + this.replace("'", "'\\''") + "'"
 
 class WorkspaceStorageImpl(
     private val shellExecutor: ShellExecutor
@@ -49,7 +59,7 @@ class WorkspaceStorageImpl(
                 }
             }
 
-            when (val result = shellExecutor.exec("cat \"$fullPath\"")) {
+            when (val result = shellExecutor.exec("cat ${fullPath.escapeShellPath()}")) {
                 is ShellResult.Success -> return result.stdout
                 is ShellResult.Error -> Unit
             }
@@ -65,8 +75,9 @@ class WorkspaceStorageImpl(
      * SELinux blocks direct access to [DIR] under /data/local/tmp.
      */
     private fun readViaRoot(absolutePath: String): String? {
+        val escapedPath = absolutePath.escapeShellPath()
         try {
-            val result = Shell.cmd("cat \"$absolutePath\"").exec()
+            val result = Shell.cmd("cat $escapedPath").exec()
             if (result.isSuccess && result.out.isNotEmpty()) {
                 return result.out.joinToString("\n")
             }
@@ -74,7 +85,7 @@ class WorkspaceStorageImpl(
             // Fall through to Runtime.exec("su").
         }
         return try {
-            val process = ProcessBuilder("su", "-c", "cat \"$absolutePath\"")
+            val process = ProcessBuilder("su", "-c", "cat $escapedPath")
                 .redirectErrorStream(true)
                 .start()
             val output = process.inputStream.bufferedReader().use { it.readText() }
@@ -86,6 +97,7 @@ class WorkspaceStorageImpl(
 
     override fun write(file: String, content: String): Boolean {
         val path = "${WorkspaceFileManager.DIR}$file"
+        val escapedPath = path.escapeShellPath()
 
         val base64Content = Base64.encodeToString(
             content.toByteArray(Charsets.UTF_8),
@@ -93,10 +105,10 @@ class WorkspaceStorageImpl(
         )
 
         val script = """
-        rm -f "$path"
-        touch "$path"
-        echo "$base64Content" | base64 -d > "$path"
-        chmod 666 "$path"
+        rm -f $escapedPath
+        touch $escapedPath
+        echo "$base64Content" | base64 -d > $escapedPath
+        chmod 666 $escapedPath
     """.trimIndent()
 
         val result = shellExecutor.exec(script)
@@ -150,7 +162,7 @@ class WorkspaceStorageImpl(
 
     override fun rm(file: String): Boolean {
         val path = "${WorkspaceFileManager.DIR}$file"
-        val script = "rm -rf \"$path\""
+        val script = "rm -rf ${path.escapeShellPath()}"
         val result = shellExecutor.exec(script)
         result.dd()
         return when (result) {
@@ -171,7 +183,7 @@ class WorkspaceStorageImpl(
     }
 
     override fun directoryExists(path: String): Boolean {
-        val result = shellExecutor.exec("ls \"$path\"")
+        val result = shellExecutor.exec("ls ${path.escapeShellPath()}")
         return when (result) {
             is ShellResult.Error -> false
             is ShellResult.Success -> true
@@ -183,7 +195,8 @@ class WorkspaceStorageImpl(
             return true
         }
 
-        val result = shellExecutor.exec("mkdir -p \"$path\"\nchmod 777 \"$path\"")
+        val escaped = path.escapeShellPath()
+        val result = shellExecutor.exec("mkdir -p $escaped\nchmod 777 $escaped")
         return when (result) {
             is ShellResult.Error -> false
             is ShellResult.Success -> true
@@ -191,7 +204,45 @@ class WorkspaceStorageImpl(
     }
 
     override fun ensureReadable(path: String) {
-        shellExecutor.exec("chmod 666 \"$path\"")
+        shellExecutor.exec("chmod 666 ${path.escapeShellPath()}")
+    }
+
+    override fun copy(srcPath: String, destPath: String): Boolean {
+        val script = "cp -r ${srcPath.escapeShellPath()} ${destPath.escapeShellPath()}"
+        return shellExecutor.exec(script) is ShellResult.Success
+    }
+
+    override fun move(srcPath: String, destPath: String): Boolean {
+        val script = "mv ${srcPath.escapeShellPath()} ${destPath.escapeShellPath()}"
+        return shellExecutor.exec(script) is ShellResult.Success
+    }
+
+    override fun unzip(zipPath: String, destDir: String): Boolean {
+        val destEscaped = destDir.escapeShellPath()
+        val zipEscaped = zipPath.escapeShellPath()
+        val script = "mkdir -p $destEscaped\nunzip -o $zipEscaped -d $destEscaped"
+        return shellExecutor.exec(script) is ShellResult.Success
+    }
+
+    override fun listFiles(dirPath: String): List<String> {
+        val script = "ls ${dirPath.escapeShellPath()}"
+        val result = shellExecutor.exec(script)
+        return if (result is ShellResult.Success) {
+            result.stdout.trim().split("\n").map { it.trim() }.filter { it.isNotBlank() }
+        } else {
+            emptyList()
+        }
+    }
+
+    override fun delete(path: String): Boolean {
+        val script = "rm -rf ${path.escapeShellPath()}"
+        return shellExecutor.exec(script) is ShellResult.Success
+    }
+
+    override fun chmod(path: String, mode: String, recursive: Boolean): Boolean {
+        val opt = if (recursive) "-R " else ""
+        val script = "chmod $opt$mode ${path.escapeShellPath()}"
+        return shellExecutor.exec(script) is ShellResult.Success
     }
 
     override fun parseParameters(fileContent: String): WorkspaceFileManager.FileParameters? {

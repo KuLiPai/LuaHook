@@ -6,43 +6,56 @@ import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.content.Intent
 import android.net.Uri
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.kulipai.luahook.core.file.WorkspaceEventManager
-import com.kulipai.luahook.core.file.WorkspaceFileManager
-import com.kulipai.luahook.core.project.ProjectManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseFragment
 import com.kulipai.luahook.databinding.FragmentHomeProjectBinding
+import com.kulipai.luahook.ui.project.ProjectViewModel
 import com.kulipai.luahook.ui.project.create.CreateProjectActivity
 import com.kulipai.luahook.ui.project.editor.ProjectEditorActivity
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
-    
+class ProjectFragment : BaseFragment<FragmentHomeProjectBinding>() {
+
+    private val viewModel: ProjectViewModel by viewModels()
     private lateinit var adapter: ProjectAdapter
     private var isFabOpen = false
+    private var emptyTextView: TextView? = null
 
     private val pickFileLauncher: ActivityResultLauncher<Array<String>> =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
             uri?.let {
-                val success = ProjectManager.importProject(requireContext(), it)
-                if (success) {
-                    Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_import_success), Toast.LENGTH_SHORT).show()
-                    loadProjects()
-                } else {
-                    Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_import_failed), Toast.LENGTH_SHORT).show()
+                viewModel.importProject(requireContext(), it) { success ->
+                    if (success) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.msg_import_success),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.msg_import_failed),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }
@@ -53,45 +66,56 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
     ): FragmentHomeProjectBinding {
         return FragmentHomeProjectBinding.inflate(inflater, container, false)
     }
-    
+
     override fun initView() {
         adapter = ProjectAdapter(
             mutableListOf(),
             onProjectClick = { project ->
-                 val intent = Intent(requireContext(), ProjectEditorActivity::class.java)
-                 intent.putExtra("project_name", project.name)
-                 startActivity(intent)
+                val intent = Intent(requireContext(), ProjectEditorActivity::class.java)
+                intent.putExtra("project_name", project.name)
+                startActivity(intent)
             },
             onProjectToggle = { project, isEnabled ->
-                ProjectManager.setProjectEnabled(project.name, isEnabled)
+                viewModel.setProjectEnabled(project.name, isEnabled)
             },
             onProjectLongClick = { project ->
-                com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(getString(com.kulipai.luahook.R.string.title_delete_project))
-                    .setMessage(getString(com.kulipai.luahook.R.string.msg_confirm_delete_project, project.name))
-                    .setPositiveButton(getString(com.kulipai.luahook.R.string.action_delete)) { _, _ ->
-                        try {
-                            ProjectManager.deleteProject(project.name)
-                            loadProjects()
-                             Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_deleted_project, project.name), Toast.LENGTH_SHORT).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(requireContext(), getString(com.kulipai.luahook.R.string.msg_delete_failed, e.message), Toast.LENGTH_SHORT).show()
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(getString(R.string.title_delete_project))
+                    .setMessage(getString(R.string.msg_confirm_delete_project, project.name))
+                    .setPositiveButton(getString(R.string.action_delete)) { _, _ ->
+                        viewModel.deleteProject(project.name) { success ->
+                            if (success) {
+                                Toast.makeText(
+                                    requireContext(),
+                                    getString(R.string.msg_deleted_project, project.name),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    requireContext(),
+                                    getString(R.string.msg_delete_failed, ""),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
                     }
-                    .setNegativeButton(getString(com.kulipai.luahook.R.string.cancel), null)
+                    .setNegativeButton(getString(R.string.cancel), null)
                     .show()
             }
         )
-        binding.projectRecyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(requireContext())
+        binding.projectRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.projectRecyclerView.adapter = adapter
     }
-    
+
     override fun initEvent() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                WorkspaceEventManager.fileEvents.collect { relativePath ->
-                    if (relativePath == ProjectManager.INFO_JSON || relativePath.startsWith("${WorkspaceFileManager.Project}/")) {
-                        loadProjects()
+                viewModel.uiState.collect { state ->
+                    adapter.updateData(state.projects)
+                    updateEmptyState(state.projects.isEmpty() && !state.isLoading)
+                    state.errorMessage?.let { error ->
+                        Toast.makeText(requireContext(), error, Toast.LENGTH_SHORT).show()
+                        viewModel.clearErrorMessage()
                     }
                 }
             }
@@ -112,7 +136,36 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
             pickFileLauncher.launch(arrayOf("*/*"))
         }
     }
-    
+
+    private fun updateEmptyState(isEmpty: Boolean) {
+        if (isEmpty) {
+            if (emptyTextView == null) {
+                emptyTextView = TextView(requireContext()).apply {
+                    text = "暂无项目\n点击右下角按钮创建或导入项目"
+                    textSize = 15f
+                    gravity = Gravity.CENTER
+                    val typedValue = android.util.TypedValue()
+                    context.theme.resolveAttribute(
+                        com.google.android.material.R.attr.colorOnSurfaceVariant,
+                        typedValue,
+                        true
+                    )
+                    setTextColor(typedValue.data)
+                    val params = CoordinatorLayout.LayoutParams(
+                        CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+                        CoordinatorLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        gravity = Gravity.CENTER
+                    }
+                    binding.root.addView(this, params)
+                }
+            }
+            emptyTextView?.isVisible = true
+        } else {
+            emptyTextView?.isVisible = false
+        }
+    }
+
     private fun toggleFab() {
         val rotateAnimator = ObjectAnimator.ofFloat(
             binding.fab,
@@ -176,15 +229,6 @@ class ProjectFragment: BaseFragment<FragmentHomeProjectBinding>() {
 
     override fun onResume() {
         super.onResume()
-        loadProjects()
-    }
-
-    private fun loadProjects() {
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            val projects = ProjectManager.getProjects()
-            withContext(Dispatchers.Main) {
-                adapter.updateData(projects)
-            }
-        }
+        viewModel.loadProjects()
     }
 }
