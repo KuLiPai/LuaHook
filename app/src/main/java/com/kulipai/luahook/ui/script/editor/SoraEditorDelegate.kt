@@ -24,16 +24,50 @@ import io.github.rosemoe.sora.widget.subscribeAlways
 import io.kulipai.sora.luaj.AndroLuaLanguage
 import io.kulipai.sora.luaj.WrapperLanguage
 import org.eclipse.tm4e.core.registry.IThemeSource
+import org.luaj.Globals
 import org.luaj.lib.jse.JsePlatform
+import com.myopicmobile.textwarrior.common.AutoIndent
+import com.myopicmobile.textwarrior.common.Flag
+import com.myopicmobile.textwarrior.common.LuaParser
 
 // TODO)) 封装
 fun isNightMode(context: Context): Boolean {
     return (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 }
 
+fun CodeEditor.formatLua(indent: Int = 2): Result<Unit> = runCatching {
+    val cursorLine = cursor.leftLine
+    val cursorColumn = cursor.leftColumn
+    val currentScrollY = offsetY
+
+    val luaCode = text.toString()
+    LuaParser.lexer(luaCode, Globals(), Flag())
+    val formattedCode = AutoIndent.format(luaCode, indent)
+
+    val content = text
+    content.beginBatchEdit()
+    content.delete(0, 0, content.lineCount - 1, content.getColumnCount(content.lineCount - 1))
+    content.insert(0, 0, formattedCode)
+    content.endBatchEdit()
+
+    val targetLine = cursorLine.coerceAtMost(content.lineCount - 1)
+    val maxCol = content.getColumnCount(targetLine)
+    val targetCol = cursorColumn.coerceIn(0, maxCol)
+    setSelection(targetLine, targetCol)
+
+    if (!scroller.isFinished) {
+        scroller.forceFinished(true)
+    }
+    scroller.startScroll(0, currentScrollY, 0, 0, 0)
+}
+
 
 object SoraEditorDelegate {
-    fun Context.initLuaEditor(editor: CodeEditor, errMessage: TextView) {
+    fun Context.initLuaEditor(
+        editor: CodeEditor,
+        errMessage: TextView? = null,
+        enableLegacySyntaxCheck: Boolean = (errMessage != null)
+    ) {
 
         fun loadDefaultThemes() {
             val themes = arrayOf("darcula", "abyss", "quietlight", "solarized_drak")
@@ -120,22 +154,24 @@ object SoraEditorDelegate {
             nonPrintablePaintingFlags =
                 CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or CodeEditor.FLAG_DRAW_LINE_SEPARATOR or CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION
 
-            subscribeAlways<ContentChangeEvent> {
-                val c = "=".repeat(99)
-                val code = editor.text.toString()
-                // 简单的语法检查，需确保 load 函数在环境中可用
-                try {
-                    val err =
-                        JsePlatform.standardGlobals().load("_,err = load([$c[$code]$c]);return err")
-                            .call()
-                    if (err.toString() == "nil") {
-                        errMessage.visibility = View.GONE
-                    } else {
-                        errMessage.text = err.toString()
-                        errMessage.visibility = View.VISIBLE
+            if (enableLegacySyntaxCheck && errMessage != null) {
+                subscribeAlways<ContentChangeEvent> {
+                    val c = "=".repeat(99)
+                    val code = editor.text.toString()
+                    // 简单的语法检查，需确保 load 函数在环境中可用
+                    try {
+                        val err =
+                            JsePlatform.standardGlobals().load("_,err = load([$c[$code]$c]);return err")
+                                .call()
+                        if (err.toString() == "nil") {
+                            errMessage.visibility = View.GONE
+                        } else {
+                            errMessage.text = err.toString()
+                            errMessage.visibility = View.VISIBLE
+                        }
+                    } catch (e: Exception) {
+                        // 避免 Lua 解析崩溃导致 App 闪退
                     }
-                } catch (e: Exception) {
-                    // 避免 Lua 解析崩溃导致 App 闪退
                 }
             }
 //            subscribeAlways<PublishSearchResultEvent> { updatePositionText() }

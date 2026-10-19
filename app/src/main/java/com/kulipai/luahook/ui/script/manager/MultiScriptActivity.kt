@@ -23,24 +23,29 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
+import com.kulipai.luahook.app.di.AppContainer
 import com.kulipai.luahook.core.base.BaseActivity
-import com.kulipai.luahook.core.script.ScriptConfigHelper
 import com.kulipai.luahook.core.theme.ColorUtils.getDynamicColor
+import com.kulipai.luahook.data.repository.ScriptRepository
 import com.kulipai.luahook.databinding.ActivityMultiScriptBinding
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import kotlinx.coroutines.launch
 
 class MultiScriptActivity : BaseActivity<ActivityMultiScriptBinding>() {
 
+    private val scriptRepository: ScriptRepository by lazy {
+        AppContainer.instance.scriptRepository
+    }
+
     private lateinit var adapter: MultScriptAdapter
     private lateinit var currentPackageName: String
     private lateinit var appName: String
-    private lateinit var scriptList: MutableList<MutableMap.MutableEntry<String, Any?>>
+    private var scriptList: MutableList<MutableMap.MutableEntry<String, Any?>> = mutableListOf()
 
     private val launcher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             lifecycleScope.launch {
-                scriptList = ScriptConfigHelper.readConf(currentPackageName)
+                scriptList = scriptRepository.readConf(currentPackageName)
                 adapter.updateData(scriptList)
             }
         }
@@ -74,10 +79,12 @@ class MultiScriptActivity : BaseActivity<ActivityMultiScriptBinding>() {
 
     override fun initData() {
         if (::currentPackageName.isInitialized) {
-            scriptList = ScriptConfigHelper.readConf(currentPackageName)
-            adapter = MultScriptAdapter(scriptList, currentPackageName, appName, this, launcher)
-            binding.rec.adapter = adapter
-            setupItemTouchHelper()
+            lifecycleScope.launch {
+                scriptList = scriptRepository.readConf(currentPackageName)
+                adapter = MultScriptAdapter(scriptList, currentPackageName, appName, this@MultiScriptActivity, launcher, scriptRepository)
+                binding.rec.adapter = adapter
+                setupItemTouchHelper()
+            }
         }
     }
 
@@ -170,15 +177,16 @@ class MultiScriptActivity : BaseActivity<ActivityMultiScriptBinding>() {
     }
 
     private fun createAndEditScript(name: String, description: String) {
-        ScriptConfigHelper.writeScriptConfig(currentPackageName, name, description)
-        
-        val intent = Intent(this, AppsEdit::class.java).apply {
-            putExtra("packageName", currentPackageName)
-            putExtra("appName", appName)
-            putExtra("scripName", name)
-            putExtra("scriptDescription", description)
+        lifecycleScope.launch {
+            scriptRepository.createAppScript(currentPackageName, name, description)
+            val intent = Intent(this@MultiScriptActivity, AppsEdit::class.java).apply {
+                putExtra("packageName", currentPackageName)
+                putExtra("appName", appName)
+                putExtra("scripName", name)
+                putExtra("scriptDescription", description)
+            }
+            launcher.launch(intent)
         }
-        launcher.launch(intent)
     }
 
 }

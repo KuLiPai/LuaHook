@@ -1,39 +1,53 @@
 package com.kulipai.luahook.core.script
 
-import com.kulipai.luahook.core.file.WorkspaceFileManager
-import org.json.JSONArray
-import org.json.JSONException
+import com.kulipai.luahook.app.di.AppContainer
+import com.kulipai.luahook.core.file.WorkspaceStorageImpl
+import com.kulipai.luahook.core.shell.StandaloneShellExecutor
+import com.kulipai.luahook.data.repository.ScriptRepository
+import com.kulipai.luahook.data.repository.ScriptRepositoryImpl
+import kotlinx.coroutines.runBlocking
 
+/**
+ * ScriptConfigHelper (绞杀者模式兼容桥梁)
+ * 仅作为旧代码与 Hook 注入环境的兼容适配层保留，新代码请使用 [ScriptRepository]。
+ */
+@Deprecated(
+    message = "Use ScriptRepository via AppContainer.instance.scriptRepository instead",
+    replaceWith = ReplaceWith("AppContainer.instance.scriptRepository")
+)
 object ScriptConfigHelper {
 
-    fun readConf(packageName: String): MutableList<MutableMap.MutableEntry<String, Any?>> {
-        val path = WorkspaceFileManager.AppConf + "/" + packageName + ".txt"
-        val list = WorkspaceFileManager.readMap(path).entries.toMutableList()
-        transformBooleanValuesToJsonArrayInMaps(list)
-        return list
-    }
+    private var customRepository: ScriptRepository? = null
 
-    fun writeScriptConfig(packageName: String, name: String, description: String) {
-        val path = WorkspaceFileManager.AppConf + "/" + packageName + ".txt"
-        val map = WorkspaceFileManager.readMap(path)
-        map[name] = arrayOf<Any?>(true, description, "v1.0")
-        WorkspaceFileManager.writeMap(path, map)
-        WorkspaceFileManager.ensureDirectoryExists(WorkspaceFileManager.DIR + "/" + WorkspaceFileManager.AppScript + "/" + packageName)
-    }
-
-    private fun transformBooleanValuesToJsonArrayInMaps(
-        dataList: MutableList<MutableMap.MutableEntry<String, Any?>>
-    ) {
-        for (entry in dataList) {
-            val value = entry.value
-            if (value is Boolean) {
-                try {
-                    val newArray = JSONArray(arrayOf<Any?>(value, "", "v1.0"))
-                    entry.setValue(newArray)
-                } catch (_: JSONException) {
-                } catch (_: Exception) {
-                }
-            }
+    // 在目标宿主应用（如 Xposed Hook 注入场景）或无 AppContainer 时的 Standalone 兜底
+    private val defaultRepository: ScriptRepository by lazy {
+        val container = AppContainer.instanceOrNull
+        if (container != null) {
+            container.scriptRepository
+        } else {
+            val standaloneExecutor = StandaloneShellExecutor()
+            ScriptRepositoryImpl(
+                WorkspaceStorageImpl(standaloneExecutor),
+                standaloneExecutor
+            )
         }
+    }
+
+    fun bindRepository(repository: ScriptRepository) {
+        customRepository = repository
+    }
+
+    private fun getRepository(): ScriptRepository {
+        return customRepository
+            ?: AppContainer.instanceOrNull?.scriptRepository
+            ?: defaultRepository
+    }
+
+    fun readConf(packageName: String): MutableList<MutableMap.MutableEntry<String, Any?>> = runBlocking {
+        getRepository().readConf(packageName)
+    }
+
+    fun writeScriptConfig(packageName: String, name: String, description: String): Unit = runBlocking {
+        getRepository().writeScriptConfig(packageName, name, description)
     }
 }

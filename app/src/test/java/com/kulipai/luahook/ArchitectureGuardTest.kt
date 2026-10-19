@@ -41,7 +41,6 @@ class ArchitectureGuardTest {
     }
 
     @Test
-    @Ignore("待 Phase 2-4 UI 界面与底层解耦完成后开启")
     fun `UI 界面严禁直接调用底层 Shell 或 Shizuku`() {
         scope.files
             .withNameEndingWith("Activity", "Fragment", "Adapter")

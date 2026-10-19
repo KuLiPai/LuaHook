@@ -25,6 +25,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -45,18 +46,22 @@ import com.kulipai.luahook.R
 import com.kulipai.luahook.ui.manual.Manual
 import com.kulipai.luahook.ui.script.editor.SymbolAdapter
 import com.kulipai.luahook.ui.logcat.LogCatActivity
-import com.kulipai.luahook.core.file.WorkspaceFileManager
-import com.kulipai.luahook.core.file.WorkspaceEventManager
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
+import com.kulipai.luahook.ui.script.editor.ScriptEditorViewModel
+import com.kulipai.luahook.ui.script.editor.ScriptEditorMode
+import com.kulipai.luahook.ui.script.editor.ScriptEditorEffect
+import com.kulipai.luahook.ui.script.editor.formatLua
 import kotlinx.coroutines.launch
-import com.myopicmobile.textwarrior.common.AutoIndent
-import com.myopicmobile.textwarrior.common.Flag
-import com.myopicmobile.textwarrior.common.LuaParser
+import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.EditorSearcher
-import org.luaj.Globals
+import io.github.rosemoe.sora.widget.subscribeAlways
 
 class EditActivity : AppCompatActivity() {
+
+    private val viewModel: ScriptEditorViewModel by viewModels {
+        ScriptEditorViewModel.provideFactory()
+    }
 
 
     // 1. 懒加载搜索视图控件
@@ -246,45 +251,7 @@ class EditActivity : AppCompatActivity() {
             }
 
             3 -> {
-                // 格式化
-//                editor.format()
-                try {
-                    // 1. 保存当前状态
-                    val cursorLine = editor.cursor.leftLine
-                    val cursorColumn = editor.cursor.leftColumn
-                    val currentScrollY = editor.offsetY // 获取当前滚动纵坐标
-
-                    val luaCode = editor.text.toString()
-                    LuaParser.lexer(luaCode, Globals(), Flag())
-                    val formattedCode = AutoIndent.format(luaCode, 2)
-
-                    // 获取 Content 对象
-                    val content = editor.text
-
-                    // 2. 使用 batchEdit 进行原子操作（关键步骤）
-                    // 这告诉编辑器这一系列操作是一个整体，Undo 时会一步撤销回格式化前
-                    content.beginBatchEdit()
-
-                    // 删除全部内容 (从 0,0 到 最后一行,最后一列)
-                    content.delete(0, 0, content.lineCount - 1, content.getColumnCount(content.lineCount - 1))
-
-                    // 插入格式化后的代码
-                    content.insert(0, 0, formattedCode)
-
-                    // 结束编辑
-                    content.endBatchEdit()
-
-                    // 3. 恢复光标位置
-                    val targetLine = cursorLine.coerceAtMost(content.lineCount - 1)
-                    val targetCol = if (targetLine == cursorLine) cursorColumn else 0
-                    editor.setSelection(targetLine, targetCol)
-
-                    // 4. 强制恢复视角（解决概率性跳回第一行的问题）
-                    if (!editor.scroller.isFinished) {
-                        editor.scroller.forceFinished(true)
-                    }
-                    editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
-                } catch (e: Exception) {
+                editor.formatLua(2).onFailure { e ->
                     Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
                 true
@@ -336,62 +303,26 @@ class EditActivity : AppCompatActivity() {
     companion object
 
 
-    private var lastSavedContent: String = ""
-
-    private fun isContentModified(): Boolean {
-        return editor.text.toString() != lastSavedContent
-    }
-
     fun saveScript(text: String) {
-        lastSavedContent = text
-        WorkspaceFileManager.write("/global.lua", text)
+        viewModel.save(text, showToast = true)
     }
 
     override fun onResume() {
         super.onResume()
-        checkAndReloadGlobalScript()
+        viewModel.checkExternalChange(editor.text.toString())
     }
 
     override fun onStop() {
         super.onStop()
-        if (isContentModified()) {
-            saveScript(editor.text.toString())
+        if (viewModel.isContentModified(editor.text.toString())) {
+            viewModel.save(editor.text.toString(), showToast = false)
         }
     }
 
     override fun onPause() {
         super.onPause()
-        if (isContentModified()) {
-            saveScript(editor.text.toString())
-        }
-    }
-
-    private fun checkAndReloadGlobalScript() {
-        val diskText = WorkspaceFileManager.read("/global.lua")
-        if (diskText == lastSavedContent) return
-        if (!isContentModified()) {
-            val cursorLine = editor.cursor.leftLine
-            val cursorColumn = editor.cursor.leftColumn
-            val currentScrollY = editor.offsetY
-
-            lastSavedContent = diskText
-            editor.setText(diskText)
-
-            val content = editor.text
-            if (content.lineCount > 0 && cursorLine >= 0) {
-                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
-                val maxCol = content.getColumnCount(targetLine)
-                val safeCol = cursorColumn.coerceIn(0, maxCol)
-                editor.setSelection(targetLine, safeCol)
-            }
-            try {
-                if (!editor.scroller.isFinished) {
-                    editor.scroller.forceFinished(true)
-                }
-                editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
-            } catch (_: Exception) {}
-
-            Toast.makeText(this, getString(R.string.msg_file_reloaded_from_disk), Toast.LENGTH_SHORT).show()
+        if (viewModel.isContentModified(editor.text.toString())) {
+            viewModel.save(editor.text.toString(), showToast = false)
         }
     }
 
@@ -449,36 +380,88 @@ class EditActivity : AppCompatActivity() {
         // 确保在布局稳定后请求 WindowInsets，以便监听器能够正确工作
         ViewCompat.requestApplyInsets(rootLayout)
 
-
-        val luaScript = WorkspaceFileManager.read("/global.lua")
-        if (luaScript == "") {
-            val lua = """
-        """.trimIndent()
-            saveScript(lua)
-        }
-
-
         // SoraEditor
-        initLuaEditor(editor, errMessage)
-
-
-
-        editor.setText(luaScript)
-        lastSavedContent = luaScript
+        initLuaEditor(editor, errMessage, enableLegacySyntaxCheck = false)
+        editor.subscribeAlways<ContentChangeEvent> {
+            viewModel.onContentChanged(editor.text.toString())
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                WorkspaceEventManager.fileEvents.collect { path ->
-                    if (path == "/global.lua") {
-                        checkAndReloadGlobalScript()
+                viewModel.uiState.collect { state ->
+                    if (state.syntaxError != null) {
+                        errMessage.text = state.syntaxError
+                        errMessage.visibility = View.VISIBLE
+                    } else {
+                        errMessage.visibility = View.GONE
+                    }
+                    if (state.title.isNotEmpty()) {
+                        toolbar.title = state.title
                     }
                 }
             }
         }
 
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        is ScriptEditorEffect.InitContent -> {
+                            editor.setText(effect.content)
+                        }
+                        is ScriptEditorEffect.ReloadContent -> {
+                            val cursorLine = editor.cursor.leftLine
+                            val cursorColumn = editor.cursor.leftColumn
+                            val currentScrollY = editor.offsetY
+
+                            editor.setText(effect.content)
+
+                            val content = editor.text
+                            if (content.lineCount > 0 && cursorLine >= 0) {
+                                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+                                val maxCol = content.getColumnCount(targetLine)
+                                val safeCol = cursorColumn.coerceIn(0, maxCol)
+                                editor.setSelection(targetLine, safeCol)
+                            }
+                            try {
+                                if (!editor.scroller.isFinished) {
+                                    editor.scroller.forceFinished(true)
+                                }
+                                editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+                            } catch (_: Exception) {}
+                        }
+                        is ScriptEditorEffect.FileConflict -> {
+                            MaterialAlertDialogBuilder(this@EditActivity)
+                                .setTitle(getString(R.string.tips))
+                                .setMessage(getString(R.string.msg_file_conflict))
+                                .setPositiveButton(getString(R.string.action_reload_from_disk)) { _, _ ->
+                                    viewModel.applyDiskContent(effect.diskContent, showToast = true)
+                                }
+                                .setNegativeButton(getString(R.string.action_overwrite_disk)) { _, _ ->
+                                    viewModel.forceSave(editor.text.toString())
+                                }
+                                .setNeutralButton(getString(R.string.cancel), null)
+                                .show()
+                        }
+                        is ScriptEditorEffect.ShowToast -> {
+                            Toast.makeText(this@EditActivity, effect.message, Toast.LENGTH_SHORT).show()
+                        }
+                        is ScriptEditorEffect.ShowToastRes -> {
+                            Toast.makeText(this@EditActivity, getString(effect.resId), Toast.LENGTH_SHORT).show()
+                        }
+                        is ScriptEditorEffect.SaveSuccess -> {
+                            Toast.makeText(this@EditActivity, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+
+        viewModel.init(ScriptEditorMode.Global)
+
         fab.setOnClickListener {
-            saveScript(editor.text.toString())
-            Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
+            viewModel.save(editor.text.toString(), showToast = true)
         }
 
         initSearchPanel()

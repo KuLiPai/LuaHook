@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.activity.enableEdgeToEdge
 import com.kulipai.luahook.R
+import com.kulipai.luahook.app.di.AppContainer
 import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.log.e
@@ -51,7 +52,7 @@ class ScriptSetActivity : BaseActivity<ActivityScriptSetBinding>() {
         } else {
             path
         }
-        return WorkspaceFileManager.read(relative)
+        return AppContainer.instance.workspaceStorage.read(relative)
     }
 
     private fun createGlobals(): Globals {

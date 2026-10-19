@@ -69,6 +69,14 @@ object ShizukuApi {
             isPermissionGranted.postValue(granted)
         }
 
+    fun registerPermissionListener() {
+        Shizuku.addRequestPermissionResultListener(permissionListener)
+    }
+
+    fun unregisterPermissionListener() {
+        Shizuku.removeRequestPermissionResultListener(permissionListener)
+    }
+
     fun checkShizukuPermission(): Boolean = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
 
     fun requestShizuku() {

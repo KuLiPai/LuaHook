@@ -3,7 +3,6 @@ package com.kulipai.luahook.ui.script.editor.app
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -15,8 +14,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.viewModels
 import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -24,7 +22,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doBeforeTextChanged
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,92 +30,35 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseActivity
-import com.kulipai.luahook.core.file.WorkspaceFileManager
-import com.kulipai.luahook.core.file.WorkspaceEventManager
-import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.databinding.ActivityAppsEditBinding
 import com.kulipai.luahook.ui.logcat.LogCatActivity
 import com.kulipai.luahook.ui.manual.Manual
+import com.kulipai.luahook.ui.script.editor.ScriptEditorEffect
+import com.kulipai.luahook.ui.script.editor.ScriptEditorMode
+import com.kulipai.luahook.ui.script.editor.ScriptEditorViewModel
 import com.kulipai.luahook.ui.script.editor.SoraEditorDelegate.initLuaEditor
 import com.kulipai.luahook.ui.script.editor.SymbolAdapter
 import com.kulipai.luahook.ui.script.editor.ToolAdapter
+import com.kulipai.luahook.ui.script.editor.formatLua
 import com.kulipai.luahook.ui.script.setting.ScriptSetActivity
-import com.myopicmobile.textwarrior.common.AutoIndent
-import com.myopicmobile.textwarrior.common.Flag
-import com.myopicmobile.textwarrior.common.LuaParser
+import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.widget.EditorSearcher
-import kotlinx.coroutines.Dispatchers
+import io.github.rosemoe.sora.widget.subscribeAlways
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.luaj.Globals
 import java.io.File
 
 class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
-    // 文件分享
     private val FILE_PROVIDER_AUTHORITY = "com.kulipai.luahook.fileprovider"
 
-    // 全局变量
+    private val viewModel: ScriptEditorViewModel by viewModels {
+        ScriptEditorViewModel.provideFactory()
+    }
+
     private lateinit var currentPackageName: String
     private lateinit var scripName: String
-    private lateinit var scriptDescription: String
-    private var author: String = ""
-
-    private var lastSavedContent: String = ""
-
-    private fun isContentModified(): Boolean {
-        return binding.editor.text.toString() != lastSavedContent
-    }
-
-    override fun onResume() {
-        super.onResume()
-        checkAndReloadScript()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (isContentModified()) {
-            saveScript(binding.editor.text.toString())
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        if (isContentModified()) {
-            saveScript(binding.editor.text.toString())
-        }
-    }
-
-    private fun checkAndReloadScript() {
-        if (!::currentPackageName.isInitialized || !::scripName.isInitialized) return
-        val path = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-        val diskText = WorkspaceFileManager.read(path)
-        if (diskText == lastSavedContent) return
-        if (!isContentModified()) {
-            val cursorLine = binding.editor.cursor.leftLine
-            val cursorColumn = binding.editor.cursor.leftColumn
-            val currentScrollY = binding.editor.offsetY
-
-            lastSavedContent = diskText
-            binding.editor.setText(diskText, null)
-
-            val content = binding.editor.text
-            if (content.lineCount > 0 && cursorLine >= 0) {
-                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
-                val maxCol = content.getColumnCount(targetLine)
-                val safeCol = cursorColumn.coerceIn(0, maxCol)
-                binding.editor.setSelection(targetLine, safeCol)
-            }
-            try {
-                if (!binding.editor.scroller.isFinished) {
-                    binding.editor.scroller.forceFinished(true)
-                }
-                binding.editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
-            } catch (_: Exception) {}
-
-            Toast.makeText(this, getString(R.string.msg_file_reloaded_from_disk), Toast.LENGTH_SHORT).show()
-        }
-    }
+    private var scriptDescription: String = ""
+    private var appName: String = ""
 
     override fun inflateBinding(inflater: LayoutInflater): ActivityAppsEditBinding {
         return ActivityAppsEditBinding.inflate(inflater)
@@ -127,7 +67,6 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     override fun initView() {
         setSupportActionBar(binding.toolbar)
 
-        // 监听窗口边距变化（包括状态栏、导航栏、IME键盘）
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { view, insets ->
             val bars = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
@@ -140,8 +79,10 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         binding.symbolRecyclerView.adapter = SymbolAdapter(binding.editor)
 
-        // soraEditor
-        initLuaEditor(binding.editor, binding.errMessage)
+        initLuaEditor(binding.editor, binding.errMessage, enableLegacySyntaxCheck = false)
+        binding.editor.subscribeAlways<ContentChangeEvent> {
+            viewModel.onContentChanged(binding.editor.text.toString())
+        }
 
         val tool = listOf(
             R.string.gen_hook_code,
@@ -156,29 +97,97 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     }
 
     override fun initData() {
-        // 接收传递信息
         val intent = intent
         if (intent != null) {
-            currentPackageName = intent.getStringExtra("packageName").toString()
-            scriptDescription = intent.getStringExtra("scriptDescription").toString()
-            scripName = intent.getStringExtra("scripName").toString()
+            currentPackageName = intent.getStringExtra("packageName").orEmpty()
+            scriptDescription = intent.getStringExtra("scriptDescription").orEmpty()
+            scripName = intent.getStringExtra("scripName") ?: intent.getStringExtra("scriptName").orEmpty()
+            appName = intent.getStringExtra("appName").orEmpty()
             title = scripName
         }
 
-        val scriptPath = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-        val content = WorkspaceFileManager.read(scriptPath)
-        lastSavedContent = content
-        binding.editor.setText(content, null)
+        val mode = ScriptEditorMode.AppSpecific(
+            packageName = currentPackageName,
+            scriptName = scripName,
+            appName = appName,
+            scriptDescription = scriptDescription
+        )
+        viewModel.init(mode)
     }
 
     override fun initEvent() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                WorkspaceEventManager.fileEvents.collect { path ->
-                    if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
-                        val expected = "${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-                        if (path == expected) {
-                            checkAndReloadScript()
+                viewModel.uiState.collect { state ->
+                    if (state.syntaxError != null) {
+                        binding.errMessage.text = state.syntaxError
+                        binding.errMessage.visibility = View.VISIBLE
+                    } else {
+                        binding.errMessage.visibility = View.GONE
+                    }
+                    if (state.title.isNotEmpty()) {
+                        binding.toolbar.title = state.title
+                        title = state.title
+                    }
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.effect.collect { effect ->
+                    when (effect) {
+                        is ScriptEditorEffect.InitContent -> {
+                            binding.editor.setText(effect.content, null)
+                        }
+                        is ScriptEditorEffect.ReloadContent -> {
+                            val cursorLine = binding.editor.cursor.leftLine
+                            val cursorColumn = binding.editor.cursor.leftColumn
+                            val currentScrollY = binding.editor.offsetY
+
+                            binding.editor.setText(effect.content, null)
+
+                            val content = binding.editor.text
+                            if (content.lineCount > 0 && cursorLine >= 0) {
+                                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+                                val maxCol = content.getColumnCount(targetLine)
+                                val safeCol = cursorColumn.coerceIn(0, maxCol)
+                                binding.editor.setSelection(targetLine, safeCol)
+                            }
+                            try {
+                                if (!binding.editor.scroller.isFinished) {
+                                    binding.editor.scroller.forceFinished(true)
+                                }
+                                binding.editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+                            } catch (_: Exception) {}
+                        }
+                        is ScriptEditorEffect.FileConflict -> {
+                            MaterialAlertDialogBuilder(this@AppsEdit)
+                                .setTitle(getString(R.string.tips))
+                                .setMessage(getString(R.string.msg_file_conflict))
+                                .setPositiveButton(getString(R.string.action_reload_from_disk)) { _, _ ->
+                                    viewModel.applyDiskContent(effect.diskContent, showToast = true)
+                                }
+                                .setNegativeButton(getString(R.string.action_overwrite_disk)) { _, _ ->
+                                    viewModel.forceSave(binding.editor.text.toString())
+                                }
+                                .setNeutralButton(getString(R.string.cancel), null)
+                                .show()
+                        }
+                        is ScriptEditorEffect.LaunchApp -> {
+                            launchApp(this@AppsEdit, effect.packageName)
+                        }
+                        is ScriptEditorEffect.ShareFile -> {
+                            sharePreparedFile(effect.file)
+                        }
+                        is ScriptEditorEffect.ShowToast -> {
+                            Toast.makeText(this@AppsEdit, effect.message, Toast.LENGTH_SHORT).show()
+                        }
+                        is ScriptEditorEffect.ShowToastRes -> {
+                            Toast.makeText(this@AppsEdit, getString(effect.resId), Toast.LENGTH_SHORT).show()
+                        }
+                        is ScriptEditorEffect.SaveSuccess -> {
+                            Toast.makeText(this@AppsEdit, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -186,12 +195,35 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         }
 
         binding.fab.setOnClickListener {
-            saveScript(binding.editor.text.toString())
-            Toast.makeText(this, resources.getString(R.string.save_ok), Toast.LENGTH_SHORT).show()
+            viewModel.save(binding.editor.text.toString(), showToast = true)
         }
     }
 
-    // 菜单
+    override fun onResume() {
+        super.onResume()
+        if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
+            viewModel.checkExternalChange(binding.editor.text.toString())
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
+            if (viewModel.isContentModified(binding.editor.text.toString())) {
+                viewModel.save(binding.editor.text.toString(), showToast = false)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
+            if (viewModel.isContentModified(binding.editor.text.toString())) {
+                viewModel.save(binding.editor.text.toString(), showToast = false)
+            }
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menu?.add(0, 0, 0, "Run")?.setIcon(R.drawable.play_arrow_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 1, 0, "Undo")?.setIcon(R.drawable.undo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
@@ -205,19 +237,10 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         return true
     }
 
-    // TODO)) 每条写注释或者换个写法
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             0 -> {
-                if (isContentModified()) {
-                    saveScript(binding.editor.text.toString())
-                }
-                lifecycleScope.launch(Dispatchers.IO) {
-                    ShellManager.shell("am force-stop $currentPackageName")
-                    withContext(Dispatchers.Main) {
-                        launchApp(this@AppsEdit, currentPackageName)
-                    }
-                }
+                viewModel.runScript(binding.editor.text.toString())
                 true
             }
             1 -> {
@@ -229,45 +252,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                 true
             }
             3 -> {
-                try {
-                    val editor = binding.editor
-                    // 1. 保存当前状态
-                    val cursorLine = editor.cursor.leftLine
-                    val cursorColumn = editor.cursor.leftColumn
-                    val currentScrollY = editor.offsetY // 获取当前滚动纵坐标
-
-                    val luaCode = editor.text.toString()
-                    LuaParser.lexer(luaCode, Globals(), Flag())
-                    val formattedCode = AutoIndent.format(luaCode, 2)
-
-                    // 获取 Content 对象
-                    val content = editor.text
-
-                    // 2. 使用 batchEdit 进行原子操作（关键步骤）
-                    // 这告诉编辑器这一系列操作是一个整体，Undo 时会一步撤销回格式化前
-                    content.beginBatchEdit()
-
-                    // 删除全部内容 (从 0,0 到 最后一行,最后一列)
-                    content.delete(0, 0, content.lineCount - 1, content.getColumnCount(content.lineCount - 1))
-
-                    // 插入格式化后的代码
-                    content.insert(0, 0, formattedCode)
-
-                    // 结束编辑
-                    content.endBatchEdit()
-
-                    // 3. 恢复光标位置
-                    val targetLine = cursorLine.coerceAtMost(content.lineCount - 1)
-                    val targetCol = if (targetLine == cursorLine) cursorColumn else 0
-                    editor.setSelection(targetLine, targetCol)
-
-                    // 4. 强制恢复视角（解决概率性跳回第一行的问题）
-                    if (!editor.scroller.isFinished) {
-                        editor.scroller.forceFinished(true)
-                    }
-                    editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
-
-                } catch (e: Exception) {
+                binding.editor.formatLua(2).onFailure { e ->
                     Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
                 true
@@ -298,7 +283,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                 val intent = Intent(this, ScriptSetActivity::class.java)
                 intent.putExtra(
                     "path",
-                    WorkspaceFileManager.DIR + WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
+                    "/data/local/tmp/LuaHook/AppScript/$currentPackageName/$scripName.lua"
                 )
                 startActivity(intent)
                 true
@@ -309,7 +294,8 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
     private fun handleShare() {
         val prefs = getSharedPreferences("conf", MODE_PRIVATE)
-        if (prefs.getString("author", "").isNullOrEmpty()) {
+        val author = prefs.getString("author", "").orEmpty()
+        if (author.isEmpty()) {
             val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
             val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
             val edit = view.findViewById<TextInputEditText>(R.id.edit)
@@ -324,14 +310,12 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                     if (edit.text.isNullOrEmpty()) {
                         edit.error = resources.getString(R.string.input_id)
                     } else {
+                        val inputAuthor = edit.text.toString()
                         prefs.edit {
-                            putString("author", edit.text.toString())
+                            putString("author", inputAuthor)
                             apply()
                         }
-                        shareFileFromTmp(
-                            this,
-                            "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-                        )
+                        viewModel.prepareShare(cacheDir, inputAuthor)
                     }
                 }
                 .setNegativeButton(resources.getString(R.string.cancel)) { dialog, _ ->
@@ -339,14 +323,39 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                 }
                 .show()
         } else {
-            shareFileFromTmp(
-                this,
-                "/data/local/tmp/LuaHook/${WorkspaceFileManager.AppScript}/$currentPackageName/$scripName.lua"
-            )
+            viewModel.prepareShare(cacheDir, author)
         }
     }
 
-    // TODO)) 封装起来调用
+    private fun sharePreparedFile(fileToShare: File) {
+        try {
+            val fileUri: Uri = FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, fileToShare)
+            val shareIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, fileUri)
+                type = "*/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            val chooser = Intent.createChooser(shareIntent, resources.getString(R.string.share_doc))
+            if (shareIntent.resolveActivity(packageManager) != null) {
+                startActivity(chooser)
+            } else {
+                Toast.makeText(
+                    this,
+                    resources.getString(R.string.no_apps_share),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                this,
+                resources.getString(R.string.errors_sharing) + "${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
     private fun launchApp(context: Context, packageName: String): Boolean {
         val packageManager = context.packageManager
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
@@ -365,78 +374,9 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
         }
     }
 
-    // TODO)) 封装
     fun saveScript(script: String) {
-        lastSavedContent = script
-        val path = WorkspaceFileManager.AppScript + "/" + currentPackageName + "/" + scripName + ".lua"
-        WorkspaceFileManager.write(path, script)
+        viewModel.save(script, showToast = true)
     }
-
-    // TODO)) 封装
-    fun shareFileFromTmp(
-        context: Context,
-        sourceFilePath: String,
-        title: String = resources.getString(R.string.share_doc),
-        mimeType: String = "*/*"
-    ) {
-        (context as? LifecycleOwner)?.lifecycleScope?.launch(Dispatchers.IO) {
-            val copiedFile: File? = try {
-                val cacheDir = context.cacheDir
-                val destinationFile = File(cacheDir, File(sourceFilePath).name)
-                val relative = sourceFilePath.removePrefix(WorkspaceFileManager.DIR)
-                val originalContent = WorkspaceFileManager.read(relative)
-                author = getSharedPreferences("conf", MODE_PRIVATE).getString("author", "").toString()
-                val headerContent = "-- name: $scripName\n-- descript: $scriptDescription\n-- package: $currentPackageName\n-- author: $author\n\n"
-                val mergedContent = headerContent + originalContent
-                destinationFile.writeText(mergedContent)
-                destinationFile
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "文件复制或写入失败: ${e.message}", Toast.LENGTH_LONG)
-                        .show()
-                }
-                null
-            }
-
-            copiedFile?.let { fileToShare ->
-                withContext(Dispatchers.Main) {
-                    try {
-                        val fileUri: Uri = getFileUri(context, fileToShare)
-                        val shareIntent: Intent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_STREAM, fileUri)
-                            type = mimeType
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        }
-                        val chooser = Intent.createChooser(shareIntent, title)
-                        if (shareIntent.resolveActivity(context.packageManager) != null) {
-                            context.startActivity(chooser)
-                        } else {
-                            Toast.makeText(
-                                context,
-                                resources.getString(R.string.no_apps_share),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        Toast.makeText(
-                            context,
-                            resources.getString(R.string.errors_sharing) + "${e.message}",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-            }
-        }
-    }
-
-    // TODO)) 封装
-    private fun getFileUri(context: Context, file: File): Uri {
-        return FileProvider.getUriForFile(context, FILE_PROVIDER_AUTHORITY, file)
-    }
-
-
 
     private fun searchNext() {
         val text = binding.etSearch.text?.toString().orEmpty()
@@ -465,17 +405,12 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     }
 
     private fun initSearchPanel() {
-        // 监听搜索框文本变化
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 val text = s.toString()
                 if (text.isNotEmpty()) {
-                    // search(text, options)
-                    // 参数2 SearchOptions: (ignoreCase, normal/regex)
-                    // 这里默认: 不区分大小写(false -> true才区分), 普通模式(false -> true才正则)
-                    // 如果你想完全精确搜索，可以根据需求调整 SearchOptions
                     binding.editor.searcher.search(text, EditorSearcher.SearchOptions(false, false))
                 } else {
                     binding.editor.searcher.stopSearch()
@@ -483,7 +418,6 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             }
         })
 
-        // 监听键盘的"搜索"按钮
         binding.etSearch.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 (event != null && event.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN)
@@ -495,17 +429,14 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             }
         }
 
-        // 上一个
         binding.btnSearchPrev.setOnClickListener {
             searchPrevious()
         }
 
-        // 下一个
         binding.btnSearchNext.setOnClickListener {
             searchNext()
         }
 
-        // 替换当前选中
         binding.btnReplaceOne.setOnClickListener {
             if (binding.editor.searcher.hasQuery()) {
                 val replaceText = binding.etReplace.text.toString()
@@ -517,7 +448,6 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             }
         }
 
-        // 替换所有
         binding.btnReplaceAll.setOnClickListener {
             if (binding.editor.searcher.hasQuery()) {
                 val replaceText = binding.etReplace.text.toString()
@@ -529,7 +459,6 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             }
         }
 
-        // 关闭面板
         binding.btnSearchClose.setOnClickListener {
             closeSearchPanel()
         }
@@ -538,16 +467,13 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     private fun openSearchPanel() {
         binding.searchPanel.visibility = View.VISIBLE
         binding.etSearch.requestFocus()
-        // 弹出键盘
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(binding.etSearch, InputMethodManager.SHOW_IMPLICIT)
 
-        // 如果之前有选中的文本，自动填入搜索框
         if (binding.editor.cursor.isSelected) {
             val selectedText = binding.editor.text.substring(binding.editor.cursor.left, binding.editor.cursor.right)
-            if (selectedText.length < 50 && !selectedText.contains("\n")) { // 限制长度防止填入大段代码
+            if (selectedText.length < 50 && !selectedText.contains("\n")) {
                 binding.etSearch.setText(selectedText)
-                // 移动光标到末尾
                 binding.etSearch.setSelection(selectedText.length)
             }
         }
@@ -556,14 +482,10 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     private fun closeSearchPanel() {
         binding.searchPanel.visibility = View.GONE
         binding.editor.searcher.stopSearch()
-        // 关闭键盘
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
-        // 焦点还给编辑器
         binding.editor.requestFocus()
     }
-
-
 
     override fun onDestroy() {
         super.onDestroy()

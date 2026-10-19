@@ -29,7 +29,6 @@ import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import com.kulipai.luahook.ui.setting.SettingsActivity
 import kotlinx.coroutines.launch
-import rikka.shizuku.Shizuku
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
@@ -196,12 +195,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
 
     override fun onStart() {
         super.onStart()
-        Shizuku.addRequestPermissionResultListener(ShizukuApi.permissionListener)
+        ShizukuApi.registerPermissionListener()
     }
 
     override fun onStop() {
         super.onStop()
-        Shizuku.removeRequestPermissionResultListener(ShizukuApi.permissionListener)
+        ShizukuApi.unregisterPermissionListener()
     }
 
     override fun onDestroy() {
