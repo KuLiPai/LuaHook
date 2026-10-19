@@ -9,22 +9,31 @@ import android.os.IInterface
 import android.os.RemoteException
 import androidx.lifecycle.MutableLiveData
 import com.kulipai.luahook.BuildConfig
-import com.kulipai.luahook.core.file.WorkspaceFileManager
-import com.kulipai.luahook.mcp.McpManager
-import com.kulipai.luahook.core.shell.ShellManager.Mode
-import com.kulipai.luahook.core.shell.ShellManager.setMode
 import com.kulipai.luahook.core.shell.ShellResult
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import rikka.shizuku.Shizuku
 import rikka.shizuku.ShizukuBinderWrapper
 
 object ShizukuApi {
 
-    //
     private fun IBinder.wrap() = ShizukuBinderWrapper(this)
     private fun IInterface.asShizukuBinder() = this.asBinder().wrap()
 
     private var userService: IUserService? = null
 
+    // 响应式 StateFlow 状态流
+    private val _isBinderAvailableFlow = MutableStateFlow(false)
+    val isBinderAvailableFlow: StateFlow<Boolean> = _isBinderAvailableFlow.asStateFlow()
+
+    private val _isPermissionGrantedFlow = MutableStateFlow(false)
+    val isPermissionGrantedFlow: StateFlow<Boolean> = _isPermissionGrantedFlow.asStateFlow()
+
+    private val _isServiceConnectedFlow = MutableStateFlow(false)
+    val isServiceConnectedFlow: StateFlow<Boolean> = _isServiceConnectedFlow.asStateFlow()
+
+    // 遗留 LiveData 兼容字段（保留供 UI 层读取，如 HomeFragment）
     val isBinderAvailable = MutableLiveData(false)
     val isPermissionGranted = MutableLiveData(false)
     val isServiceConnected = MutableLiveData(false)
@@ -33,44 +42,55 @@ object ShizukuApi {
         // 使用 Sticky 确保能获取到初始状态
         Shizuku.addBinderReceivedListenerSticky {
             val available = Shizuku.pingBinder()
-            isBinderAvailable.value = available
+            _isBinderAvailableFlow.value = available
+            isBinderAvailable.postValue(available)
             if (available) {
-                isPermissionGranted.value = checkShizukuPermission()
+                val granted = checkShizukuPermission()
+                _isPermissionGrantedFlow.value = granted
+                isPermissionGranted.postValue(granted)
             }
         }
 
         Shizuku.addBinderDeadListener {
-            isBinderAvailable.value = false
-            isPermissionGranted.value = false
-            isServiceConnected.value = false
+            _isBinderAvailableFlow.value = false
+            _isPermissionGrantedFlow.value = false
+            _isServiceConnectedFlow.value = false
+            isBinderAvailable.postValue(false)
+            isPermissionGranted.postValue(false)
+            isServiceConnected.postValue(false)
             userService = null
         }
-
     }
-
 
     val permissionListener =
         Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-            isPermissionGranted.value = grantResult == PackageManager.PERMISSION_GRANTED
+            val granted = grantResult == PackageManager.PERMISSION_GRANTED
+            _isPermissionGrantedFlow.value = granted
+            isPermissionGranted.postValue(granted)
         }
+
+    fun registerPermissionListener() {
+        Shizuku.addRequestPermissionResultListener(permissionListener)
+    }
+
+    fun unregisterPermissionListener() {
+        Shizuku.removeRequestPermissionResultListener(permissionListener)
+    }
 
     fun checkShizukuPermission(): Boolean = Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
 
-
     fun requestShizuku() {
-        if (isBinderAvailable.value == true && isPermissionGranted.value == false) {
+        if (_isBinderAvailableFlow.value && !_isPermissionGrantedFlow.value) {
             Shizuku.requestPermission(114514)
         }
     }
 
-
     fun bindShizuku(context: Context) {
-        if (isBinderAvailable.value != true || isPermissionGranted.value != true) {
-            // Err
+        if (!_isBinderAvailableFlow.value || !_isPermissionGrantedFlow.value) {
             return
         }
 
-        if (isServiceConnected.value == true) return
+        if (_isServiceConnectedFlow.value) return
 
         val args = Shizuku.UserServiceArgs(
             ComponentName(context.packageName, UserService::class.java.name)
@@ -79,32 +99,22 @@ object ShizukuApi {
             .debuggable(BuildConfig.DEBUG)
             .version(BuildConfig.VERSION_CODE)
 
-
-
-
         Shizuku.bindUserService(args, object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
                 if (binder != null && binder.pingBinder()) {
                     userService = IUserService.Stub.asInterface(binder)
-                    isServiceConnected.value = true
-                    setMode(Mode.SHIZUKU)
-                    WorkspaceFileManager.init(context)
-                    McpManager.onWorkspaceReady(context)
-
-                    // Successful
+                    _isServiceConnectedFlow.value = true
+                    isServiceConnected.postValue(true)
                 }
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
-
-                isServiceConnected.value = false
+                _isServiceConnectedFlow.value = false
+                isServiceConnected.postValue(false)
                 userService = null
-
             }
         })
     }
-
-
 
     fun execShell(cmd: String): ShellResult {
         val service = userService
@@ -124,7 +134,4 @@ object ShizukuApi {
             )
         }
     }
-
-
-
 }

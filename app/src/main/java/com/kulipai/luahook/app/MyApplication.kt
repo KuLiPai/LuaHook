@@ -1,123 +1,84 @@
 package com.kulipai.luahook.app
 
 import android.app.Application
-import android.content.pm.PackageManager
+import android.content.Intent
 import android.content.res.Configuration
 import com.google.android.material.color.DynamicColors
-import com.kulipai.luahook.core.shizuku.ShizukuApi
+import com.kulipai.luahook.app.di.AppContainer
 import com.kulipai.luahook.core.crash.AppCrashHandler
 import com.kulipai.luahook.core.language.LanguageUtils
-import com.kulipai.luahook.core.pm.PackageUtils.getInstalledApps
-import com.kulipai.luahook.core.shell.ShellManager
+import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.xposed.XposedScope
 import com.kulipai.luahook.data.model.AppInfo
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.kulipai.luahook.feature.error.ErrorActivity
 
 /**
- * 全局函数和初始化shell等等
+ * 全局函数和应用初始化入口
  */
-
 class MyApplication : Application() {
-
-    private var cachedAppList: List<AppInfo>? = null
-    private var isLoading = false
-    private val waiters = mutableListOf<CompletableDeferred<List<AppInfo>>>()
 
     companion object {
         @JvmStatic
-        lateinit var instance: MyApplication
+        var instanceOrNull: MyApplication? = null
             private set
+
+        @JvmStatic
+        val instance: MyApplication
+            get() = instanceOrNull ?: throw IllegalStateException("MyApplication is not initialized")
+
+        val containerOrNull: AppContainer?
+            get() = instanceOrNull?.appContainer
+
+        val container: AppContainer
+            get() = containerOrNull ?: throw IllegalStateException("AppContainer is not initialized")
     }
+
+    lateinit var appContainer: AppContainer
+        private set
 
     override fun onCreate() {
         super.onCreate()
-        AppCrashHandler.Companion.init(this)
+        instanceOrNull = this
+
+        // 统一初始化应用级轻量依赖注入容器
+        appContainer = AppContainer(this)
+
+        // 统一初始化全局崩溃处理器，通过高阶函数解耦 ErrorActivity 依赖
+        AppCrashHandler.init(this) { context, errorMessage, stackTrace ->
+            val intent = Intent(context, ErrorActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                putExtra(ErrorActivity.EXTRA_ERROR_MESSAGE, errorMessage)
+                putExtra(ErrorActivity.EXTRA_STACK_TRACE, stackTrace)
+            }
+            context.startActivity(intent)
+        }
+
         DynamicColors.applyToActivitiesIfAvailable(this)
-        instance = this
         LanguageUtils.applyLanguage(this)
-        ShizukuApi.init()//在shell里init？
-        // 预加载 shell，确保 MainActivity 能及时拿到状态
-        ShellManager.init(applicationContext)
+        ShizukuApi.init()
+
+        // 启动容器编排与基础设施加载
+        appContainer.initialize()
+
         XposedScope.init()
     }
 
-
-    // TODO)) 放进一个ViewMode里加载
-    // 挂起函数：异步获取 AppInfo 列表
+    @Deprecated(
+        message = "Use AppContainer.instance.installedAppsRepository.getAppInfoList instead",
+        replaceWith = ReplaceWith("AppContainer.instance.installedAppsRepository.getAppInfoList(packageNames)")
+    )
     suspend fun getAppInfoList(packageNames: List<String>): List<AppInfo> =
-        withContext(Dispatchers.IO) {
-            val pm = packageManager
-            val appInfoList = mutableListOf<AppInfo>()
+        appContainer.installedAppsRepository.getAppInfoList(packageNames)
 
-            for (pkg in packageNames) {
-                try {
-                    val packageInfo = pm.getPackageInfo(pkg, 0)
-                    val applicationInfo = pm.getApplicationInfo(pkg, 0)
-
-                    val appName = pm.getApplicationLabel(applicationInfo).toString()
-                    pm.getApplicationIcon(applicationInfo)
-                    val versionName = packageInfo.versionName ?: "N/A"
-                    val versionCode =
-                        packageInfo.longVersionCode
-
-                    val isSystemApp = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0 ||
-                            (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-                    val firstInstallTime = packageInfo.firstInstallTime
-                    val lastUpdateTime = packageInfo.lastUpdateTime
-
-                    appInfoList.add(
-                        AppInfo(
-                            appName = appName,
-                            packageName = pkg,
-                            versionName = versionName,
-                            versionCode = versionCode,
-                            isSystemApp = isSystemApp,
-                            firstInstallTime = firstInstallTime,
-                            lastUpdateTime = lastUpdateTime
-                        )
-                    )
-
-                } catch (e: PackageManager.NameNotFoundException) {
-                    e.printStackTrace()
-                }
-            }
-
-            return@withContext appInfoList
-        }
-
-
-    // TODO)) 放进一个ViewMode里加载
-    suspend fun getAppListAsync(): List<AppInfo> {
-        if (cachedAppList != null) return cachedAppList!!
-
-        val deferred = CompletableDeferred<List<AppInfo>>()
-        waiters.add(deferred)
-
-        if (!isLoading) {
-            isLoading = true
-            // 启动加载
-            CoroutineScope(Dispatchers.IO).launch {
-                val apps = getInstalledApps(applicationContext)
-                withContext(Dispatchers.Main) {
-                    cachedAppList = apps
-                    isLoading = false
-                    waiters.forEach { it.complete(apps) }
-                    waiters.clear()
-                }
-            }
-        }
-
-        return deferred.await()
-    }
-
+    @Deprecated(
+        message = "Use AppContainer.instance.installedAppsRepository.getInstalledApps instead",
+        replaceWith = ReplaceWith("AppContainer.instance.installedAppsRepository.getInstalledApps()")
+    )
+    suspend fun getAppListAsync(): List<AppInfo> =
+        appContainer.installedAppsRepository.getInstalledApps()
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         LanguageUtils.applyLanguage(this)
     }
-
 }

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="#ff600000"
     android:fitsSystemWindows="true"
-    tools:context=".ui.error.ErrorActivity">
+    tools:context=".feature.error.ErrorActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

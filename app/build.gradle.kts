@@ -20,9 +20,9 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 37
-        versionCode = 43
+        versionCode = 44
         val versionSuffix = project.findProperty("versionSuffix") as? String ?: ""
-        versionName = "4.1.1$versionSuffix"
+        versionName = "4.2.0$versionSuffix"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -89,6 +89,9 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
+    testImplementation("com.lemonappdev:konsist:0.17.3")
+    testImplementation("org.json:json:20240303")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 //    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
