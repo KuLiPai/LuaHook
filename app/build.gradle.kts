@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     testImplementation(libs.junit)
+    testImplementation("com.lemonappdev:konsist:0.17.3")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 //    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
