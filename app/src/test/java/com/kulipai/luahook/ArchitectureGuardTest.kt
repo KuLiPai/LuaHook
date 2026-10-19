@@ -28,7 +28,6 @@ class ArchitectureGuardTest {
     }
 
     @Test
-    @Ignore("待 Phase 1 Core 基础设施层解耦完成后开启")
     fun `Core 层严禁反向依赖 UI 层或 MCP 业务层`() {
         scope.files
             .withPackage("com.kulipai.luahook.core..")
