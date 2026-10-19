@@ -47,9 +47,14 @@ class WorkspaceStorageImpl(
     private val shellExecutor: ShellExecutor
 ) : WorkspaceStorage {
 
+    private fun toFullPath(relativePath: String): String {
+        val normalized = if (relativePath.startsWith("/")) relativePath else "/$relativePath"
+        return WorkspaceFileManager.DIR + normalized
+    }
+
     override fun read(relativePath: String): String {
         try {
-            val fullPath = WorkspaceFileManager.DIR + relativePath
+            val fullPath = toFullPath(relativePath)
             val file = File(fullPath)
             // Host app domains (system_app / untrusted_app / system_server) are
             // often denied search/open on /data/local/tmp (shell_data_file) even
@@ -104,7 +109,7 @@ class WorkspaceStorageImpl(
     }
 
     override fun write(file: String, content: String): Boolean {
-        val path = "${WorkspaceFileManager.DIR}$file"
+        val path = toFullPath(file)
         val escapedPath = path.escapeShellPath()
 
         val base64Content = Base64.encodeToString(
@@ -169,7 +174,7 @@ class WorkspaceStorageImpl(
     }
 
     override fun rm(file: String): Boolean {
-        val path = "${WorkspaceFileManager.DIR}$file"
+        val path = toFullPath(file)
         val script = "rm -rf ${path.escapeShellPath()}"
         val result = shellExecutor.exec(script)
         result.dd()

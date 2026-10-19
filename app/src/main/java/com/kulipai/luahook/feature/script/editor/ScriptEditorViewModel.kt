@@ -62,9 +62,12 @@ data class ScriptEditorUiState(
     val title: String = "",
     val mode: ScriptEditorMode? = null,
     val isLoading: Boolean = false,
+    val isLoaded: Boolean = false,
     val isModified: Boolean = false,
     val syntaxError: String? = null,
     val lastSavedContent: String = "",
+    val contentToLoad: String? = null,
+    val loadContentVersion: Long = 0L,
     val canRun: Boolean = false
 )
 
@@ -107,9 +110,19 @@ class ScriptEditorViewModel(
     private var isInitialized = false
     private var fileObserverJob: Job? = null
     private var syntaxValidationJob: Job? = null
+    private var lastSelfSaveTimestamp = 0L
 
     fun init(mode: ScriptEditorMode) {
-        if (isInitialized && currentMode == mode) return
+        if (currentMode == mode && _uiState.value.isLoaded) {
+            // Already loaded for this mode; notify UI to ensure editor view has content
+            _uiState.update {
+                it.copy(
+                    contentToLoad = lastSavedContent,
+                    loadContentVersion = it.loadContentVersion + 1
+                )
+            }
+            return
+        }
         currentMode = mode
         isInitialized = true
 
@@ -119,6 +132,8 @@ class ScriptEditorViewModel(
                 title = mode.title,
                 mode = mode,
                 isLoading = true,
+                isLoaded = false,
+                isModified = false,
                 canRun = canRun
             )
         }
@@ -132,8 +147,11 @@ class ScriptEditorViewModel(
             _uiState.update {
                 it.copy(
                     isLoading = false,
+                    isLoaded = true,
                     lastSavedContent = content,
-                    isModified = false
+                    isModified = false,
+                    contentToLoad = content,
+                    loadContentVersion = it.loadContentVersion + 1
                 )
             }
             _effect.emit(ScriptEditorEffect.InitContent(content))
@@ -147,6 +165,10 @@ class ScriptEditorViewModel(
         fileObserverJob?.cancel()
         fileObserverJob = viewModelScope.launch {
             WorkspaceEventManager.fileEvents.collect { changedPath ->
+                // If this event was triggered by our own save in the last 1000ms, ignore it
+                if (System.currentTimeMillis() - lastSelfSaveTimestamp < 1000L) {
+                    return@collect
+                }
                 val normChanged = changedPath.trimStart('/')
                 val normExpected = expectedPath.trimStart('/')
                 if (normChanged == normExpected) {
@@ -157,10 +179,23 @@ class ScriptEditorViewModel(
     }
 
     fun isContentModified(currentText: String): Boolean {
+        if (!_uiState.value.isLoaded) return false
         return currentText != lastSavedContent
     }
 
+    fun autoSaveIfNeeded(currentText: String) {
+        val state = _uiState.value
+        // Critical safeguards against wiping files:
+        if (!state.isLoaded) return
+        if (!state.isModified) return
+        if (currentText == state.lastSavedContent) return
+        if (currentText.isEmpty() && state.lastSavedContent.isNotEmpty()) return
+
+        save(currentText, showToast = false)
+    }
+
     fun onContentChanged(newContent: String) {
+        if (!_uiState.value.isLoaded) return
         currentEditorContent = newContent
         val modified = newContent != lastSavedContent
         if (_uiState.value.isModified != modified) {
@@ -199,6 +234,7 @@ class ScriptEditorViewModel(
             val previousSaved = lastSavedContent
             lastSavedContent = content
             currentEditorContent = content
+            lastSelfSaveTimestamp = System.currentTimeMillis()
 
             val success = withContext(NonCancellable) {
                 scriptRepository.saveScript(mode.relativePath, content)
@@ -226,8 +262,11 @@ class ScriptEditorViewModel(
         save(content, showToast = true)
     }
 
-    fun checkExternalChange(currentEditorContent: String, quiet: Boolean = false) {
-        this.currentEditorContent = currentEditorContent
+    fun checkExternalChange(currentEditorContent: String? = null, quiet: Boolean = false) {
+        if (!_uiState.value.isLoaded) return
+        if (currentEditorContent != null) {
+            this.currentEditorContent = currentEditorContent
+        }
         viewModelScope.launch(ioDispatcher) {
             checkExternalChangeInternal(currentEditorContent, quiet)
         }
@@ -235,19 +274,23 @@ class ScriptEditorViewModel(
 
     private suspend fun checkExternalChangeInternal(currentContent: String?, quiet: Boolean) {
         val mode = currentMode ?: return
+        if (!_uiState.value.isLoaded) return
+
         val diskText = scriptRepository.readScript(mode.relativePath)
         if (diskText == lastSavedContent) return
 
         val textToCompare = currentContent ?: currentEditorContent
-        val modified = textToCompare != lastSavedContent
+        val isModified = _uiState.value.isModified || (textToCompare != lastSavedContent)
 
-        if (!modified) {
+        if (!isModified) {
             lastSavedContent = diskText
             currentEditorContent = diskText
             _uiState.update {
                 it.copy(
                     lastSavedContent = diskText,
-                    isModified = false
+                    isModified = false,
+                    contentToLoad = diskText,
+                    loadContentVersion = it.loadContentVersion + 1
                 )
             }
             _effect.emit(ScriptEditorEffect.ReloadContent(diskText))
@@ -266,13 +309,15 @@ class ScriptEditorViewModel(
         _uiState.update {
             it.copy(
                 lastSavedContent = diskContent,
-                isModified = false
+                isModified = false,
+                contentToLoad = diskContent,
+                loadContentVersion = it.loadContentVersion + 1
             )
         }
-        viewModelScope.launch {
-            _effect.emit(ScriptEditorEffect.ReloadContent(diskContent))
-            validateSyntax(diskContent)
-            if (showToast) {
+        _effect.tryEmit(ScriptEditorEffect.ReloadContent(diskContent))
+        validateSyntax(diskContent)
+        if (showToast) {
+            viewModelScope.launch {
                 _effect.emit(ScriptEditorEffect.ShowToastRes(R.string.msg_file_reloaded_from_disk))
             }
         }

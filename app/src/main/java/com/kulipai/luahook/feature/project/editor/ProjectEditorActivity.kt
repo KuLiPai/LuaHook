@@ -65,6 +65,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     private val openFiles = mutableListOf<String>()
 
     private var lastSavedContent: String = ""
+    private var lastSelfSaveTime: Long = 0L
     private var conflictDialog: AlertDialog? = null
 
     private var projectFileObserver: FileObserver? = null
@@ -188,6 +189,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 WorkspaceEventManager.fileEvents.collect { relativePath ->
+                    if (System.currentTimeMillis() - lastSelfSaveTime < 1000L) {
+                        return@collect
+                    }
                     val projectPrefix = "${WorkspaceStorage.Project}/$projectName/"
                     if (relativePath.startsWith(projectPrefix) || relativePath == "${WorkspaceStorage.Project}/$projectName") {
                         loadFileList()
@@ -207,6 +211,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 fileObserverEvents
                     .debounce(200)
                     .collect { path ->
+                        if (System.currentTimeMillis() - lastSelfSaveTime < 1000L) {
+                            return@collect
+                        }
                         loadFileList()
                         if (path == null || path == currentFile || path.endsWith(currentFile)) {
                             checkAndReloadCurrentFile(quiet = false)
@@ -368,7 +375,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     private fun openFile(filename: String) {
-        if (!openFiles.contains(filename)) {
+        val isNewTab = !openFiles.contains(filename)
+        if (isNewTab) {
             openFiles.add(filename)
             val tab = binding.tabLayout.newTab().setText(filename)
             binding.tabLayout.addTab(tab)
@@ -381,7 +389,9 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 }
             }
         }
-        switchToFile(filename)
+        if (currentFile != filename) {
+            switchToFile(filename)
+        }
     }
 
     private fun isContentModified(): Boolean {
@@ -412,6 +422,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         val success = AppContainer.instance.workspaceStorage.write(path, currentText)
         if (success) {
             lastSavedContent = currentText
+            lastSelfSaveTime = System.currentTimeMillis()
         }
         return success
     }
@@ -808,7 +819,11 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
     override fun onPause() {
         super.onPause()
+        val currentText = binding.editor.text.toString()
         if (isContentModified()) {
+            if (currentText.isEmpty() && lastSavedContent.isNotEmpty()) {
+                return
+            }
             saveCurrentFile()
         }
     }

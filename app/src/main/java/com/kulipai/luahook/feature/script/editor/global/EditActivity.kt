@@ -302,6 +302,8 @@ class EditActivity : AppCompatActivity() {
 
     companion object
 
+    private var appliedContentVersion: Long = 0L
+    private var isSettingContentProgrammatically = false
 
     fun saveScript(text: String) {
         viewModel.save(text, showToast = true)
@@ -309,21 +311,16 @@ class EditActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.checkExternalChange(editor.text.toString())
+        viewModel.checkExternalChange(editor.text.toString(), quiet = true)
     }
 
     override fun onStop() {
         super.onStop()
-        if (viewModel.isContentModified(editor.text.toString())) {
-            viewModel.save(editor.text.toString(), showToast = false)
-        }
     }
 
     override fun onPause() {
         super.onPause()
-        if (viewModel.isContentModified(editor.text.toString())) {
-            viewModel.save(editor.text.toString(), showToast = false)
-        }
+        viewModel.autoSaveIfNeeded(editor.text.toString())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -383,6 +380,7 @@ class EditActivity : AppCompatActivity() {
         // SoraEditor
         initLuaEditor(editor, errMessage, enableLegacySyntaxCheck = false)
         editor.subscribeAlways<ContentChangeEvent> {
+            if (isSettingContentProgrammatically) return@subscribeAlways
             viewModel.onContentChanged(editor.text.toString())
         }
 
@@ -398,6 +396,33 @@ class EditActivity : AppCompatActivity() {
                     if (state.title.isNotEmpty()) {
                         toolbar.title = state.title
                     }
+                    if (state.contentToLoad != null && state.loadContentVersion > appliedContentVersion) {
+                        appliedContentVersion = state.loadContentVersion
+                        val newText = state.contentToLoad
+                        if (editor.text.toString() != newText) {
+                            isSettingContentProgrammatically = true
+                            val cursorLine = editor.cursor.leftLine
+                            val cursorColumn = editor.cursor.leftColumn
+                            val currentScrollY = editor.offsetY
+
+                            editor.setText(newText)
+
+                            val content = editor.text
+                            if (content.lineCount > 0 && cursorLine >= 0) {
+                                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+                                val maxCol = content.getColumnCount(targetLine)
+                                val safeCol = cursorColumn.coerceIn(0, maxCol)
+                                editor.setSelection(targetLine, safeCol)
+                            }
+                            try {
+                                if (!editor.scroller.isFinished) {
+                                    editor.scroller.forceFinished(true)
+                                }
+                                editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+                            } catch (_: Exception) {}
+                            isSettingContentProgrammatically = false
+                        }
+                    }
                 }
             }
         }
@@ -407,14 +432,20 @@ class EditActivity : AppCompatActivity() {
                 viewModel.effect.collect { effect ->
                     when (effect) {
                         is ScriptEditorEffect.InitContent -> {
-                            editor.setText(effect.content)
+                            if (editor.text.toString() != effect.content) {
+                                isSettingContentProgrammatically = true
+                                editor.setText(effect.content)
+                                isSettingContentProgrammatically = false
+                            }
                         }
                         is ScriptEditorEffect.ReloadContent -> {
                             val cursorLine = editor.cursor.leftLine
                             val cursorColumn = editor.cursor.leftColumn
                             val currentScrollY = editor.offsetY
 
+                            isSettingContentProgrammatically = true
                             editor.setText(effect.content)
+                            isSettingContentProgrammatically = false
 
                             val content = editor.text
                             if (content.lineCount > 0 && cursorLine >= 0) {
@@ -432,7 +463,7 @@ class EditActivity : AppCompatActivity() {
                         }
                         is ScriptEditorEffect.FileConflict -> {
                             MaterialAlertDialogBuilder(this@EditActivity)
-                                .setTitle(getString(R.string.tips))
+                                .setTitle(getString(R.string.title_file_conflict))
                                 .setMessage(getString(R.string.msg_file_conflict))
                                 .setPositiveButton(getString(R.string.action_reload_from_disk)) { _, _ ->
                                     viewModel.applyDiskContent(effect.diskContent, showToast = true)

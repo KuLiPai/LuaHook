@@ -322,4 +322,67 @@ class ScriptEditorViewModelTest {
 
         job.cancel()
     }
+
+    @Test
+    fun `autoSaveIfNeeded does NOT overwrite file when editor text is empty but disk has content`() = runTest(testDispatcher) {
+        repository.scripts["/global.lua"] = "important script content"
+        viewModel.init(ScriptEditorMode.Global)
+        advanceUntilIdle()
+
+        // Suppose editor is somehow empty (uninitialized or unpopulated)
+        viewModel.autoSaveIfNeeded("")
+        advanceUntilIdle()
+
+        // Content on disk MUST remain untouched
+        assertEquals("important script content", repository.scripts["/global.lua"])
+    }
+
+    @Test
+    fun `autoSaveIfNeeded does NOT save if content is not loaded or not modified`() = runTest(testDispatcher) {
+        repository.scripts["/global.lua"] = "original"
+        // Not loaded yet
+        viewModel.autoSaveIfNeeded("modified before init")
+        advanceUntilIdle()
+        assertEquals("original", repository.scripts["/global.lua"])
+
+        viewModel.init(ScriptEditorMode.Global)
+        advanceUntilIdle()
+
+        // Loaded, but not modified
+        viewModel.autoSaveIfNeeded("original")
+        advanceUntilIdle()
+        assertEquals("original", repository.scripts["/global.lua"])
+    }
+
+    @Test
+    fun `autoSaveIfNeeded saves when user modified text`() = runTest(testDispatcher) {
+        repository.scripts["/global.lua"] = "v1"
+        viewModel.init(ScriptEditorMode.Global)
+        advanceUntilIdle()
+
+        viewModel.onContentChanged("v2_user_edits")
+        viewModel.autoSaveIfNeeded("v2_user_edits")
+        advanceUntilIdle()
+
+        assertEquals("v2_user_edits", repository.scripts["/global.lua"])
+        assertFalse(viewModel.uiState.value.isModified)
+    }
+
+    @Test
+    fun `re-init with same mode on retained ViewModel re-emits contentToLoad`() = runTest(testDispatcher) {
+        repository.scripts["/global.lua"] = "initial text"
+        viewModel.init(ScriptEditorMode.Global)
+        advanceUntilIdle()
+
+        assertEquals("initial text", viewModel.uiState.value.contentToLoad)
+        val initialVersion = viewModel.uiState.value.loadContentVersion
+        assertTrue(initialVersion > 0)
+
+        // Activity recreated (e.g. rotation): calls init again with same mode
+        viewModel.init(ScriptEditorMode.Global)
+        val reInitVersion = viewModel.uiState.value.loadContentVersion
+        assertTrue("loadContentVersion must increment to notify newly created Activity view", reInitVersion > initialVersion)
+        assertEquals("initial text", viewModel.uiState.value.contentToLoad)
+    }
 }
+

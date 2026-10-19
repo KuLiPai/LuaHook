@@ -60,6 +60,9 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     private var scriptDescription: String = ""
     private var appName: String = ""
 
+    private var appliedContentVersion: Long = 0L
+    private var isSettingContentProgrammatically = false
+
     override fun inflateBinding(inflater: LayoutInflater): ActivityAppsEditBinding {
         return ActivityAppsEditBinding.inflate(inflater)
     }
@@ -81,6 +84,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
 
         initLuaEditor(binding.editor, binding.errMessage, enableLegacySyntaxCheck = false)
         binding.editor.subscribeAlways<ContentChangeEvent> {
+            if (isSettingContentProgrammatically) return@subscribeAlways
             viewModel.onContentChanged(binding.editor.text.toString())
         }
 
@@ -129,6 +133,33 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                         binding.toolbar.title = state.title
                         title = state.title
                     }
+                    if (state.contentToLoad != null && state.loadContentVersion > appliedContentVersion) {
+                        appliedContentVersion = state.loadContentVersion
+                        val newText = state.contentToLoad
+                        if (binding.editor.text.toString() != newText) {
+                            isSettingContentProgrammatically = true
+                            val cursorLine = binding.editor.cursor.leftLine
+                            val cursorColumn = binding.editor.cursor.leftColumn
+                            val currentScrollY = binding.editor.offsetY
+
+                            binding.editor.setText(newText, null)
+
+                            val content = binding.editor.text
+                            if (content.lineCount > 0 && cursorLine >= 0) {
+                                val targetLine = cursorLine.coerceIn(0, content.lineCount - 1)
+                                val maxCol = content.getColumnCount(targetLine)
+                                val safeCol = cursorColumn.coerceIn(0, maxCol)
+                                binding.editor.setSelection(targetLine, safeCol)
+                            }
+                            try {
+                                if (!binding.editor.scroller.isFinished) {
+                                    binding.editor.scroller.forceFinished(true)
+                                }
+                                binding.editor.scroller.startScroll(0, currentScrollY, 0, 0, 0)
+                            } catch (_: Exception) {}
+                            isSettingContentProgrammatically = false
+                        }
+                    }
                 }
             }
         }
@@ -138,14 +169,20 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                 viewModel.effect.collect { effect ->
                     when (effect) {
                         is ScriptEditorEffect.InitContent -> {
-                            binding.editor.setText(effect.content, null)
+                            if (binding.editor.text.toString() != effect.content) {
+                                isSettingContentProgrammatically = true
+                                binding.editor.setText(effect.content, null)
+                                isSettingContentProgrammatically = false
+                            }
                         }
                         is ScriptEditorEffect.ReloadContent -> {
                             val cursorLine = binding.editor.cursor.leftLine
                             val cursorColumn = binding.editor.cursor.leftColumn
                             val currentScrollY = binding.editor.offsetY
 
+                            isSettingContentProgrammatically = true
                             binding.editor.setText(effect.content, null)
+                            isSettingContentProgrammatically = false
 
                             val content = binding.editor.text
                             if (content.lineCount > 0 && cursorLine >= 0) {
@@ -163,7 +200,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                         }
                         is ScriptEditorEffect.FileConflict -> {
                             MaterialAlertDialogBuilder(this@AppsEdit)
-                                .setTitle(getString(R.string.tips))
+                                .setTitle(getString(R.string.title_file_conflict))
                                 .setMessage(getString(R.string.msg_file_conflict))
                                 .setPositiveButton(getString(R.string.action_reload_from_disk)) { _, _ ->
                                     viewModel.applyDiskContent(effect.diskContent, showToast = true)
@@ -202,25 +239,18 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     override fun onResume() {
         super.onResume()
         if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
-            viewModel.checkExternalChange(binding.editor.text.toString())
+            viewModel.checkExternalChange(binding.editor.text.toString(), quiet = true)
         }
     }
 
     override fun onStop() {
         super.onStop()
-        if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
-            if (viewModel.isContentModified(binding.editor.text.toString())) {
-                viewModel.save(binding.editor.text.toString(), showToast = false)
-            }
-        }
     }
 
     override fun onPause() {
         super.onPause()
         if (::currentPackageName.isInitialized && ::scripName.isInitialized) {
-            if (viewModel.isContentModified(binding.editor.text.toString())) {
-                viewModel.save(binding.editor.text.toString(), showToast = false)
-            }
+            viewModel.autoSaveIfNeeded(binding.editor.text.toString())
         }
     }
 
