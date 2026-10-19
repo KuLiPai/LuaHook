@@ -2,11 +2,10 @@ package com.kulipai.luahook.data.repository
 
 import android.content.Context
 import android.net.Uri
-import com.kulipai.luahook.core.file.WorkspaceFileManager
 import com.kulipai.luahook.core.file.WorkspaceStorage
 import com.kulipai.luahook.core.project.Project
-import com.kulipai.luahook.core.project.ProjectManager
 import com.kulipai.luahook.core.shell.ShellExecutor
+import com.kulipai.luahook.data.repository.ProjectRepository.Companion.INFO_JSON
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,6 +30,10 @@ interface ProjectRepository {
     suspend fun deleteProject(name: String)
     suspend fun importProject(context: Context, uri: Uri): Boolean
     suspend fun exportProject(context: Context, name: String, uri: Uri): Boolean
+
+    companion object {
+        const val INFO_JSON = "/Project/info.json"
+    }
 }
 
 class ProjectRepositoryImpl(
@@ -41,12 +44,12 @@ class ProjectRepositoryImpl(
 
     override suspend fun getProjects(): List<Project> = withContext(ioDispatcher) {
         val projects = mutableListOf<Project>()
-        val infoMap = workspaceStorage.readMap(ProjectManager.INFO_JSON) // Name -> Boolean
+        val infoMap = workspaceStorage.readMap(INFO_JSON) // Name -> Boolean
 
         infoMap.forEach { (name, enabledObj) ->
             val isEnabled = enabledObj as? Boolean ?: false
-            val projectRelativePath = "${WorkspaceFileManager.Project}/$name"
-            val projectFullPath = "${WorkspaceFileManager.DIR}$projectRelativePath"
+            val projectRelativePath = "${WorkspaceStorage.Project}/$name"
+            val projectFullPath = "${WorkspaceStorage.DIR}$projectRelativePath"
             val initPath = "$projectRelativePath/init.lua"
 
             if (workspaceStorage.directoryExists(projectFullPath)) {
@@ -103,12 +106,12 @@ class ProjectRepositoryImpl(
     ): Boolean = withContext(ioDispatcher) {
         if (name.isEmpty()) return@withContext false
 
-        val projectRelativePath = "${WorkspaceFileManager.Project}/$name"
-        val projectFullPath = "${WorkspaceFileManager.DIR}$projectRelativePath"
+        val projectRelativePath = "${WorkspaceStorage.Project}/$name"
+        val projectFullPath = "${WorkspaceStorage.DIR}$projectRelativePath"
 
         if (workspaceStorage.directoryExists(projectFullPath)) return@withContext false
 
-        if (!workspaceStorage.ensureDirectoryExists("${WorkspaceFileManager.DIR}${WorkspaceFileManager.Project}")) return@withContext false
+        if (!workspaceStorage.ensureDirectoryExists("${WorkspaceStorage.DIR}${WorkspaceStorage.Project}")) return@withContext false
         if (!workspaceStorage.ensureDirectoryExists(projectFullPath)) return@withContext false
 
         // Double Check
@@ -148,25 +151,25 @@ scope = ${scopeLua.trimIndent()}
         ) return@withContext false
 
         // Update info.json
-        val infoMap = workspaceStorage.readMap(ProjectManager.INFO_JSON)
+        val infoMap = workspaceStorage.readMap(INFO_JSON)
         infoMap[name] = true // Enabled by default
-        workspaceStorage.writeMap(ProjectManager.INFO_JSON, infoMap)
+        workspaceStorage.writeMap(INFO_JSON, infoMap)
     }
 
     override suspend fun setProjectEnabled(name: String, enabled: Boolean) = withContext(ioDispatcher) {
-        val infoMap = workspaceStorage.readMap(ProjectManager.INFO_JSON)
+        val infoMap = workspaceStorage.readMap(INFO_JSON)
         infoMap[name] = enabled
-        workspaceStorage.writeMap(ProjectManager.INFO_JSON, infoMap)
+        workspaceStorage.writeMap(INFO_JSON, infoMap)
         Unit
     }
 
     override suspend fun deleteProject(name: String) = withContext(ioDispatcher) {
-        val projectDir = "${WorkspaceFileManager.Project}/$name"
+        val projectDir = "${WorkspaceStorage.Project}/$name"
         workspaceStorage.rm(projectDir)
 
-        val infoMap = workspaceStorage.readMap(ProjectManager.INFO_JSON)
+        val infoMap = workspaceStorage.readMap(INFO_JSON)
         infoMap.remove(name)
-        workspaceStorage.writeMap(ProjectManager.INFO_JSON, infoMap)
+        workspaceStorage.writeMap(INFO_JSON, infoMap)
         Unit
     }
 
@@ -183,8 +186,8 @@ scope = ${scopeLua.trimIndent()}
             return@withContext false
         }
 
-        val tempZip = "${WorkspaceFileManager.DIR}/import_temp.zip"
-        val tempDir = "${WorkspaceFileManager.DIR}/import_temp_dir"
+        val tempZip = "${WorkspaceStorage.DIR}/import_temp.zip"
+        val tempDir = "${WorkspaceStorage.DIR}/import_temp_dir"
 
         workspaceStorage.delete(tempZip)
         workspaceStorage.delete(tempDir)
@@ -209,14 +212,14 @@ scope = ${scopeLua.trimIndent()}
             }
         }
 
-        val initLua = workspaceStorage.read(root.removePrefix(WorkspaceFileManager.DIR) + "/init.lua")
+        val initLua = workspaceStorage.read(root.removePrefix(WorkspaceStorage.DIR) + "/init.lua")
         val name = parseName(initLua)
         if (name.isEmpty()) {
             cleanupImport(tempZip, tempDir, cacheFile)
             return@withContext false
         }
 
-        val dest = "${WorkspaceFileManager.DIR}${WorkspaceFileManager.Project}/$name"
+        val dest = "${WorkspaceStorage.DIR}${WorkspaceStorage.Project}/$name"
         if (workspaceStorage.directoryExists(dest)) {
             cleanupImport(tempZip, tempDir, cacheFile)
             return@withContext false
@@ -225,9 +228,9 @@ scope = ${scopeLua.trimIndent()}
         workspaceStorage.move(root, dest)
         workspaceStorage.chmod(dest, "777", recursive = true)
 
-        val infoMap = workspaceStorage.readMap(ProjectManager.INFO_JSON)
+        val infoMap = workspaceStorage.readMap(INFO_JSON)
         infoMap[name] = true
-        workspaceStorage.writeMap(ProjectManager.INFO_JSON, infoMap)
+        workspaceStorage.writeMap(INFO_JSON, infoMap)
 
         cleanupImport(tempZip, tempDir, cacheFile)
         true
@@ -259,8 +262,8 @@ scope = ${scopeLua.trimIndent()}
     }
 
     override suspend fun exportProject(context: Context, name: String, uri: Uri): Boolean = withContext(ioDispatcher) {
-        val projectRelativePath = "${WorkspaceFileManager.Project}/$name"
-        val projectFullPath = "${WorkspaceFileManager.DIR}$projectRelativePath"
+        val projectRelativePath = "${WorkspaceStorage.Project}/$name"
+        val projectFullPath = "${WorkspaceStorage.DIR}$projectRelativePath"
 
         if (!workspaceStorage.directoryExists(projectFullPath)) return@withContext false
 

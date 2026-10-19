@@ -28,49 +28,49 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LuaHook"
         tools:targetApi="35">
-        <activity android:name=".ui.project.config.ProjectConfigActivity"
+        <activity android:name=".feature.project.config.ProjectConfigActivity"
             android:exported="false" />
-        <activity android:name=".ui.project.editor.ProjectEditorActivity"
+        <activity android:name=".feature.project.editor.ProjectEditorActivity"
             android:exported="false" />
-        <activity android:name=".ui.script.selector.ScopeSelectorActivity"
+        <activity android:name=".feature.script.selector.ScopeSelectorActivity"
             android:exported="false" />
-        <activity android:name=".ui.project.create.CreateProjectActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ui.error.ErrorActivity"
+        <activity android:name=".feature.project.create.CreateProjectActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.script.manager.MultiScriptActivity"
+            android:name=".feature.error.ErrorActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.script.setting.ScriptSetActivity"
+            android:name=".feature.script.manager.MultiScriptActivity"
+            android:exported="false" />
+        <activity
+            android:name=".feature.script.setting.ScriptSetActivity"
             android:exported="true" />
         <activity
-            android:name=".ui.about.AboutActivity"
+            android:name=".feature.about.AboutActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.setting.SettingsActivity"
+            android:name=".feature.setting.SettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.script.selector.SelectApps"
+            android:name=".feature.script.selector.SelectApps"
             android:exported="false" />
         <activity
-            android:name=".ui.script.editor.app.AppsEdit"
+            android:name=".feature.script.editor.app.AppsEdit"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
         <activity
-            android:name=".ui.manual.Manual"
+            android:name=".feature.manual.Manual"
             android:exported="false" />
         <activity
-            android:name=".ui.logcat.LogCatActivity"
+            android:name=".feature.logcat.LogCatActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.script.editor.global.EditActivity"
+            android:name=".feature.script.editor.global.EditActivity"
             android:windowSoftInputMode="adjustResize"
 
             android:exported="false" />
         <activity
-            android:name=".ui.home.MainActivity"
+            android:name=".feature.home.MainActivity"
             android:exported="true"
             android:windowSoftInputMode="adjustNothing"
             >
@@ -106,7 +106,7 @@
             android:multiprocess="false"
             android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
         <service
-            android:name=".mcp.McpForegroundService"
+            android:name=".feature.mcp.McpForegroundService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
@@ -114,7 +114,7 @@
                 android:value="Local MCP HTTP server that accepts requests from paired developer tools." />
         </service>
         <receiver
-            android:name=".mcp.McpBootReceiver"
+            android:name=".feature.mcp.McpBootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

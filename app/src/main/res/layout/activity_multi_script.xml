@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context=".ui.script.manager.MultiScriptActivity">
+    tools:context=".feature.script.manager.MultiScriptActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

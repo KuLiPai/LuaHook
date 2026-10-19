@@ -14,11 +14,11 @@ import com.kulipai.luahook.core.shell.StandaloneShellExecutor
 )
 object WorkspaceFileManager {
 
-    const val DIR: String = "/data/local/tmp/LuaHook"
-    const val Project: String = "/Project"
-    const val AppConf: String = "/AppConf"
-    const val AppScript: String = "/AppScript"
-    const val Plugin: String = "/Plugin"
+    const val DIR: String = WorkspaceStorage.DIR
+    const val Project: String = WorkspaceStorage.Project
+    const val AppConf: String = WorkspaceStorage.AppConf
+    const val AppScript: String = WorkspaceStorage.AppScript
+    const val Plugin: String = WorkspaceStorage.Plugin
 
     data class FileParameters(
         val name: String? = null,

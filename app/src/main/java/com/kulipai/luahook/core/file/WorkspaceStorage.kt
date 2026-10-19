@@ -11,6 +11,14 @@ import org.json.JSONObject
 import java.io.File
 
 interface WorkspaceStorage {
+    companion object {
+        const val DIR: String = "/data/local/tmp/LuaHook"
+        const val Project: String = "/Project"
+        const val AppConf: String = "/AppConf"
+        const val AppScript: String = "/AppScript"
+        const val Plugin: String = "/Plugin"
+    }
+
     fun read(relativePath: String): String
     fun write(file: String, content: String): Boolean
     fun writeMap(file: String, data: MutableMap<String, Any?>): Boolean

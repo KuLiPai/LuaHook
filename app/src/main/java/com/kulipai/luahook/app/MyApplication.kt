@@ -10,7 +10,7 @@ import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.core.xposed.XposedScope
 import com.kulipai.luahook.data.model.AppInfo
-import com.kulipai.luahook.ui.error.ErrorActivity
+import com.kulipai.luahook.feature.error.ErrorActivity
 
 /**
  * 全局函数和应用初始化入口

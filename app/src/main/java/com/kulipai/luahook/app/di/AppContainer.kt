@@ -19,8 +19,8 @@ import com.kulipai.luahook.data.repository.ProjectRepository
 import com.kulipai.luahook.data.repository.ProjectRepositoryImpl
 import com.kulipai.luahook.data.repository.ScriptRepository
 import com.kulipai.luahook.data.repository.ScriptRepositoryImpl
-import com.kulipai.luahook.mcp.McpManager
-import com.kulipai.luahook.ui.logcat.LogcatDelegate
+import com.kulipai.luahook.feature.mcp.McpManager
+import com.kulipai.luahook.feature.logcat.LogcatDelegate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

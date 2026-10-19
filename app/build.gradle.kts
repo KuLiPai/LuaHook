@@ -20,9 +20,9 @@ android {
         applicationId = "com.kulipai.luahook"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = 37
-        versionCode = 43
+        versionCode = 44
         val versionSuffix = project.findProperty("versionSuffix") as? String ?: ""
-        versionName = "4.1.1$versionSuffix"
+        versionName = "4.2.0$versionSuffix"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
