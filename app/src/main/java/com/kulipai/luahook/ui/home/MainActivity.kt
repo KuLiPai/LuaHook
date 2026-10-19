@@ -5,9 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.ImageButton
-import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.edit
@@ -17,8 +14,6 @@ import androidx.core.view.get
 import androidx.core.view.size
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.kulipai.luahook.R
@@ -29,41 +24,18 @@ import com.kulipai.luahook.core.language.LanguageUtils
 import com.kulipai.luahook.core.shell.ShellManager
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.databinding.ActivityMainBinding
-import com.kulipai.luahook.ui.logcat.LogAdapter
-import com.kulipai.luahook.ui.logcat.LogHistory
-import com.kulipai.luahook.ui.logcat.LogcatDelegate
+import com.kulipai.luahook.ui.logcat.FloatingLogcatController
 import com.kulipai.luahook.ui.script.editor.app.AppsEdit
 import com.kulipai.luahook.ui.script.editor.global.EditActivity
 import com.kulipai.luahook.ui.setting.SettingsActivity
-import com.petterp.floatingx.core.FloatingX
-import com.petterp.floatingx.core.container.FxViewHolder
-import com.petterp.floatingx.core.layout.FxAdsorb
-import com.petterp.floatingx.core.layout.FxEdge
-import com.petterp.floatingx.core.layout.FxGravity
-import com.petterp.floatingx.core.update
-import com.petterp.floatingx.system.permission.FxPermissionStrategy
-import com.petterp.floatingx.system.systemHost
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
 
-    private companion object {
-        const val LOGCAT_FLOATING_TAG = "logcat"
-        const val LOGCAT_CACHE = "cache"
-        const val LOGCAT_CLEAR_TIME = "logClearTime"
-        const val LOGCAT_REFRESH_INTERVAL = 1_000L
-    }
-
     private var lastLanguage: String = ""
-    private var floatingLogRefreshJob: Job? = null
-    private var floatingLogMinimized = false
-    private val floatingLogHistory = LogHistory()
-    private var floatingLogError: String? = null
-    
+    private val floatingLogcatController by lazy { FloatingLogcatController(this) }
+
     private val settingsLauncher: ActivityResultLauncher<Intent> = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -92,18 +64,14 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun initEvent() {
-        ShellManager.mode.observe(this) {
-            if (!floatingLogMinimized) {
-                FloatingX.controlOrNull(LOGCAT_FLOATING_TAG)?.updateContent(::bindFloatingLogcat)
-                refreshFloatingLogcat()
-            }
+        ShellManager.mode.observe(this) { mode ->
+            floatingLogcatController.onShellModeChanged(mode)
         }
     }
 
     // --------------------- Toolbar ---------------------
 
     private fun setupToolbar() {
-
         binding.toolbar.menu.add(0, 1, 0, getString(R.string.log))  // 新增菜单项
             .setIcon(R.drawable.baseline_bug_report_24)
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
@@ -112,37 +80,9 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             .setIcon(R.drawable.settings_24px)
             .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
 
-
         binding.toolbar.setOnMenuItemClickListener {
-
             if (it.itemId == 1) {
-                val floatingLogcat = FloatingX.controlOrNull(LOGCAT_FLOATING_TAG)
-                if (floatingLogcat != null) {
-                    if (floatingLogMinimized) {
-                        restoreFloatingLogcat()
-                    } else if (floatingLogcat.isShowing) {
-                        stopFloatingLogRefresh()
-                        floatingLogcat.hide()
-                    } else {
-                        floatingLogcat.show()
-                        refreshFloatingLogcat()
-                    }
-                } else {
-                    FloatingX.install(LOGCAT_FLOATING_TAG) {
-                        layout(R.layout.floating_logcat)
-                        anchor(FxGravity.TOP_START, dx = 24f, dy = 200f)
-                        adsorb(FxAdsorb.Edges(setOf(FxEdge.START, FxEdge.END)))
-                        systemHost(this@MainActivity) {
-                            theme(R.style.Theme_LuaHook)
-                            permission(FxPermissionStrategy.auto())
-                        }
-                    }.also { control ->
-                        floatingLogMinimized = false
-                        control.updateContent(::bindFloatingLogcat)
-                        control.show()
-                    }
-                    refreshFloatingLogcat()
-                }
+                floatingLogcatController.toggle()
             }
 
             if (it.itemId == 2) {
@@ -151,131 +91,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             }
             true
         }
-    }
-
-    private fun bindFloatingLogcat(holder: FxViewHolder) {
-        val recyclerView = holder.getView<RecyclerView>(R.id.LogRecyclerView)
-        if (recyclerView.layoutManager == null) {
-            recyclerView.layoutManager = LinearLayoutManager(recyclerView.context)
-        }
-        if (recyclerView.adapter == null) {
-            recyclerView.adapter = LogAdapter(floatingLogHistory.entries.toMutableList())
-        }
-        recyclerView.itemAnimator = null
-
-        updateFloatingLogcatStatus(holder)
-
-        holder.getView<ImageButton>(R.id.btnClean).setOnClickListener {
-            getSharedPreferences(LOGCAT_CACHE, MODE_PRIVATE).edit {
-                putString(LOGCAT_CLEAR_TIME, LogcatDelegate.getCurrentLogcatTimeFormat())
-            }
-            floatingLogHistory.clear()
-            floatingLogError = null
-            (recyclerView.adapter as? LogAdapter)?.clearLogs()
-            updateFloatingLogcatStatus(holder)
-            refreshFloatingLogcat()
-        }
-        holder.getView<ImageButton>(R.id.btnMinimize).setOnClickListener {
-            minimizeFloatingLogcat()
-        }
-        holder.getView<ImageButton>(R.id.btnClose).setOnClickListener {
-            stopFloatingLogRefresh()
-            FloatingX.uninstall(LOGCAT_FLOATING_TAG)
-        }
-    }
-
-    private fun updateFloatingLogcatStatus(holder: FxViewHolder) {
-        val recyclerView = holder.getView<RecyclerView>(R.id.LogRecyclerView)
-        val status = holder.getView<TextView>(R.id.noPower)
-        val message = when {
-            (recyclerView.adapter?.itemCount ?: 0) > 0 -> null
-            ShellManager.mode.value == ShellManager.Mode.NONE -> getString(R.string.no_power)
-            floatingLogError != null -> getString(R.string.logcat_read_failed, floatingLogError)
-            recyclerView.adapter?.itemCount == 0 -> getString(R.string.logcat_empty)
-            else -> null
-        }
-        status.text = message
-        status.visibility = if (message == null) View.GONE else View.VISIBLE
-        recyclerView.visibility = if (message == null) View.VISIBLE else View.INVISIBLE
-    }
-
-    private fun stopFloatingLogRefresh() {
-        floatingLogRefreshJob?.cancel()
-        floatingLogRefreshJob = null
-    }
-
-    private fun refreshFloatingLogcat() {
-        val control = FloatingX.controlOrNull(LOGCAT_FLOATING_TAG) ?: return
-        if (floatingLogMinimized) return
-
-        stopFloatingLogRefresh()
-        floatingLogRefreshJob = lifecycleScope.launch {
-            while (isActive && !floatingLogMinimized &&
-                FloatingX.controlOrNull(LOGCAT_FLOATING_TAG) === control
-            ) {
-                // The window may still be waiting for overlay permission after show().
-                if (control.isShowing) {
-                    control.updateContent(::updateFloatingLogcatStatus)
-                    if (ShellManager.mode.value != ShellManager.Mode.NONE) {
-                        val result = LogcatDelegate.readSystemLogsByTagSince(
-                            "LuaXposed",
-                            getSharedPreferences(LOGCAT_CACHE, MODE_PRIVATE)
-                                .getString(LOGCAT_CLEAR_TIME, null)
-                        )
-                        if (!isActive || floatingLogMinimized || !control.isShowing ||
-                            FloatingX.controlOrNull(LOGCAT_FLOATING_TAG) !== control
-                        ) return@launch
-
-                        floatingLogError = result.exceptionOrNull()?.message
-                        result.getOrNull()?.let { logs ->
-                            val appended = floatingLogHistory.appendSnapshot(logs)
-                            if (appended.isEmpty()) return@let
-                            control.updateContent { holder ->
-                                val recyclerView = holder.getView<RecyclerView>(R.id.LogRecyclerView)
-                                val adapter = recyclerView.adapter as? LogAdapter ?: return@updateContent
-                                val followLatest = adapter.itemCount == 0 || !recyclerView.canScrollVertically(1)
-                                adapter.appendLogs(appended)
-                                if (followLatest) {
-                                    recyclerView.scrollToPosition(adapter.itemCount - 1)
-                                }
-                            }
-                        }
-                        control.updateContent(::updateFloatingLogcatStatus)
-                    }
-                }
-                delay(LOGCAT_REFRESH_INTERVAL)
-            }
-        }
-    }
-
-    private fun minimizeFloatingLogcat() {
-        val control = FloatingX.controlOrNull(LOGCAT_FLOATING_TAG) ?: return
-        floatingLogMinimized = true
-        stopFloatingLogRefresh()
-        control.update {
-            layout(R.layout.floating_logcat_ball)
-        }
-        control.updateContent { holder ->
-            holder.view.setOnClickListener {
-                restoreFloatingLogcat()
-            }
-            holder.view.setOnLongClickListener {
-                stopFloatingLogRefresh()
-                FloatingX.uninstall(LOGCAT_FLOATING_TAG)
-                floatingLogMinimized = false
-                true
-            }
-        }
-    }
-
-    private fun restoreFloatingLogcat() {
-        val control = FloatingX.controlOrNull(LOGCAT_FLOATING_TAG) ?: return
-        floatingLogMinimized = false
-        control.update {
-            layout(R.layout.floating_logcat)
-        }
-        control.updateContent(::bindFloatingLogcat)
-        refreshFloatingLogcat()
     }
 
     // --------------------- 状态恢复 ---------------------
@@ -390,9 +205,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun onDestroy() {
-        stopFloatingLogRefresh()
-        floatingLogMinimized = false
-        FloatingX.uninstall(LOGCAT_FLOATING_TAG)
+        floatingLogcatController.destroy()
         super.onDestroy()
     }
 }

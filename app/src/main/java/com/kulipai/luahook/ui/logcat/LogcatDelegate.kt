@@ -1,48 +1,44 @@
 package com.kulipai.luahook.ui.logcat
 
-import com.kulipai.luahook.core.shell.ShellManager
-import com.kulipai.luahook.core.shell.ShellResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import com.kulipai.luahook.app.di.AppContainer
+import com.kulipai.luahook.core.shell.StandaloneShellExecutor
+import com.kulipai.luahook.data.repository.LogcatRepository
+import com.kulipai.luahook.data.repository.LogcatRepositoryImpl
 
 /**
- * 读取系统日志的工具类
+ * 读取系统日志的工具类 (绞杀者模式兼容桥梁)
+ * 仅作为旧代码与 UI 层的适配层保留，新代码请使用 [LogcatRepository]。
  */
-
+@Deprecated(
+    message = "Use AppContainer.instance.logcatRepository instead",
+    replaceWith = ReplaceWith("AppContainer.instance.logcatRepository")
+)
 object LogcatDelegate {
 
+    private var customRepository: LogcatRepository? = null
+
+    private val defaultRepository: LogcatRepository by lazy {
+        val executor = AppContainer.instanceOrNull?.shellExecutor ?: StandaloneShellExecutor()
+        LogcatRepositoryImpl(executor)
+    }
+
+    fun bindRepository(repository: LogcatRepository) {
+        customRepository = repository
+    }
+
+    private fun getRepository(): LogcatRepository {
+        return AppContainer.instanceOrNull?.logcatRepository ?: customRepository ?: defaultRepository
+    }
+
     suspend fun getSystemLogsByTagSince(tag: String, since: String? = null): List<String> {
-        return readSystemLogsByTagSince(tag, since).getOrDefault(emptyList()).toMutableList()
+        return getRepository().getSystemLogsByTagSince(tag, since)
     }
 
     suspend fun readSystemLogsByTagSince(tag: String, since: String? = null): Result<List<String>> {
-        val command = if (since.isNullOrEmpty()) {
-            "logcat -d -v threadtime '$tag:*' '*:S'"
-        } else {
-            "logcat -d -v threadtime -T \"$since\" '$tag:*' '*:S'"
-        }
-
-        return withContext(Dispatchers.IO) {
-            when (val result = ShellManager.shell(command)) {
-                is ShellResult.Error -> {
-                    Result.failure(IOException(result.stderr.ifBlank { "Failed to read logcat" }, result.throwable))
-                }
-                is ShellResult.Success -> {
-                    Result.success(result.stdout.lineSequence()
-                        .map { it.trimEnd() }
-                        .filter { it.isNotBlank() && !it.startsWith("---------") }
-                        .toList())
-                }
-            }
-        }
+        return getRepository().readSystemLogsByTagSince(tag, since)
     }
 
     fun getCurrentLogcatTimeFormat(): String {
-        val dateFormat = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US)
-        return dateFormat.format(Date())
+        return getRepository().getCurrentLogcatTimeFormat()
     }
 }
