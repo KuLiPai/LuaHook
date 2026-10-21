@@ -88,6 +88,23 @@
             android:paddingVertical="4dp"
             android:scrollbars="vertical" />
 
+        <TextView
+            android:id="@+id/tvInWindowToast"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_copy_pill"
+            android:elevation="6dp"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:text="@string/log_copied"
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
     </FrameLayout>
 </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

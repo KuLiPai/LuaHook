@@ -77,6 +77,9 @@
     <string name="no_power">Permission denied</string>
     <string name="logcat_empty">No logs yet. Waiting for new logs…</string>
     <string name="logcat_read_failed">Failed to read logs: %1$s</string>
+    <string name="log_copied">Copied to clipboard</string>
+    <string name="log_copied_full">Full log copied to clipboard</string>
+    <string name="clear_success">Logs cleared</string>
     <string name="checking">Checking...</string>
     <string name="check_update_false">Checking for updates failed, please try again later</string>
     <string name="new_version">There is a new version</string>

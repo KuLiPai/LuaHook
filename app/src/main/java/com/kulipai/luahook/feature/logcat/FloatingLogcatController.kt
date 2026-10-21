@@ -2,8 +2,10 @@ package com.kulipai.luahook.feature.logcat
 
 import android.content.Context
 import android.view.View
+import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
@@ -33,7 +35,7 @@ class FloatingLogcatController(
     private val logcatRepository: LogcatRepository? = null
 ) {
 
-    private companion object {
+    companion object {
         const val LOGCAT_FLOATING_TAG = "logcat"
         const val LOGCAT_CACHE = "cache"
         const val LOGCAT_CLEAR_TIME = "logClearTime"
@@ -79,6 +81,23 @@ class FloatingLogcatController(
                 systemHost(activity) {
                     theme(R.style.Theme_LuaHook)
                     permission(FxPermissionStrategy.auto())
+                    layoutParams { lp ->
+                        // 移除 FLAG_NOT_FOCUSABLE，并保留 FLAG_NOT_TOUCH_MODAL 与 FLAG_ALT_FOCUSABLE_IM：
+                        // 1. 悬浮窗内部点击天然具备焦点，ClipboardService 永久允许写入剪切板；
+                        // 2. 悬浮窗外部点击依然无缝透传到底层宿主应用（FLAG_NOT_TOUCH_MODAL）；
+                        // 3. 不拦截宿主应用的输入法软键盘（FLAG_ALT_FOCUSABLE_IM）。
+                        lp.flags = (lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()) or
+                            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                            WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
+                    }
+                    onBackPressed {
+                        if (!floatingLogMinimized) {
+                            minimizeFloatingLogcat()
+                            true
+                        } else {
+                            false
+                        }
+                    }
                 }
             }.also { control ->
                 floatingLogMinimized = false
@@ -125,7 +144,13 @@ class FloatingLogcatController(
             recyclerView.layoutManager = LinearLayoutManager(recyclerView.context)
         }
         if (recyclerView.adapter == null) {
-            recyclerView.adapter = LogAdapter(floatingLogHistory.entries.toMutableList())
+            recyclerView.adapter = LogAdapter(
+                logs = floatingLogHistory.entries.toMutableList(),
+                isSelectableMode = false,
+                onLogCopied = {
+                    showInWindowToast(holder, activity.getString(R.string.log_copied))
+                }
+            )
         }
         recyclerView.itemAnimator = null
 
@@ -141,6 +166,7 @@ class FloatingLogcatController(
             (recyclerView.adapter as? LogAdapter)?.clearLogs()
             updateFloatingLogcatStatus(holder)
             refreshFloatingLogcat()
+            showInWindowToast(holder, activity.getString(R.string.clear_success))
         }
         holder.getView<ImageButton>(R.id.btnMinimize).setOnClickListener {
             minimizeFloatingLogcat()
@@ -164,6 +190,32 @@ class FloatingLogcatController(
         status.text = message
         status.visibility = if (message == null) View.GONE else View.VISIBLE
         recyclerView.visibility = if (message == null) View.VISIBLE else View.INVISIBLE
+    }
+
+    private fun showInWindowToast(holder: FxViewHolder, message: String) {
+        val toastView = holder.getViewOrNull<TextView>(R.id.tvInWindowToast) ?: return
+        toastView.text = message
+        toastView.animate().cancel()
+        toastView.alpha = 0f
+        toastView.translationY = 24f
+        toastView.visibility = View.VISIBLE
+        toastView.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(160)
+            .withEndAction {
+                toastView.postDelayed({
+                    toastView.animate()
+                        .alpha(0f)
+                        .translationY(16f)
+                        .setDuration(200)
+                        .withEndAction {
+                            toastView.visibility = View.GONE
+                        }
+                        .start()
+                }, 900)
+            }
+            .start()
     }
 
     private fun stopFloatingLogRefresh() {
