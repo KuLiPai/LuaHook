@@ -1,12 +1,8 @@
 package com.kulipai.luahook.feature.logcat
 
 import android.annotation.SuppressLint
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.util.TypedValue
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -60,20 +56,12 @@ class LogAdapter(
             holder.logText.isClickable = false
             holder.logText.isFocusable = false
             holder.card.isClickable = true
-            holder.card.isFocusable = true
+            holder.card.isFocusable = false
+            holder.card.setOnTouchListener(null)
 
             val typedValue = TypedValue()
             if (holder.card.context.theme.resolveAttribute(android.R.attr.selectableItemBackground, typedValue, true)) {
                 holder.card.foreground = ContextCompat.getDrawable(holder.card.context, typedValue.resourceId)
-            }
-
-            // 关键：在手指按下（ACTION_DOWN）瞬间提前移除 FLAG_NOT_FOCUSABLE 并请求焦点，
-            // 彻底解决 Android 10+ 在浮窗覆盖其他 App 时拦截剪切板写入（mWm.isUidFocused == false）的问题
-            holder.card.setOnTouchListener { v, event ->
-                if (event.action == MotionEvent.ACTION_DOWN) {
-                    FloatingClipboardHelper.prepareFocus(v)
-                }
-                false
             }
 
             holder.card.setOnClickListener { v ->

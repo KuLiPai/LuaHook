@@ -2,7 +2,6 @@ package com.kulipai.luahook.feature.logcat
 
 import android.content.Context
 import android.view.View
-import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
@@ -81,23 +80,6 @@ class FloatingLogcatController(
                 systemHost(activity) {
                     theme(R.style.Theme_LuaHook)
                     permission(FxPermissionStrategy.auto())
-                    layoutParams { lp ->
-                        // 移除 FLAG_NOT_FOCUSABLE，并保留 FLAG_NOT_TOUCH_MODAL 与 FLAG_ALT_FOCUSABLE_IM：
-                        // 1. 悬浮窗内部点击天然具备焦点，ClipboardService 永久允许写入剪切板；
-                        // 2. 悬浮窗外部点击依然无缝透传到底层宿主应用（FLAG_NOT_TOUCH_MODAL）；
-                        // 3. 不拦截宿主应用的输入法软键盘（FLAG_ALT_FOCUSABLE_IM）。
-                        lp.flags = (lp.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()) or
-                            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                            WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
-                    }
-                    onBackPressed {
-                        if (!floatingLogMinimized) {
-                            minimizeFloatingLogcat()
-                            true
-                        } else {
-                            false
-                        }
-                    }
                 }
             }.also { control ->
                 floatingLogMinimized = false
