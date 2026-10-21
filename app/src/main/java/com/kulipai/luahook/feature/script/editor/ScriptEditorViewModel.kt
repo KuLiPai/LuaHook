@@ -277,10 +277,21 @@ class ScriptEditorViewModel(
         if (!_uiState.value.isLoaded) return
 
         val diskText = scriptRepository.readScript(mode.relativePath)
-        if (diskText == lastSavedContent) return
-
         val textToCompare = currentContent ?: currentEditorContent
-        val isModified = _uiState.value.isModified || (textToCompare != lastSavedContent)
+
+        val normDisk = diskText.replace("\r\n", "\n").replace("\r", "\n").trimEnd('\r', '\n')
+        val normCompare = textToCompare.replace("\r\n", "\n").replace("\r", "\n").trimEnd('\r', '\n')
+        val normSaved = lastSavedContent.replace("\r\n", "\n").replace("\r", "\n").trimEnd('\r', '\n')
+
+        if (normDisk == normCompare) {
+            lastSavedContent = textToCompare
+            _uiState.update { it.copy(lastSavedContent = textToCompare, isModified = false) }
+            return
+        }
+
+        if (normDisk == normSaved) return
+
+        val isModified = _uiState.value.isModified || (normCompare != normSaved)
 
         if (!isModified) {
             lastSavedContent = diskText

@@ -57,11 +57,13 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private fun String.normalizeContent(): String = replace("\r\n", "\n").replace("\r", "\n").trimEnd('\r', '\n')
+
 class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
     private lateinit var projectName: String
     private lateinit var projectDir: String
-    private var currentFile: String = "main.lua" // Relative path
+    private var currentFile: String = "" // Relative path
     private val openFiles = mutableListOf<String>()
 
     private var lastSavedContent: String = ""
@@ -215,7 +217,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                             return@collect
                         }
                         loadFileList()
-                        if (path == null || path == currentFile || path.endsWith(currentFile)) {
+                        val isCurrent = path != null && (path == currentFile || path.endsWith("/$currentFile") || path == File(currentFile).name)
+                        if (isCurrent) {
                             checkAndReloadCurrentFile(quiet = false)
                         }
                     }
@@ -251,7 +254,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 tab?.text?.let { filename ->
                     if (filename.toString() != currentFile) {
                         if (isContentModified()) {
-                            saveCurrentFile()
+                            saveCurrentFile(force = true)
                         }
                         switchToFile(filename.toString())
                     }
@@ -402,19 +405,37 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         currentFile = filename
         val content =
             AppContainer.instance.workspaceStorage.read("${WorkspaceStorage.Project}/$projectName/$filename")
-        lastSavedContent = content
         binding.editor.setText(content)
+        lastSavedContent = binding.editor.text.toString()
     }
 
     private fun saveCurrentFile(force: Boolean = false): Boolean {
+        if (currentFile.isEmpty()) return true
         val currentText = binding.editor.text.toString()
-        if (!isContentModified()) {
+        if (!force && !isContentModified()) {
             return true
+        }
+
+        // 严禁在待写入内容为空而磁盘原文件非空时静默覆盖（AGENTS.md 防空覆盖卫语句）
+        if (currentText.isEmpty() && lastSavedContent.isNotEmpty()) {
+            return false
         }
 
         val path = "${WorkspaceStorage.Project}/$projectName/$currentFile"
         val diskContent = AppContainer.instance.workspaceStorage.read(path)
-        if (!force && diskContent != lastSavedContent) {
+
+        val normalizedDisk = diskContent.normalizeContent()
+        val normalizedCurrent = currentText.normalizeContent()
+        val normalizedSaved = lastSavedContent.normalizeContent()
+
+        // 磁盘内容已与当前编辑器内存完全一致，无需重复写入
+        if (normalizedDisk == normalizedCurrent) {
+            lastSavedContent = currentText
+            return true
+        }
+
+        // 非强制保存下，若磁盘内容被外部修改（既不等于基线，也不等于当前内存），提示冲突
+        if (!force && normalizedDisk != normalizedSaved && normalizedDisk != normalizedCurrent) {
             showConflictDialog(diskContent)
             return false
         }
@@ -428,6 +449,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     private fun showConflictDialog(diskContent: String) {
+        if (isFinishing || isDestroyed) return
         if (conflictDialog?.isShowing == true) return
         conflictDialog = MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.title_file_conflict))
@@ -443,13 +465,31 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
     }
 
     private fun checkAndReloadCurrentFile(quiet: Boolean = false) {
+        if (currentFile.isEmpty()) return
         val path = "${WorkspaceStorage.Project}/$projectName/$currentFile"
         val diskContent = AppContainer.instance.workspaceStorage.read(path)
-        if (diskContent == lastSavedContent) return
 
+        val normalizedDisk = diskContent.normalizeContent()
+        val normalizedCurrent = binding.editor.text.toString().normalizeContent()
+        val normalizedSaved = lastSavedContent.normalizeContent()
+
+        // 1. 若磁盘内容与当前编辑器完全一致，说明已同步，直接更新基线
+        if (normalizedDisk == normalizedCurrent) {
+            lastSavedContent = binding.editor.text.toString()
+            return
+        }
+
+        // 2. 若磁盘内容与基线一致，说明外部未做任何修改
+        if (normalizedDisk == normalizedSaved) {
+            return
+        }
+
+        // 3. 磁盘发生了外部变更：
+        // 若当前编辑器无未保存修改，安全平滑重载
         if (!isContentModified()) {
             applyNewContent(diskContent, showToast = !quiet)
         } else {
+            // 当前编辑器存在未保存修改，且外部内容与当前内容不一致，才弹窗询问
             showConflictDialog(diskContent)
         }
     }
@@ -460,8 +500,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         val cursorColumn = editor.cursor.leftColumn
         val currentScrollY = editor.offsetY
 
-        lastSavedContent = newContent
         editor.setText(newContent)
+        lastSavedContent = editor.text.toString()
 
         val content = editor.text
         if (content.lineCount > 0 && cursorLine >= 0) {
@@ -562,7 +602,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
         runView.setOnClickListener {
             if (isContentModified()) {
-                saveCurrentFile()
+                saveCurrentFile(force = true)
             }
             runProject()
         }
@@ -593,7 +633,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
         return when (item.itemId) {
             0 -> { // Run
                 if (isContentModified()) {
-                    saveCurrentFile()
+                    saveCurrentFile(force = true)
                 }
                 runProject()
                 true
@@ -741,7 +781,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                 val pkg = input.text.toString().trim()
                 if (pkg.isNotEmpty()) {
                     if (isContentModified()) {
-                        saveCurrentFile()
+                        saveCurrentFile(force = true)
                     }
                     runProject(pkg)
                 }
@@ -824,7 +864,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             if (currentText.isEmpty() && lastSavedContent.isNotEmpty()) {
                 return
             }
-            saveCurrentFile()
+            saveCurrentFile(force = true)
         }
     }
 
