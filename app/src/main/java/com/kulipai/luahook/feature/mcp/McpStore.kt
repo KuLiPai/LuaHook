@@ -5,6 +5,7 @@ import com.kulipai.luahook.core.file.WorkspaceStorage
 import com.kulipai.luahook.core.pm.PackageUtils
 import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.app.MyApplication
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
@@ -229,60 +230,72 @@ object McpStore {
         }
     }
 
-    /** 从 assets/skill 读取文档 */
+    /** 从 assets/skill 读取文档，支持多种灵活相对路径解析（兼顾 Android Runtime 与 JVM 单元测试） */
     fun readSkillAsset(path: String): String {
-        return try {
-            MyApplication.instance.assets.open("skill/$path").bufferedReader().use { it.readText() }
-        } catch (_: Exception) {
-            ""
+        val clean = path.trim().removePrefix("/").removePrefix("skill/").removePrefix("/")
+        val candidates = listOf(
+            clean,
+            "references/$clean",
+            "references/source-docs/$clean",
+            "references/source-docs/zh/$clean",
+            "references/source-docs/zh/manual/$clean",
+            "references/source-docs/zh/manual/native/$clean",
+            "references/source-docs/zh/example/$clean",
+            "$clean.md",
+            "references/$clean.md",
+            "references/source-docs/zh/$clean.md",
+            "references/source-docs/zh/manual/$clean.md",
+            "references/source-docs/zh/manual/native/$clean.md",
+            "references/source-docs/zh/example/$clean.md"
+        )
+        val app = MyApplication.instanceOrNull
+        for (candidate in candidates) {
+            try {
+                if (app != null) {
+                    val text = app.assets.open("skill/$candidate").bufferedReader().use { it.readText() }
+                    if (text.isNotBlank()) return text
+                } else {
+                    val file = listOf(
+                        File("src/main/assets/skill/$candidate"),
+                        File("app/src/main/assets/skill/$candidate")
+                    ).firstOrNull { it.exists() && it.isFile }
+                    if (file != null) {
+                        val text = file.readText()
+                        if (text.isNotBlank()) return text
+                    }
+                }
+            } catch (_: Exception) {}
         }
+        return ""
     }
 
     /** 获取完整的 Skill 规则 Markdown */
     fun getFullSkillMarkdown(): String {
         val skill = readSkillAsset("SKILL.md")
         val core = readSkillAsset("references/core-api.md")
+        val hookZh = readSkillAsset("references/source-docs/zh/manual/hook.md")
+        val fieldZh = readSkillAsset("references/source-docs/zh/manual/field.md")
         val patterns = readSkillAsset("references/patterns.md")
         val luajpp = readSkillAsset("references/luajpp-cheatsheet.md")
+        val luajppZh = readSkillAsset("references/source-docs/zh/luaj++.md")
         val native = readSkillAsset("references/native-api.md")
+        val nativePointer = readSkillAsset("references/source-docs/zh/manual/native/pointer.md")
+        val nativeMemIo = readSkillAsset("references/source-docs/zh/manual/native/memory_io.md")
+        val nativeHook = readSkillAsset("references/source-docs/zh/manual/native/hook.md")
 
-        return if (skill.isNotEmpty()) {
-            buildString {
-                append(skill)
-                append("\n\n---\n\n")
-                append(core)
-                append("\n\n---\n\n")
-                append(patterns)
-                append("\n\n---\n\n")
-                append(luajpp)
-                append("\n\n---\n\n")
-                append(native)
-            }
-        } else {
-            defaultOverview()
-        }
+        return listOf(
+            skill, core, hookZh, fieldZh, patterns, luajpp, luajppZh, native, nativePointer, nativeMemIo, nativeHook
+        ).filter { it.isNotBlank() }.joinToString("\n\n---\n\n").ifEmpty { defaultOverview() }
     }
 
     /** 工具 get_scripting_guide 的实现，按 topic 给出指南 */
     fun getScriptingGuide(args: JSONObject): JSONObject {
-        val topic = args.optString("topic", "overview").lowercase()
-        val (title, content) = when (topic) {
-            "core_api", "core", "api" -> {
-                "LuaHook Core API" to readSkillAsset("references/core-api.md").ifEmpty { defaultCoreApi() }
-            }
-            "patterns", "examples", "pattern" -> {
-                "LuaHook Script Patterns" to readSkillAsset("references/patterns.md").ifEmpty { defaultPatterns() }
-            }
-            "luajpp", "syntax" -> {
-                "LuaJ++ Syntax Sugar" to readSkillAsset("references/luajpp-cheatsheet.md").ifEmpty { defaultLuajpp() }
-            }
-            "native" -> {
-                "LuaHook Native API" to readSkillAsset("references/native-api.md").ifEmpty { defaultNative() }
-            }
-            "all", "full" -> {
-                "LuaHook Scripting Guide (Full)" to getFullSkillMarkdown()
-            }
-            else -> {
+        val rawTopic = args.optString("topic", "overview").trim()
+        val topic = rawTopic.lowercase()
+
+        // 1. 优先匹配已定义的各模块主题关键词
+        val keywordResult: Pair<String, String>? = when (topic) {
+            "", "overview", "default" -> {
                 val skill = readSkillAsset("SKILL.md")
                 val core = readSkillAsset("references/core-api.md")
                 val patterns = readSkillAsset("references/patterns.md")
@@ -292,8 +305,137 @@ object McpStore {
                     defaultOverview()
                 }
             }
+            "core", "core_api", "api" -> {
+                val core = readSkillAsset("references/core-api.md").ifEmpty { defaultCoreApi() }
+                val hookZh = readSkillAsset("references/source-docs/zh/manual/hook.md")
+                val fieldZh = readSkillAsset("references/source-docs/zh/manual/field.md")
+                val importZh = readSkillAsset("references/source-docs/zh/manual/import.md")
+                val lpparamZh = readSkillAsset("references/source-docs/zh/manual/lpparam.md")
+                val invokeZh = readSkillAsset("references/source-docs/zh/manual/invoke.md")
+                "LuaHook Core API" to listOf(core, hookZh, fieldZh, importZh, lpparamZh, invokeZh)
+                    .filter { it.isNotEmpty() }
+                    .joinToString("\n\n---\n\n")
+            }
+            "hook", "hooks", "hookctor", "hookall", "replace" -> {
+                "LuaHook Hook API Reference" to readSkillAsset("references/source-docs/zh/manual/hook.md")
+            }
+            "field", "fields", "il2cpp" -> {
+                "LuaHook Field Operations" to readSkillAsset("references/source-docs/zh/manual/field.md")
+            }
+            "import", "imports", "findclass" -> {
+                "LuaHook Class Loading & Imports" to readSkillAsset("references/source-docs/zh/manual/import.md")
+            }
+            "invoke", "call", "reflection" -> {
+                "LuaHook Method Invocation (Invoke)" to readSkillAsset("references/source-docs/zh/manual/invoke.md")
+            }
+            "lpparam", "classloader" -> {
+                "LuaHook LPParam & ClassLoader" to readSkillAsset("references/source-docs/zh/manual/lpparam.md")
+            }
+            "task", "async", "delay" -> {
+                "LuaHook Async Task Helper" to readSkillAsset("references/source-docs/zh/manual/task.md")
+            }
+            "http", "network" -> {
+                "LuaHook HTTP Network Helper" to readSkillAsset("references/source-docs/zh/manual/http.md")
+            }
+            "json" -> {
+                "LuaHook JSON Helper" to readSkillAsset("references/source-docs/zh/manual/json.md")
+            }
+            "file", "io" -> {
+                "LuaHook File IO Helper" to readSkillAsset("references/source-docs/zh/manual/file.md")
+            }
+            "patterns", "examples", "pattern", "template", "templates" -> {
+                val patterns = readSkillAsset("references/patterns.md").ifEmpty { defaultPatterns() }
+                val firstScript = readSkillAsset("references/source-docs/zh/firstscript.md")
+                "LuaHook Script Patterns & Templates" to "$patterns\n\n---\n\n$firstScript"
+            }
+            "luajpp", "syntax", "sugar" -> {
+                val luajpp = readSkillAsset("references/luajpp-cheatsheet.md").ifEmpty { defaultLuajpp() }
+                val luajppZh = readSkillAsset("references/source-docs/zh/luaj++.md")
+                "LuaJ++ Syntax Sugar & Java Interop" to "$luajpp\n\n---\n\n$luajppZh"
+            }
+            "native", "native_api" -> {
+                val nativeSummary = readSkillAsset("references/native-api.md").ifEmpty { defaultNative() }
+                val pointerZh = readSkillAsset("references/source-docs/zh/manual/native/pointer.md")
+                val memIoZh = readSkillAsset("references/source-docs/zh/manual/native/memory_io.md")
+                val memStrZh = readSkillAsset("references/source-docs/zh/manual/native/memory_string.md")
+                val memAllocZh = readSkillAsset("references/source-docs/zh/manual/native/memory_alloc.md")
+                val hookZh = readSkillAsset("references/source-docs/zh/manual/native/hook.md")
+                val moduleZh = readSkillAsset("references/source-docs/zh/manual/native/module.md")
+                val invokeZh = readSkillAsset("references/source-docs/zh/manual/native/invoke.md")
+                val legacyZh = readSkillAsset("references/source-docs/zh/manual/native/legacy.md")
+                "LuaHook Native & Memory API (Comprehensive)" to listOf(
+                    nativeSummary, pointerZh, memIoZh, memStrZh, memAllocZh, hookZh, moduleZh, invokeZh, legacyZh
+                ).filter { it.isNotEmpty() }.joinToString("\n\n---\n\n")
+            }
+            "native/pointer", "pointer", "luapointer" -> {
+                "LuaHook Pointer (LuaPointer) Operations" to readSkillAsset("references/source-docs/zh/manual/native/pointer.md")
+            }
+            "native/memory", "memory", "memory_io" -> {
+                val io = readSkillAsset("references/source-docs/zh/manual/native/memory_io.md")
+                val str = readSkillAsset("references/source-docs/zh/manual/native/memory_string.md")
+                val alloc = readSkillAsset("references/source-docs/zh/manual/native/memory_alloc.md")
+                "LuaHook Native Memory Operations" to listOf(io, str, alloc).filter { it.isNotEmpty() }.joinToString("\n\n---\n\n")
+            }
+            "native/hook", "inline_hook" -> {
+                "LuaHook Native Inline Hooking" to readSkillAsset("references/source-docs/zh/manual/native/hook.md")
+            }
+            "native/module", "module", "module_base" -> {
+                "LuaHook Native Module & Symbol Operations" to readSkillAsset("references/source-docs/zh/manual/native/module.md")
+            }
+            "native/invoke", "native/new_function", "new_function", "native_function" -> {
+                "LuaHook Native Function Invocation" to readSkillAsset("references/source-docs/zh/manual/native/invoke.md")
+            }
+            "native/legacy", "legacy" -> {
+                "LuaHook Native Legacy APIs" to readSkillAsset("references/source-docs/zh/manual/native/legacy.md")
+            }
+            "all", "full" -> {
+                "LuaHook Scripting Guide (Full)" to getFullSkillMarkdown()
+            }
+            else -> null
         }
-        return JSONObject().put("topic", topic).put("title", title).put("guide", content)
+
+        if (keywordResult != null && keywordResult.second.isNotEmpty()) {
+            return JSONObject().put("topic", rawTopic).put("title", keywordResult.first).put("guide", keywordResult.second)
+        }
+
+        // 2. 支持直接按文件相对路径读取
+        val directContent = readSkillAsset(rawTopic)
+        if (directContent.isNotEmpty()) {
+            val title = rawTopic.substringAfterLast("/").removeSuffix(".md")
+                .replace('_', ' ')
+                .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+            return JSONObject().put("topic", rawTopic).put("title", "LuaHook Guide: $title").put("guide", directContent)
+        }
+
+        // 3. 未识别的 topic：不再静默降级为默认三合一，而是明确提示并返回合法 topic 列表
+        val availableTopics = JSONArray()
+            .put("overview")
+            .put("all")
+            .put("core")
+            .put("patterns")
+            .put("luajpp")
+            .put("native")
+            .put("hook")
+            .put("field")
+            .put("import")
+            .put("invoke")
+            .put("lpparam")
+            .put("task")
+            .put("http")
+            .put("json")
+            .put("file")
+            .put("native/pointer")
+            .put("native/memory")
+            .put("native/hook")
+            .put("native/invoke")
+            .put("native/module")
+            .put("native/legacy")
+
+        return JSONObject()
+            .put("topic", rawTopic)
+            .put("error", "Topic '$rawTopic' not recognized.")
+            .put("available_topics", availableTopics)
+            .put("hint", "You can request any topic above, or specify a relative doc path under references/ (e.g. 'references/source-docs/zh/manual/field.md' or 'references/native-api.md').")
     }
 
     /** MCP resources/list */
@@ -324,18 +466,34 @@ object McpStore {
                 .put("name", "Native Hook API")
                 .put("description", "Native C/C++ inline hooking, module base, LuaPointer, memory ops")
                 .put("mimeType", "text/markdown"))
+            .put(JSONObject()
+                .put("uri", "luahook://skill/field")
+                .put("name", "Field Operations")
+                .put("description", "getField, setField, getStaticField, setStaticField for instance and static member access")
+                .put("mimeType", "text/markdown"))
+            .put(JSONObject()
+                .put("uri", "luahook://skill/native/memory")
+                .put("name", "Native Memory Operations")
+                .put("description", "native.memory read/write/alloc/string operations")
+                .put("mimeType", "text/markdown"))
         return JSONObject().put("resources", array)
     }
 
     /** MCP resources/read */
     fun readResource(uri: String): JSONObject {
-        val text = when (uri.trim()) {
+        val text = when (val cleanUri = uri.trim()) {
             "luahook://skill/full" -> getFullSkillMarkdown()
             "luahook://skill/core-api" -> readSkillAsset("references/core-api.md").ifEmpty { defaultCoreApi() }
             "luahook://skill/patterns" -> readSkillAsset("references/patterns.md").ifEmpty { defaultPatterns() }
             "luahook://skill/luajpp" -> readSkillAsset("references/luajpp-cheatsheet.md").ifEmpty { defaultLuajpp() }
             "luahook://skill/native-api" -> readSkillAsset("references/native-api.md").ifEmpty { defaultNative() }
-            else -> error("Resource not found: $uri")
+            "luahook://skill/field" -> readSkillAsset("references/source-docs/zh/manual/field.md")
+            "luahook://skill/native/memory" -> readSkillAsset("references/source-docs/zh/manual/native/memory_io.md")
+            else -> {
+                val assetPath = cleanUri.removePrefix("luahook://skill/")
+                val content = readSkillAsset(assetPath)
+                if (content.isNotEmpty()) content else error("Resource not found: $uri")
+            }
         }
         val content = JSONObject()
             .put("uri", uri)

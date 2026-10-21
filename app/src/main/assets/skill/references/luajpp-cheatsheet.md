@@ -143,16 +143,41 @@ local ints = int[10]
 local values = int{1,2,3}
 ```
 
-### Class Helpers Mentioned In Docs
+### Class Helpers & Advanced Interop
 
-Docs mention helpers such as:
+```lua
+-- Create Java Array
+local strArray = String.array{"apple", "banana", "orange"}
+local intArray = int{1, 2, 3, 4, 5}
+local emptyInts = int[10]
 
-- `Object.array{}`
-- `Object.new`
-- `Object.class`
-- `Object.override{}`
+-- Access Class Constructor & Class Reflection
+local newInstance = MyClass.new("arg1", 123)
+local classObj = MyClass.class
 
-Use them only when the user needs compact Java interop and the surrounding codebase already uses them.
+-- Interface Implementation (Anonymous interface)
+local clickListener = interface {
+  onClick = function(view)
+    print("Clicked: " .. tostring(view))
+  end
+}
+
+-- Abstract Class Implementation
+local customHandler = abstract {
+  handleMessage = function(superCall, msg)
+    print("Handling msg: " .. tostring(msg))
+    superCall(msg)
+  end
+}
+
+-- Method Overriding on Existing Java Class
+local customList = ArrayList.override {
+  add = function(superCall, element)
+    print("Adding element: " .. tostring(element))
+    return superCall(element)
+  end
+}()
+```
 
 ## Operator Extensions Mentioned In Docs
 

@@ -72,5 +72,5 @@ setStaticField(类, "字段名", 新值)
 #### 示例：
 
 ```lua
-setStaticField(Builds, "SDK_INT", 99)
+setStaticField(Build, "SDK_INT", 99)
 ```

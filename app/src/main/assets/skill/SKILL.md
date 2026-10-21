@@ -29,13 +29,14 @@ LuaHook is an Android framework for writing Xposed-style modules in Lua. Prefer 
 ## Workflow
 
 1. Identify whether the user needs app-level Java hooks, native hooks, or syntax explanation.
-2. Load only the relevant reference file:
+2. If working via MCP (`get_scripting_guide`), pass the desired topic or relative path directly (e.g. `topic = "core"`, `"patterns"`, `"luajpp"`, `"native"`, `"field"`, `"hook"`, `"import"`, `"invoke"`, `"lpparam"`, `"native/pointer"`, `"native/memory"`, `"all"`).
+3. If working locally as an agent skill, load only the relevant reference file:
    - Core Java/Xposed-style scripting: `references/core-api.md`
    - LuaJ++ syntax and Java sugar: `references/luajpp-cheatsheet.md`
    - Practical starter templates and patterns: `references/patterns.md`
    - Native hook and pointer work: `references/native-api.md`
    - Project framing and terminology: `references/project-context.md`
-3. Prefer bundled local source docs under `references/source-docs/` over external web links.
+4. Prefer bundled local source docs under `references/source-docs/` (or via MCP topic keywords like `"field"`, `"hook"`, `"memory"`) over external web links.
 4. If the docs do not confirm an API shape, say that explicitly and choose the safest documented form.
 5. Return code that is ready to paste into a LuaHook script, with a short explanation of why each LuaHook-specific choice is used.
 

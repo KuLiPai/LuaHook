@@ -1,72 +1,187 @@
-# LuaHook Native API Notes
+# LuaHook Native API Reference
 
-Use this reference only when the user is working with native libraries or memory addresses. For ordinary app hooks, stay with `hook` and related Java-layer APIs.
+Use this reference when working with native C/C++ libraries (`.so`), inline native hooks, memory read/write, or pointer manipulation.
 
-## Core Native Concepts
+---
 
-- `native.module_base("libname.so")` returns a `LuaPointer` base address.
-- `native.resolve_symbol("libc.so", "fopen")` resolves an exported symbol address.
-- `native.hook(target_addr, config)` installs an inline native hook.
-- `native.ptr(value)` creates a `LuaPointer`.
-- `native.memory.*` is the preferred modern memory API family.
+## 1. Core Native Concepts
 
-## `LuaPointer`
+- `native.module_base("libname.so")` -> returns `LuaPointer` base address of a loaded ELF shared library.
+- `native.resolve_symbol("libname.so", "symbol_name")` -> resolves an exported symbol address into a `LuaPointer`.
+- `native.ptr(addr)` -> wraps a number, hex string, or address into a `LuaPointer`.
+- `native.hook(target_addr, config)` -> installs an inline native hook.
+  - `native.new_function(address, returnType, paramTypes)` -> creates a callable wrapper object for a native function address.
+- `native.memory.*` -> comprehensive modern memory read, write, allocation, and string operations.
 
-The docs describe `LuaPointer` as a safer pointer wrapper that preserves 64-bit address behavior better than raw Lua numbers.
+---
 
-Useful methods documented:
+## 2. `LuaPointer` Object
 
-- `is_null()`
-- `not_null()`
-- `to_hex()`
-- `to_int()`
-- `add(offset)`
-- `sub(offset)`
-- `equals(other)`
-- `deref([offset])`
-- `hexdump([size])`
+`LuaPointer` encapsulates 64-bit native memory addresses safely, preventing precision loss from standard Lua numbers, and supports direct chained memory operations.
 
-Docs also describe pointer read and write chaining such as `read_ptr()` and `write_u32()`.
+### Creation
+```lua
+local p1 = native.ptr(0x7f12345678)
+local p2 = native.ptr("0x7f12345678")
+local p3 = native.module_base("libil2cpp.so")
+local p4 = native.memory.alloc(64)
+```
 
-## Native Hook Shape
+### Null Check & Inspection
+```lua
+p.is_null()   -- boolean: true if address == 0
+p.not_null()  -- boolean: true if address != 0
+p.to_hex()    -- uppercase hex string (e.g. "7F12345678", without 0x)
+p.to_int()    -- number (note: may lose precision on 64-bit addresses)
+p.to_long()   -- returns self (compatibility)
+p.hexdump([size]) -- logs or dumps hex memory representation (default size 64)
+```
+
+### Pointer Arithmetic & Bitwise (all return a new `LuaPointer`)
+```lua
+local p_offset = p.add(0x10)  -- address + 0x10
+local p_sub    = p.sub(0x04)  -- address - 0x04
+local p_and    = p.and(mask)  -- bitwise AND
+local p_or     = p.or(mask)   -- bitwise OR
+local p_xor    = p.xor(mask)  -- bitwise XOR
+local p_shl    = p.shl(bits)  -- left shift
+local p_shr    = p.shr(bits)  -- right shift
+local p_set    = p.set(0x123) -- create new pointer with new address
+p.equals(other)               -- boolean comparison
+```
+
+### Chained Pointer Dereferencing & Read/Write
+`LuaPointer` directly implements all `native.memory.*` methods with self as the base address:
+```lua
+-- Read pointer at p, add 0x10 offset, then read a uint32
+local val = p.read_ptr().add(0x10).read_u32()
+
+-- Write directly to pointer
+p.write_u32(100)       -- at p + 0
+p.write_u32(200, 0x04) -- at p + 0x04
+p.write_cstr("hello")
+```
+
+---
+
+## 3. `native.memory.*` API
+
+All `addr` parameters support `LuaPointer`, integer `number`, or hex `string`.
+
+### Integer Read & Write
+| Width | Type | Read Function | Write Function | Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **8-bit** | Unsigned | `native.memory.read_u8(addr, [offset])` | `native.memory.write_u8(addr, value, [offset])` | 0 ~ 255 |
+| | Signed | `native.memory.read_s8(addr, [offset])` | `native.memory.write_s8(addr, value, [offset])` | -128 ~ 127 |
+| **16-bit**| Unsigned | `native.memory.read_u16(addr, [offset])` | `native.memory.write_u16(addr, value, [offset])` | 0 ~ 65535 |
+| | Signed | `native.memory.read_s16(addr, [offset])` | `native.memory.write_s16(addr, value, [offset])` | -32768 ~ 32767 |
+| **32-bit**| Unsigned | `native.memory.read_u32(addr, [offset])` | `native.memory.write_u32(addr, value, [offset])` | Lua number (UInt32) |
+| | Signed | `native.memory.read_s32(addr, [offset])` | `native.memory.write_s32(addr, value, [offset])` | Lua number (Int32) |
+| **64-bit**| Unsigned | `native.memory.read_u64(addr, [offset])` | `native.memory.write_u64(addr, value, [offset])` | **Returns `LuaPointer`** |
+| | Signed | `native.memory.read_s64(addr, [offset])` | `native.memory.write_s64(addr, value, [offset])` | **Returns `LuaPointer`** |
+| **Pointer**| Architecture width | `native.memory.read_ptr(addr, [offset])` | `native.memory.write_ptr(addr, ptrVal, [offset])`| Auto 32/64 bit pointer |
+
+### Floating Point Read & Write
+| Type | Read Function | Write Function |
+| :--- | :--- | :--- |
+| Float (32-bit) | `native.memory.read_f32(addr, [offset])` | `native.memory.write_f32(addr, value, [offset])` |
+| Double (64-bit)| `native.memory.read_f64(addr, [offset])` | `native.memory.write_f64(addr, value, [offset])` |
+
+### Raw Byte Arrays
+```lua
+-- Read size bytes into a Lua table of integers [1..size] (0-255)
+local bytes = native.memory.read_byte_array(addr, size, [offset])
+
+-- Write Lua table of byte values into memory
+native.memory.write_byte_array(addr, { 0x90, 0x90, 0x00 }, [offset])
+```
+
+### Strings
+```lua
+-- C-style null-terminated strings
+local str = native.memory.read_cstr(addr, [max_len=512])
+local strUtf8 = native.memory.read_cstr_utf8(addr, [max_len=512])
+native.memory.write_cstr(addr, "my_string")
+native.memory.write_cstr_utf8(addr, "中文内容")
+
+-- Length-prefixed strings (1-byte length + body)
+local lpStr = native.memory.read_lp_utf8(addr, [max_len])
+native.memory.write_lp_utf8(addr, "string", [max_len])
+
+-- Auto-detect (length-prefixed if printable, otherwise cstr)
+local autoStr = native.memory.read_auto_utf8(addr, [max_len])
+```
+
+### Allocation & Free
+```lua
+local buf = native.memory.alloc(128) -- returns LuaPointer
+-- ... use buf ...
+native.memory.free(buf) -- returns boolean
+```
+
+---
+
+## 4. Native Inline Hooking (`native.hook`)
 
 ```lua
-local base = native.module_base("libgame.so")
+local base = native.module_base("libil2cpp.so")
 if base.is_null() then
+  log("libil2cpp.so not loaded yet")
   return
 end
 
-native.hook(base.add(0x1234), {
-  ret = "int",
+local targetAddr = base.add(0x123456) -- Function offset
+
+native.hook(targetAddr, {
+  ret = "int", -- Return type: "void", "int", "pointer", "bool", "float", "double"
   onEnter = function(ctx)
+    -- On ARM64: ctx[0], ctx[1], ctx[2] ... correspond to registers X0, X1, X2 ...
+    -- ctx[0] is typically 'this' for C++ member methods or first argument
+    local arg0 = ctx[0]
+    local arg1 = ctx[1]
+    log("onEnter called with arg0=" .. tostring(arg0) .. ", arg1=" .. tostring(arg1))
+
+    -- Modify argument register
+    ctx[1] = 9999
   end,
   onLeave = function(ret)
-    return ret
+    log("onLeave original return value: " .. tostring(ret))
+    -- Return replacement value or original
+    return 1
   end,
 })
 ```
 
-## Native Hook Callback Notes
+---
 
-- `onEnter(ctx)` runs before the target function.
-- `ctx[0]`, `ctx[1]`, and similar access general-purpose registers, not abstract argument numbers across all ABIs.
-- Docs explicitly frame these examples around ARM64 register usage.
-- `onLeave(ret)` receives the original return value and may return a replacement.
+## 5. Native Function Calls (`native.new_function`)
 
-## Compatibility Guidance
+### 1. Creating a Native Function Object
+Use `native.new_function` to create a wrapper for a native function address:
 
-- Prefer `native.module_base` over `native.get_module_base`.
-- Prefer `native.memory.*` over old top-level `native.read*` or `native.write*` helpers.
-- Keep pointer values as `LuaPointer` objects rather than plain Lua numbers whenever 64-bit precision matters.
+```lua
+local func = native.new_function(address, returnType, paramTypes)
+```
+- **address**: The memory address of the native function (Long or `LuaPointer`).
+- **returnType**: The return type string. Supported: `"void"`, `"int"`, `"float"`, `"double"`, `"pointer"`.
+- **paramTypes**: A table containing parameter type strings. Supported: `"int"`, `"float"`, `"double"`, `"pointer"`.
 
-## Safety Guidance
+**Example:**
+```lua
+local base = native.resolve_symbol("libexample.so", "some_exported_func")
+local func = native.new_function(base, "void", {"int", "int"})
+```
 
-- Native hooks are version-sensitive and crash-prone.
-- If the user does not provide ABI, module name, and offset or symbol name, ask for them or clearly label assumptions.
+### 2. Invoking the Function
+Once the function object is created, you can call it directly:
 
-## Local Source Docs
+```lua
+func(arg1, arg2...)
+```
+- Pass arguments directly.
+- The return value matches the specified `returnType`.
 
-- `references/source-docs/zh/manual/native/hook.md`
-- `references/source-docs/zh/manual/native/module.md`
-- `references/source-docs/zh/manual/native/pointer.md`
-- `references/source-docs/zh/manual/native/legacy.md`
+**Example:**
+```lua
+func(10, 20)
+```

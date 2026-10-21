@@ -128,8 +128,32 @@ class McpHttpServer(private val listenPort: Int) : NanoHTTPD("0.0.0.0", listenPo
                 .put("description", description)
                 .put("inputSchema", JSONObject().put("type", "object").put("properties", props))
         }
+        val guideTool = JSONObject()
+            .put("name", "get_scripting_guide")
+            .put(
+                "description",
+                "Retrieve official LuaHook scripting documentation, API syntax rules (hook, replace, lpparam, imports, LuaJ++), and code templates. Call this whenever you need to write or review LuaHook scripts."
+            )
+            .put(
+                "inputSchema",
+                JSONObject()
+                    .put("type", "object")
+                    .put(
+                        "properties",
+                        JSONObject().put(
+                            "topic",
+                            JSONObject()
+                                .put("type", "string")
+                                .put(
+                                    "description",
+                                    "Topic or relative doc path to retrieve. Supported topics: 'overview' (default overview), 'all' (complete documentation), 'core' (Java hook APIs, params, classloaders), 'patterns' (script templates), 'luajpp' (syntax sugar and Java interop), 'native' (comprehensive C/C++ inline hooks, memory read/write, LuaPointer), 'hook', 'field', 'import', 'invoke', 'lpparam', 'task', 'http', 'json', 'file', 'native/pointer', 'native/memory', 'native/hook', 'native/invoke', 'native/module', 'native/legacy', or any relative doc path under references/ (e.g. 'references/source-docs/zh/manual/field.md')."
+                                )
+                        )
+                    )
+            )
+
         return JSONArray()
-            .put(tool("get_scripting_guide", "Retrieve official LuaHook scripting documentation, API syntax rules (hook, replace, lpparam, imports, LuaJ++), and code templates. Call this whenever you need to write or review LuaHook scripts.", "topic"))
+            .put(guideTool)
             .put(tool("list_projects", "List projects"))
             .put(tool("create_project", "Create a project with manifest and initial scripts", "name", "description", "author", "scope", "launcher", "icon"))
             .put(tool("set_project_enabled", "Enable or disable a project", "name", "enabled"))

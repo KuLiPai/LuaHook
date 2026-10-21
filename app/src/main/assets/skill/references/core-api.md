@@ -199,12 +199,53 @@ local packageName = invoke(context, "getPackageName")
 
 ## Field Helpers
 
-LuaHook documents four reflection-style field helpers:
+LuaHook provides four reflection-style field helpers that bypass Java access control (supporting private, protected, and package-private fields):
 
-- `getField(instance, "field")`
-- `setField(instance, "field", value)`
-- `getStaticField(clazz, "field")`
-- `setStaticField(clazz, "field", value)`
+### 1. `getField(instance, "fieldName")`
+Retrieves an instance field value from an object:
+```lua
+hook {
+  class = "android.app.Activity",
+  method = "onResume",
+  params = {},
+  after = function(it)
+    -- Read private member field from current instance
+    local titleView = getField(it.thisObject, "mTitleTextView")
+  end,
+}
+```
+
+### 2. `setField(instance, "fieldName", newValue)`
+Modifies an instance field value on an object:
+```lua
+hook {
+  class = "com.example.UserSession",
+  method = "isVip",
+  params = {},
+  before = function(it)
+    setField(it.thisObject, "isVipUser", true)
+    setField(it.thisObject, "expireTime", 9999999999)
+  end,
+}
+```
+
+### 3. `getStaticField(clazz, "fieldName")`
+Retrieves a static class-level field:
+```lua
+imports "android.os.Build"
+local sdkInt = getStaticField(Build, "SDK_INT")
+
+-- Or by finding class with lpparam.classLoader:
+local targetCls = findClass("com.example.Config", lpparam.classLoader)
+local isDebug = getStaticField(targetCls, "DEBUG")
+```
+
+### 4. `setStaticField(clazz, "fieldName", newValue)`
+Overwrites a static class-level field:
+```lua
+imports "android.os.Build$VERSION"
+setStaticField(VERSION, "SDK_INT", 34)
+```
 
 ## Utility Helpers
 
