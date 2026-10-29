@@ -32,6 +32,7 @@ compileSdk = "37"
 minSdk = "28"
 buildToolsVersion = "35.0.0"
 libluahook = "1.0.0-alpha08"
+apksig = "8.7.3"
 
 [libraries]
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
@@ -80,6 +81,7 @@ libluahook-core = { module = "com.github.KuLiPai.libluahook:luahook-core", versi
 libluahook-ext-layout = { module = "com.github.KuLiPai.libluahook:luahook-ext-layout", version.ref = "libluahook" }
 libluahook-ext-dexkit = { module = "com.github.KuLiPai.libluahook:luahook-ext-dexkit", version.ref = "libluahook" }
 libluahook-ext-native = { module = "com.github.KuLiPai.libluahook:luahook-ext-native", version.ref = "libluahook" }
+apksig = { module = "com.android.tools.build:apksig", version.ref = "apksig" }
 
 [plugins]
 agp-lib = { id = "com.android.library", version.ref = "agp" }

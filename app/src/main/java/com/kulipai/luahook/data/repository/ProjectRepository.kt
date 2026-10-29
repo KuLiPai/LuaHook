@@ -30,6 +30,7 @@ interface ProjectRepository {
     suspend fun deleteProject(name: String)
     suspend fun importProject(context: Context, uri: Uri): Boolean
     suspend fun exportProject(context: Context, name: String, uri: Uri): Boolean
+    suspend fun collectProjectFiles(context: Context, name: String): Map<String, ByteArray>
 
     companion object {
         const val INFO_JSON = "/Project/info.json"
@@ -307,5 +308,68 @@ scope = ${scopeLua.trimIndent()}
                 zipOut.closeEntry()
             }
         }
+    }
+
+    override suspend fun collectProjectFiles(
+        context: Context,
+        name: String
+    ): Map<String, ByteArray> = withContext(ioDispatcher) {
+        val projectRelativePath = "${WorkspaceStorage.Project}/$name"
+        val projectFullPath = "${WorkspaceStorage.DIR}$projectRelativePath"
+        val result = LinkedHashMap<String, ByteArray>()
+
+        if (!workspaceStorage.directoryExists(projectFullPath)) {
+            return@withContext result
+        }
+
+        val cacheDir = File(context.externalCacheDir ?: context.cacheDir, "pack_collect_temp")
+        if (cacheDir.exists()) cacheDir.deleteRecursively()
+        cacheDir.mkdirs()
+
+        try {
+            workspaceStorage.copy(projectFullPath, cacheDir.absolutePath)
+            workspaceStorage.chmod(cacheDir.absolutePath, "777", recursive = true)
+
+            val destDir = File(cacheDir, name)
+            val sourceRoot = if (destDir.exists() && destDir.isDirectory) {
+                destDir
+            } else {
+                File(projectFullPath)
+            }
+
+            fun walkFolder(folder: File, prefix: String) {
+                val children = folder.listFiles() ?: return
+                for (child in children) {
+                    val rel = if (prefix.isEmpty()) child.name else "$prefix/${child.name}"
+                    if (child.isDirectory) {
+                        walkFolder(child, rel)
+                    } else if (child.isFile && child.canRead()) {
+                        runCatching { result[rel] = child.readBytes() }
+                    }
+                }
+            }
+
+            if (sourceRoot.exists()) {
+                walkFolder(sourceRoot, "")
+            }
+
+            // 兜底：若 SELinux 限制导致直接遍历未读到核心脚本，通过 workspaceStorage 补齐
+            if (!result.containsKey("init.lua")) {
+                val initText = workspaceStorage.read("$projectRelativePath/init.lua")
+                if (initText.isNotEmpty()) {
+                    result["init.lua"] = initText.toByteArray(Charsets.UTF_8)
+                }
+            }
+            if (!result.containsKey("main.lua")) {
+                val mainText = workspaceStorage.read("$projectRelativePath/main.lua")
+                if (mainText.isNotEmpty()) {
+                    result["main.lua"] = mainText.toByteArray(Charsets.UTF_8)
+                }
+            }
+        } finally {
+            runCatching { cacheDir.deleteRecursively() }
+        }
+
+        result
     }
 }

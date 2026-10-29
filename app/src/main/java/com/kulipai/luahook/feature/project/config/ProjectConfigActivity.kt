@@ -31,6 +31,7 @@ import com.kulipai.luahook.data.repository.ProjectRepository
 import com.kulipai.luahook.databinding.ActivityProjectConfigBinding
 import kotlinx.coroutines.launch
 import com.kulipai.luahook.feature.project.create.CreateProjectActivity
+import com.kulipai.luahook.feature.project.pack.ProjectPackActivity
 import com.kulipai.luahook.feature.script.selector.ScopeSelectorActivity
 import java.io.File
 
@@ -76,7 +77,9 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
     }
 
     override fun initData() {
-        originalProjectName = intent.getStringExtra("project_name") ?: ""
+        originalProjectName = intent.getStringExtra("project_name")
+            ?: intent.getStringExtra("projectName")
+            ?: ""
         if (originalProjectName.isEmpty()) {
             finish()
             return
@@ -138,6 +141,12 @@ class ProjectConfigActivity : BaseActivity<ActivityProjectConfigBinding>() {
         
         binding.btnAddManualScope.setOnClickListener {
             showAddScopeDialog()
+        }
+
+        binding.btnPackApk.setOnClickListener {
+            val intent = Intent(this, ProjectPackActivity::class.java)
+            intent.putExtra("project_name", originalProjectName)
+            startActivity(intent)
         }
 
         binding.btnCreate.setOnClickListener {

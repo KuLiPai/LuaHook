@@ -31,6 +31,7 @@ import com.kulipai.luahook.databinding.FragmentHomeProjectBinding
 import com.kulipai.luahook.feature.project.ProjectViewModel
 import com.kulipai.luahook.feature.project.create.CreateProjectActivity
 import com.kulipai.luahook.feature.project.editor.ProjectEditorActivity
+import com.kulipai.luahook.feature.project.pack.ProjectPackActivity
 import kotlinx.coroutines.launch
 
 class ProjectFragment : BaseFragment<FragmentHomeProjectBinding>() {
@@ -99,6 +100,11 @@ class ProjectFragment : BaseFragment<FragmentHomeProjectBinding>() {
                                 ).show()
                             }
                         }
+                    }
+                    .setNeutralButton(getString(R.string.action_pack_apk)) { _, _ ->
+                        val intent = Intent(requireContext(), ProjectPackActivity::class.java)
+                        intent.putExtra("project_name", project.name)
+                        startActivity(intent)
                     }
                     .setNegativeButton(getString(R.string.cancel), null)
                     .show()

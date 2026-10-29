@@ -1,28 +1,44 @@
 package com.kulipai.luahook.hook.api
 
 import com.kulipai.luahook.core.file.WorkspaceFileManager
-import com.kulipai.luahook.core.utils.dd
 import org.luaj.LuaValue
 import org.luaj.lib.OneArgFunction
 
 /**
- * 模板
+ * 项目路径与目录解析 API 绑定（同时支持工作区项目与独立打包模块）。
  */
-
-class LuaProject(val projectName: String = "") {
-    // 注册一个方法东西在globals里
+class LuaProject(
+    val projectName: String = "",
+    val customProjectDir: String? = null
+) {
     fun registerTo(env: LuaValue) {
-        if (projectName.isEmpty()) {
+        if (projectName.isEmpty() && customProjectDir.isNullOrEmpty()) {
             return
         }
 
-        env["getProjectDir"] = object : OneArgFunction() {
+        val baseDir = if (!customProjectDir.isNullOrEmpty()) {
+            if (customProjectDir.endsWith("/")) customProjectDir else "$customProjectDir/"
+        } else {
+            WorkspaceFileManager.DIR + WorkspaceFileManager.Project + "/" + projectName + "/"
+        }
+
+        val dirFunc = object : OneArgFunction() {
             override fun call(p0: LuaValue): LuaValue {
-                if (p0==NIL) {
-                    return valueOf(WorkspaceFileManager.DIR + WorkspaceFileManager.Project + "/" + projectName + "/")
+                if (p0 == NIL || !p0.isstring()) {
+                    return valueOf(baseDir)
                 }
-                return valueOf(WorkspaceFileManager.DIR + WorkspaceFileManager.Project + "/" + projectName + "/" + p0.tojstring())
+                val sub = p0.tojstring().trim()
+                if (sub.isEmpty()) {
+                    return valueOf(baseDir)
+                }
+                val cleanSub = sub.removePrefix("./").trimStart('/')
+                return valueOf(baseDir + cleanSub)
             }
         }
+
+        env["getProjectDir"] = dirFunc
+        env["getProjectPath"] = dirFunc
+        env["projectDir"] = LuaValue.valueOf(baseDir)
+        env["projectPath"] = LuaValue.valueOf(baseDir)
     }
 }

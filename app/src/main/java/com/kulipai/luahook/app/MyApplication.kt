@@ -36,9 +36,16 @@ class MyApplication : Application() {
     lateinit var appContainer: AppContainer
         private set
 
+    var isStandaloneModule: Boolean = false
+        private set
+
     override fun onCreate() {
         super.onCreate()
         instanceOrNull = this
+
+        isStandaloneModule = runCatching {
+            assets.open("standalone_project/pack_config.json").use { true }
+        }.getOrDefault(false)
 
         // 统一初始化应用级轻量依赖注入容器
         appContainer = AppContainer(this)
@@ -55,10 +62,12 @@ class MyApplication : Application() {
 
         DynamicColors.applyToActivitiesIfAvailable(this)
         LanguageUtils.applyLanguage(this)
-        ShizukuApi.init()
 
-        // 启动容器编排与基础设施加载
-        appContainer.initialize()
+        if (!isStandaloneModule) {
+            ShizukuApi.init()
+            // 启动容器编排与基础设施加载
+            appContainer.initialize()
+        }
 
         XposedScope.init()
     }

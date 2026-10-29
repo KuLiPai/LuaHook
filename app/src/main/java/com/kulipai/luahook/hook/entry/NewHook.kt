@@ -31,11 +31,21 @@ class NewHook : XposedModule() {
     lateinit var selectAppsString: String
     lateinit var selectAppsList: MutableList<String>
 
-    /** API 102 的包就绪回调。记下模块 apk 路径后，按工作区加载全局脚本、应用脚本和项目。 */
+    /** API 102 的包就绪回调。优先检测是否为独立打包模块，否则按工作区加载全局脚本、应用脚本和项目。 */
     override fun onPackageReady(lpparam: XposedModuleInterface.PackageReadyParam) {
         super.onPackageReady(lpparam)
-        XpHelper.moduleApkPath = moduleApplicationInfo.sourceDir
+        val moduleApk = runCatching { moduleApplicationInfo.sourceDir }.getOrDefault("")
+        XpHelper.moduleApkPath = moduleApk
         LuaHookEngine.init(this, lpparam)
+        if (StandaloneHookRunner.tryRunStandalone(
+                hookInstance = this,
+                moduleApkPath = moduleApk,
+                targetPackageName = lpparam.packageName,
+                targetDataDir = runCatching { lpparam.applicationInfo.dataDir }.getOrNull()
+            )
+        ) {
+            return
+        }
         luaHookInit(lpparam)
     }
 

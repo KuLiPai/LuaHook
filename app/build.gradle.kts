@@ -102,7 +102,6 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     // The core module that provides APIs to a shell
     implementation(libs.core)
-    implementation(libs.kotlin.reflect)
     implementation(libs.xphelper)
     implementation(libs.dexkit)
     implementation(libs.ripple.components.android)
@@ -145,4 +144,7 @@ dependencies {
     implementation(libs.floatingx.core)
 
     implementation(libs.floatingx.system)
+
+    // APK 签名支持 (V1/V2/V3)
+    implementation(libs.apksig)
 }

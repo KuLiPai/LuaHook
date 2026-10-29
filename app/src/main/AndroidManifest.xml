@@ -30,6 +30,8 @@
         tools:targetApi="35">
         <activity android:name=".feature.project.config.ProjectConfigActivity"
             android:exported="false" />
+        <activity android:name=".feature.project.pack.ProjectPackActivity"
+            android:exported="false" />
         <activity android:name=".feature.project.editor.ProjectEditorActivity"
             android:exported="false" />
         <activity android:name=".feature.script.selector.ScopeSelectorActivity"

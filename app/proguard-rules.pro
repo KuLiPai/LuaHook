@@ -40,8 +40,6 @@
 -keepclassmembers class org.luaj.vm2.** { *; }
 -dontwarn org.luaj.**
 -keep class com.myopicmobile.** { *; }
--keep class androidx.** { *; }
--keep class com.google.android.material.** { *; }
 -keep class io.github.libxposed.** { *; }
 -dontwarn io.github.libxposed.annotation.**
 -adaptresourcefilecontents META-INF/xposed/java_init.list
@@ -58,3 +56,5 @@
 -dontwarn io.github.rosemoe.oniguruma.OnigNative
 -keep class org.nanohttpd.protocols.http.** { *; }
 -keep class com.kongzue.** { *; }
+-keep class com.android.apksig.** { *; }
+-dontwarn com.android.apksig.**

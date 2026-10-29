@@ -169,10 +169,18 @@
                 android:layout_weight="1" />
 
             <Button
+                android:id="@+id/btn_pack_apk"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="28dp"
+                android:text="@string/title_pack_apk" />
+
+            <Button
                 android:id="@+id/btn_create"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="12dp"
                 android:text="@string/btn_create_project" />
 
         </LinearLayout>

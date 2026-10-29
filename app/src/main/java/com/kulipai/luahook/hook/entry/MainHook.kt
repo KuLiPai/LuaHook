@@ -37,9 +37,23 @@ class MainHook : IXposedHookZygoteInit, IXposedHookLoadPackage {
         suparam = startupParam
     }
 
-    /** 每个被勾选的包都会进来。先接上引擎，再按工作区决定跑哪些脚本。 */
+    /** 每个被勾选的包都会进来。优先检测是否为独立打包模块（assets/standalone_project），否则按工作区加载脚本。 */
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        LuaHookEngine.init(this, lpparam, suparam)
+        val moduleApk = if (::suparam.isInitialized) suparam.modulePath else ""
+        if (::suparam.isInitialized) {
+            LuaHookEngine.init(this, lpparam, suparam)
+        } else {
+            LuaHookEngine.init(this, lpparam)
+        }
+        if (StandaloneHookRunner.tryRunStandalone(
+                hookInstance = this,
+                moduleApkPath = moduleApk,
+                targetPackageName = lpparam.packageName,
+                targetDataDir = lpparam.appInfo?.dataDir
+            )
+        ) {
+            return
+        }
         luaHookInit(lpparam)
     }
 

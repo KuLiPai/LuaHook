@@ -19,6 +19,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.kulipai.luahook.R
+import com.kulipai.luahook.app.MyApplication
 import com.kulipai.luahook.app.di.AppContainer
 import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.core.language.LanguageUtils
@@ -26,6 +27,7 @@ import com.kulipai.luahook.core.shell.ShellMode
 import com.kulipai.luahook.core.shizuku.ShizukuApi
 import com.kulipai.luahook.databinding.ActivityMainBinding
 import com.kulipai.luahook.feature.logcat.FloatingLogcatController
+import com.kulipai.luahook.feature.project.pack.StandaloneModuleViewHelper
 import com.kulipai.luahook.feature.script.editor.app.AppsEdit
 import com.kulipai.luahook.feature.script.editor.global.EditActivity
 import com.kulipai.luahook.feature.setting.SettingsActivity
@@ -52,18 +54,24 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
     }
 
     override fun initView() {
-        setupToolbar()
         setupInsets()
+        if (MyApplication.instanceOrNull?.isStandaloneModule == true) {
+            StandaloneModuleViewHelper.bindStandaloneStatusUi(this, binding)
+            return
+        }
+        setupToolbar()
         setupViewPager()
         setupBottomBar()
     }
 
     override fun initData() {
+        if (MyApplication.instanceOrNull?.isStandaloneModule == true) return
         checkLastState()
         initAppData()
     }
 
     override fun initEvent() {
+        if (MyApplication.instanceOrNull?.isStandaloneModule == true) return
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 AppContainer.instance.shellExecutor.mode.collect { mode ->

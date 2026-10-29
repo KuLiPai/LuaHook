@@ -22,6 +22,7 @@ import com.kulipai.luahook.core.file.WorkspaceStorage
 import com.kulipai.luahook.core.shell.ShellResult
 import com.kulipai.luahook.databinding.ActivityProjectEditorBinding
 import com.kulipai.luahook.feature.logcat.LogCatActivity
+import com.kulipai.luahook.feature.project.pack.ProjectPackActivity
 import com.kulipai.luahook.feature.script.editor.SoraEditorDelegate.initLuaEditor
 import com.kulipai.luahook.feature.script.editor.SymbolAdapter
 import com.kulipai.luahook.feature.script.editor.ToolAdapter
@@ -625,6 +626,8 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 6, 0, getString(R.string.action_export))
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
+        menu?.add(0, 7, 0, getString(R.string.action_pack_apk))
+            ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
 
         return true
     }
@@ -718,6 +721,16 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
 
             6 -> {
                 exportLauncher.launch("$projectName.zip")
+                true
+            }
+
+            7 -> {
+                if (isContentModified()) {
+                    saveCurrentFile(force = true)
+                }
+                val intent = Intent(this, ProjectPackActivity::class.java)
+                intent.putExtra("project_name", projectName)
+                startActivity(intent)
                 true
             }
 
