@@ -1,3 +1,6 @@
 [submodule "xdl"]
 	path = app/src/main/cpp/xdl
 	url = https://github.com/hexhacking/xDL.git
+[submodule "libluahook"]
+	path = libluahook
+	url = https://github.com/KuLiPai/libluahook.git
