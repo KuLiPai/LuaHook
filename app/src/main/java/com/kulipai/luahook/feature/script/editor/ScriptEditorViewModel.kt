@@ -253,7 +253,7 @@ class ScriptEditorViewModel(
             } else {
                 lastSavedContent = previousSaved
                 _uiState.update { it.copy(isModified = currentEditorContent != previousSaved) }
-                _effect.emit(ScriptEditorEffect.ShowToast("保存失败"))
+                _effect.emit(ScriptEditorEffect.ShowToastRes(R.string.msg_save_failed))
             }
         }
     }
@@ -375,7 +375,7 @@ class ScriptEditorViewModel(
             if (file != null) {
                 _effect.emit(ScriptEditorEffect.ShareFile(file))
             } else {
-                _effect.emit(ScriptEditorEffect.ShowToast("文件导出失败"))
+                _effect.emit(ScriptEditorEffect.ShowToastRes(R.string.msg_export_failed))
             }
         }
     }

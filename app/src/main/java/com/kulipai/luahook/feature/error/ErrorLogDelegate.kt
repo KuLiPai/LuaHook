@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
+import com.kulipai.luahook.R
 import java.io.File
 import java.util.Date
 
@@ -32,12 +33,12 @@ object ErrorLogDelegate {
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain" // 设置MIME类型为纯文本
-            putExtra(Intent.EXTRA_SUBJECT, "应用错误日志")
+            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.app_error_log_subject))
             putExtra(Intent.EXTRA_STREAM, fileUri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        context.startActivity(Intent.createChooser(intent, "分享错误日志"))
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_error_log_title)))
         return true
     }
 
@@ -45,20 +46,15 @@ object ErrorLogDelegate {
     private fun buildErrorLog(
         message: String,
         stack: String
-    ) = """
-        错误信息：
-        $message
-
-        堆栈：
-        $stack
-
-        ---
-        设备：
-        ${Build.MANUFACTURER} ${Build.MODEL}
-        Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})
-        包名：${context.packageName}
-        时间：${Date()}
-    """.trimIndent()
+    ) = context.getString(
+        R.string.error_log_template,
+        message,
+        stack,
+        "${Build.MANUFACTURER} ${Build.MODEL}",
+        "${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
+        context.packageName,
+        Date().toString()
+    )
 
 
     /**

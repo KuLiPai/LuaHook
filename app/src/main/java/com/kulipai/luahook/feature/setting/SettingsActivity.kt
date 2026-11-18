@@ -73,6 +73,7 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
             v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom)
             insets
         }
+        updateLanguageView()
     }
 
     override fun initEvent() {
@@ -143,39 +144,37 @@ class SettingsActivity : BaseActivity<ActivitySettingsBinding>() {
         }
     }
 
+    private fun supportedLanguages(): List<Pair<String, String>> = listOf(
+        LanguageUtils.LANGUAGE_FOLLOW_SYSTEM to getString(R.string.follow_system),
+        LanguageUtils.LANGUAGE_GERMAN to "Deutsch",
+        LanguageUtils.LANGUAGE_ENGLISH to "English",
+        LanguageUtils.LANGUAGE_SPANISH to "Español",
+        LanguageUtils.LANGUAGE_FRENCH to "Français",
+        LanguageUtils.LANGUAGE_HINDI to "हिन्दी",
+        LanguageUtils.LANGUAGE_JAPANESE to "日本語",
+        LanguageUtils.LANGUAGE_CHINESE_TRADITIONAL to "繁體中文",
+        LanguageUtils.LANGUAGE_CHINESE_SIMPLIFIED to "简体中文",
+        LanguageUtils.LANGUAGE_KOREAN to "한국어",
+        LanguageUtils.LANGUAGE_PORTUGUESE to "Português (Brasil)"
+    )
+
+    private fun updateLanguageView() {
+        var currentLanguage = LanguageUtils.getCurrentLanguage(this)
+        if (currentLanguage == "zh") currentLanguage = LanguageUtils.LANGUAGE_CHINESE_SIMPLIFIED
+        val label = supportedLanguages().firstOrNull { it.first == currentLanguage }?.second
+            ?: getString(R.string.follow_system)
+        binding.tvCurrentLanguage.text = label
+    }
+
     private fun showLanguagePickerDialog() {
-        val languages = arrayOf(
-            resources.getString(R.string.follow_system),
-            "Deutsch",
-            "English",
-            "Español",
-            "Français",
-            "हिन्दी",
-            "日本語",
-            "繁體中文",
-            "简体中文",
-            "한국어",
-            "Português"
-        )
-        val languageCodes = arrayOf(
-            LanguageUtils.LANGUAGE_FOLLOW_SYSTEM,
-            LanguageUtils.LANGUAGE_GERMAN,
-            LanguageUtils.LANGUAGE_ENGLISH,
-            LanguageUtils.LANGUAGE_SPANISH,
-            LanguageUtils.LANGUAGE_FRENCH,
-            LanguageUtils.LANGUAGE_HINDI,
-            LanguageUtils.LANGUAGE_JAPANESE,
-            LanguageUtils.LANGUAGE_CHINESE_TRADITIONAL,
-            LanguageUtils.LANGUAGE_CHINESE_SIMPLIFIED,
-            LanguageUtils.LANGUAGE_KOREAN,
-            LanguageUtils.LANGUAGE_PORTUGUESE
-        )
+        val entries = supportedLanguages()
+        val languageCodes = entries.map { it.first }.toTypedArray()
+        val languages = entries.map { it.second }.toTypedArray()
 
         var currentLanguage = LanguageUtils.getCurrentLanguage(this)
         if (currentLanguage == "zh") currentLanguage = LanguageUtils.LANGUAGE_CHINESE_SIMPLIFIED
 
-        var checkedItem = languageCodes.indexOf(currentLanguage)
-        if (checkedItem == -1) checkedItem = 0
+        val checkedItem = languageCodes.indexOf(currentLanguage).takeIf { it >= 0 } ?: 0
 
         MaterialAlertDialogBuilder(this)
             .setTitle(resources.getString(R.string.Select_language))

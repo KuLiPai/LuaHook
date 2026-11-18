@@ -17,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:navigationIcon="@drawable/arrow_back_24px"
-            app:title="Create Project"
+            app:title="@string/title_create_project"
             app:titleCentered="true" />
     </com.google.android.material.appbar.AppBarLayout>
 

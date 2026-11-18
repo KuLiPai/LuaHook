@@ -13,7 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
 
-        android:hint="选择 Hook 生成模式">
+        android:hint="@string/hint_hook_gen_mode">
 
         <AutoCompleteTextView
             android:id="@+id/gen_code_mode_menu"

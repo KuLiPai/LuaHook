@@ -130,6 +130,9 @@
     <string name="restart_luahook">Restart LuaHook</string>
     <string name="send_error_massage">Send error message</string>
     <string name="close">closure</string>
+    <string name="clear">Clear logs</string>
+    <string name="minimize">Minimize log window</string>
+    <string name="restore">Restore log window</string>
     
     <string name="trans_design">Translation, partial interface design</string>
     
@@ -241,6 +244,7 @@
     <string name="aqintrue_contribute">Native features, Native Hook</string>
     <string name="expand_all_contributors">View all contributors (%1$d)</string>
     <string name="collapse_contributors">Collapse</string>
+    <string name="ghost_xx_contribute">MCP features, API 102 adaptation</string>
     <string name="msg_file_reloaded_from_disk">File updated from external change</string>
     <string name="title_file_conflict">File Conflict</string>
     <string name="msg_file_conflict">The file was modified externally (e.g. by MCP), but the editor has unsaved changes.\nReload the latest version from disk?</string>
@@ -295,4 +299,37 @@
     <string name="err_no_abi_selected">Please select at least one native ABI</string>
     <string name="err_missing_keystore">Please select a custom keystore file</string>
     <string name="msg_pack_failed">Build failed: %1$s</string>
+
+    <!-- Additional i18n strings -->
+    <string name="hint_replace">Replace</string>
+    <string name="action_replace_one">Rep</string>
+    <string name="action_replace_all">All</string>
+    <string name="msg_replace_failed">Replace failed</string>
+    <string name="msg_replace_all_failed">Replace All failed</string>
+    <string name="msg_save_failed">Save failed</string>
+    <string name="hint_hook_gen_mode">Select Hook Generation Mode</string>
+    <string name="hook_mode_method">Hook Method</string>
+    <string name="hook_mode_constructor">Hook Constructor</string>
+    <string name="hook_mode_intercept">Intercept Execution</string>
+    <string name="hook_mode_return">Modify Return Value</string>
+    <string name="hook_mode_params">Modify Parameters</string>
+    <string name="example_change_params">e.g.: 1,2,3  \'abc\',true,0</string>
+    <string name="example_change_return">e.g.: 1 \'abc\' true</string>
+    <string name="details">Details</string>
+    <string name="text_none">None</string>
+    <string name="empty_projects_hint">No projects yet\nTap the button at the bottom right to create or import a project</string>
+    <string name="title_select_scope">Select Scope</string>
+    <string name="err_load_icon_failed">Failed to load icon</string>
+    <string name="err_read_keystore_failed">Failed to read keystore</string>
+    <string name="err_install_failed">Install failed</string>
+    <string name="err_share_failed">Share failed</string>
+    <string name="err_unknown">Unknown error</string>
+    <string name="err_no_stack_trace">No stack trace available</string>
+    <string name="app_error_log_subject">App Error Log</string>
+    <string name="share_error_log_title">Share Error Log</string>
+    <string name="error_log_template">Error Message:\n%1$s\n\nStack Trace:\n%2$s\n\n---\nDevice:\n%3$s\nAndroid %4$s\nPackage: %5$s\nTime: %6$s</string>
+    <string name="standalone_author_format">Author: %s</string>
+    <string name="standalone_target_scope_label">Target Scope:</string>
+    <string name="standalone_launch_target_app">Launch Target App (%s)</string>
+    <string name="standalone_target_not_installed">Target app not installed: %s</string>
 </resources>

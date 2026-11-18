@@ -148,7 +148,7 @@ class ProjectFragment : BaseFragment<FragmentHomeProjectBinding>() {
         if (isEmpty) {
             if (emptyTextView == null) {
                 emptyTextView = TextView(requireContext()).apply {
-                    text = "暂无项目\n点击右下角按钮创建或导入项目"
+                    text = getString(R.string.empty_projects_hint)
                     textSize = 15f
                     gravity = Gravity.CENTER
                     val typedValue = TypedValue()

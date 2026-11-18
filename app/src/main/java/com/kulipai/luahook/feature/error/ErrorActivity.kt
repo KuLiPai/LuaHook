@@ -4,6 +4,7 @@ import android.content.Intent
 import android.view.LayoutInflater
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.kulipai.luahook.R
 import com.kulipai.luahook.core.base.BaseActivity
 import com.kulipai.luahook.databinding.ActivityErrorBinding
 
@@ -36,8 +37,8 @@ class ErrorActivity : BaseActivity<ActivityErrorBinding>() {
 
     override fun initData() {
         // 从 Intent 中获取错误信息
-        errorMessage = intent.getStringExtra(EXTRA_ERROR_MESSAGE) ?: "未知错误"
-        stackTrace = intent.getStringExtra(EXTRA_STACK_TRACE) ?: "无堆栈跟踪信息"
+        errorMessage = intent.getStringExtra(EXTRA_ERROR_MESSAGE) ?: getString(R.string.err_unknown)
+        stackTrace = intent.getStringExtra(EXTRA_STACK_TRACE) ?: getString(R.string.err_no_stack_trace)
         binding.tvErrorMessage.text = errorMessage
     }
 

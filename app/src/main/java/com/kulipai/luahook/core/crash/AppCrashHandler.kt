@@ -2,6 +2,7 @@ package com.kulipai.luahook.core.crash
 
 import android.content.Context
 import android.os.Process
+import com.kulipai.luahook.R
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.system.exitProcess
@@ -19,7 +20,7 @@ class AppCrashHandler(
 ) : Thread.UncaughtExceptionHandler {
 
     override fun uncaughtException(t: Thread, e: Throwable) {
-        val errorMessage = e.localizedMessage ?: "未知错误"
+        val errorMessage = e.localizedMessage ?: runCatching { context.getString(R.string.err_unknown) }.getOrDefault("Unknown error")
         val stackTrace = getStackTrace(e)
 
         try {
