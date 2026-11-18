@@ -83,7 +83,7 @@
     <string name="check_update_false">Verifique se as atualizações falharam, tente novamente mais tarde</string>
     <string name="new_version">Existe uma nova versão</string>
     <string name="find_new_version">Descubra novos lançamentos</string>
-    <string name="goto_github_release">前往 Lançamento no GitHub</string>
+    <string name="goto_github_release">Ir para Lançamento no GitHub</string>
     <string name="cant_open_link_goto">Se não conseguir abrir o link, vá até ele manualmente</string>
     <string name="latest_version">É a versão mais recente</string>
     <string name="check_failed_no_data">Verificação falhou: Sem dados de resposta</string>
@@ -187,7 +187,7 @@ https://luahook.kulipai.top/activate.html
     <string name="msg_import_success">Importação bem-sucedida</string>
     <string name="msg_import_failed">Importação falhada</string>
     <string name="title_delete_project">Exclua o projeto</string>
-    <string name="msg_confirm_delete_project">Você tem certeza de que quer deletar as porcentagens dos itens\? Essa ação não é revertida.</string>
+    <string name="msg_confirm_delete_project">Tem certeza de que deseja excluir o projeto %s? Esta ação não pode ser desfeita.</string>
     <string name="action_delete">Excluir</string>
     <string name="msg_deleted_project">%s removidos</string>
     <string name="msg_delete_failed">Exclusão falhada: %s</string>
@@ -221,7 +221,7 @@ https://luahook.kulipai.top/activate.html
     <string name="hint_package_name">Nome do pacote</string>
     <string name="title_select_launch_app">Selecionar o aplicativo de lançamento</string>
     <string name="msg_scope_all_no_launcher">O escopo é \'Todos\' e nenhum iniciador é definido.</string>
-    <string name="msg_no_launch_intent">A intenção de lançamento para percentuais não pode ser encontrada</string>
+    <string name="msg_no_launch_intent">Não foi possível encontrar a Intent de inicialização para %s</string>
     <string name="msg_launch_error">Erro de inicialização: %s</string>
     <string name="msg_no_launcher_defined">Nenhum iniciador ou escopo definido.</string>
     <string name="msg_project_info_not_found">Nenhuma informação do projeto foi encontrada.</string>
@@ -298,4 +298,37 @@ https://luahook.kulipai.top/activate.html
     <string name="err_no_abi_selected">Selecione pelo menos uma arquitetura nativa</string>
     <string name="err_missing_keystore">Selecione um arquivo de keystore personalizado</string>
     <string name="msg_pack_failed">Falha na geração: %1$s</string>
+
+    <!-- Strings adicionais de i18n -->
+    <string name="hint_replace">Substituir</string>
+    <string name="action_replace_one">Subst.</string>
+    <string name="action_replace_all">Tudo</string>
+    <string name="msg_replace_failed">Falha ao substituir</string>
+    <string name="msg_replace_all_failed">Falha ao substituir tudo</string>
+    <string name="msg_save_failed">Falha ao salvar</string>
+    <string name="hint_hook_gen_mode">Selecionar modo de geração de Hook</string>
+    <string name="hook_mode_method">Hook em método</string>
+    <string name="hook_mode_constructor">Hook em construtor</string>
+    <string name="hook_mode_intercept">Interceptar execução</string>
+    <string name="hook_mode_return">Modificar retorno</string>
+    <string name="hook_mode_params">Modificar parâmetros</string>
+    <string name="example_change_params">Ex.: 1,2,3  \'abc\',true,0</string>
+    <string name="example_change_return">Ex.: 1 \'abc\' true</string>
+    <string name="details">Detalhes</string>
+    <string name="text_none">Nenhum</string>
+    <string name="empty_projects_hint">Nenhum projeto ainda\nToque no botão no canto inferior direito para criar ou importar um projeto</string>
+    <string name="title_select_scope">Selecionar escopo</string>
+    <string name="err_load_icon_failed">Falha ao carregar o ícone</string>
+    <string name="err_read_keystore_failed">Falha ao ler a keystore</string>
+    <string name="err_install_failed">Falha na instalação</string>
+    <string name="err_share_failed">Falha ao compartilhar</string>
+    <string name="err_unknown">Erro desconhecido</string>
+    <string name="err_no_stack_trace">Sem informações de rastreamento de pilha</string>
+    <string name="app_error_log_subject">Log de erro do aplicativo</string>
+    <string name="share_error_log_title">Compartilhar log de erro</string>
+    <string name="error_log_template">Mensagem de erro:\n%1$s\n\nRastreamento de pilha:\n%2$s\n\n---\nDispositivo:\n%3$s\nAndroid %4$s\nPacote: %5$s\nData/hora: %6$s</string>
+    <string name="standalone_author_format">Autor: %s</string>
+    <string name="standalone_target_scope_label">Escopo alvo:</string>
+    <string name="standalone_launch_target_app">Abrir app alvo (%s)</string>
+    <string name="standalone_target_not_installed">App alvo não instalado: %s</string>
 </resources>

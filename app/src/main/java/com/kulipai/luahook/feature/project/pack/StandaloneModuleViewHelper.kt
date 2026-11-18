@@ -14,6 +14,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.kulipai.luahook.R
 import com.kulipai.luahook.databinding.ActivityMainBinding
 import org.json.JSONObject
 
@@ -99,7 +100,7 @@ object StandaloneModuleViewHelper {
 
         if (author.isNotBlank()) {
             val authorTv = TextView(activity).apply {
-                text = "作者 / Author: $author"
+                text = activity.getString(R.string.standalone_author_format, author)
                 textSize = 14f
                 setPadding(0, 0, 0, 8.dp())
             }
@@ -116,7 +117,7 @@ object StandaloneModuleViewHelper {
         }
 
         val scopeTitle = TextView(activity).apply {
-            text = "生效作用域 / Target Scope:"
+            text = activity.getString(R.string.standalone_target_scope_label)
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
             setPadding(0, 4.dp(), 0, 6.dp())
@@ -125,7 +126,7 @@ object StandaloneModuleViewHelper {
 
         val chipGroup = ChipGroup(activity)
         if (scopes.isEmpty() || scopes.contains("all")) {
-            chipGroup.addView(Chip(activity).apply { text = "All Apps" })
+            chipGroup.addView(Chip(activity).apply { text = activity.getString(R.string.text_all_apps) })
         } else {
             for (s in scopes) {
                 chipGroup.addView(Chip(activity).apply { text = s })
@@ -144,13 +145,17 @@ object StandaloneModuleViewHelper {
                 ).apply {
                     topMargin = 24.dp()
                 }
-                text = "启动目标应用 ($firstTargetPkg)"
+                text = activity.getString(R.string.standalone_launch_target_app, firstTargetPkg)
                 setOnClickListener {
                     val launchIntent = activity.packageManager.getLaunchIntentForPackage(firstTargetPkg)
                     if (launchIntent != null) {
                         activity.startActivity(launchIntent)
                     } else {
-                        Toast.makeText(activity, "未安装目标应用: $firstTargetPkg", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            activity,
+                            activity.getString(R.string.standalone_target_not_installed, firstTargetPkg),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }

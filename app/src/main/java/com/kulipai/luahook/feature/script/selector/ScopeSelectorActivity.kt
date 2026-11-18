@@ -45,7 +45,7 @@ class ScopeSelectorActivity : BaseActivity<ActivitySelectAppsBinding>() {
         
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = "Select Scope"
+        supportActionBar?.title = getString(R.string.title_select_scope)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())

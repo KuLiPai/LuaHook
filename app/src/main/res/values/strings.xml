@@ -130,9 +130,9 @@
     <string name="restart_luahook">重启 LuaHook</string>
     <string name="send_error_massage">发送错误信息</string>
     <string name="close">关闭</string>
-    <string name="clear">Clear logs</string>
-    <string name="minimize">Minimize log window</string>
-    <string name="restore">Restore log window</string>
+    <string name="clear">清除日志</string>
+    <string name="minimize">最小化日志窗口</string>
+    <string name="restore">恢复日志窗口</string>
     <string name="KuLiPai" translatable="false">KuLiPai</string>
     <string name="trans_design">翻译、部分界面设计</string>
     <string name="paditianxiu" translatable="false">Padi</string>
@@ -300,4 +300,37 @@
     <string name="err_no_abi_selected">请至少选择一种 Native 架构</string>
     <string name="err_missing_keystore">请选择自定义密钥库文件</string>
     <string name="msg_pack_failed">打包失败：%1$s</string>
+
+    <!-- 补充 i18n 字符串 -->
+    <string name="hint_replace">替换</string>
+    <string name="action_replace_one">替换</string>
+    <string name="action_replace_all">全部</string>
+    <string name="msg_replace_failed">替换失败</string>
+    <string name="msg_replace_all_failed">全部替换失败</string>
+    <string name="msg_save_failed">保存失败</string>
+    <string name="hint_hook_gen_mode">选择 Hook 生成模式</string>
+    <string name="hook_mode_method">Hook方法</string>
+    <string name="hook_mode_constructor">Hook构造方法</string>
+    <string name="hook_mode_intercept">拦截执行</string>
+    <string name="hook_mode_return">修改返回值</string>
+    <string name="hook_mode_params">修改参数</string>
+    <string name="example_change_params">例如: 1,2,3  \'abc\',true,0</string>
+    <string name="example_change_return">例如: 1 \'abc\' true</string>
+    <string name="details">详情</string>
+    <string name="text_none">无</string>
+    <string name="empty_projects_hint">暂无项目\n点击右下角按钮创建或导入项目</string>
+    <string name="title_select_scope">选择作用域</string>
+    <string name="err_load_icon_failed">加载图标失败</string>
+    <string name="err_read_keystore_failed">读取密钥库失败</string>
+    <string name="err_install_failed">安装失败</string>
+    <string name="err_share_failed">分享失败</string>
+    <string name="err_unknown">未知错误</string>
+    <string name="err_no_stack_trace">无堆栈跟踪信息</string>
+    <string name="app_error_log_subject">应用错误日志</string>
+    <string name="share_error_log_title">分享错误日志</string>
+    <string name="error_log_template">错误信息：\n%1$s\n\n堆栈：\n%2$s\n\n---\n设备：\n%3$s\nAndroid %4$s\n包名：%5$s\n时间：%6$s</string>
+    <string name="standalone_author_format">作者：%s</string>
+    <string name="standalone_target_scope_label">生效作用域：</string>
+    <string name="standalone_launch_target_app">启动目标应用 (%s)</string>
+    <string name="standalone_target_not_installed">未安装目标应用: %s</string>
 </resources>

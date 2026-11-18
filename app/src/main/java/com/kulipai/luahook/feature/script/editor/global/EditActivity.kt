@@ -216,11 +216,11 @@ class EditActivity : AppCompatActivity() {
 
     //菜单
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.add(0, 1, 0, "Undo")
+        menu?.add(0, 1, 0, getString(R.string.action_undo))
             ?.setIcon(R.drawable.undo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
 
-        menu?.add(0, 2, 0, "Redo")
+        menu?.add(0, 2, 0, getString(R.string.action_redo))
             ?.setIcon(R.drawable.redo_24px)
             ?.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM)
         menu?.add(0, 3, 0, resources.getString(R.string.format))
@@ -252,7 +252,7 @@ class EditActivity : AppCompatActivity() {
 
             3 -> {
                 editor.formatLua(2).onFailure { e ->
-                    Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_format_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
                 }
                 true
             }
@@ -573,7 +573,7 @@ class EditActivity : AppCompatActivity() {
                 try {
                     editor.searcher.replaceCurrentMatch(replaceText)
                 } catch (e: Exception) {
-                    Toast.makeText(this, "Replace failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_replace_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -585,7 +585,7 @@ class EditActivity : AppCompatActivity() {
                 try {
                     editor.searcher.replaceAll(replaceText)
                 } catch (e: Exception) {
-                    Toast.makeText(this, "Replace All failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_replace_all_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }

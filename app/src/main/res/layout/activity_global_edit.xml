@@ -130,7 +130,7 @@
                         android:layout_height="40dp"
                         android:layout_weight="1"
                         android:background="@null"
-                        android:hint="Replace"
+                        android:hint="@string/hint_replace"
                         android:inputType="text"
                         android:maxLines="1"
                         android:paddingHorizontal="8dp"
@@ -144,7 +144,7 @@
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:paddingHorizontal="8dp"
-                        android:text="Rep"
+                        android:text="@string/action_replace_one"
                         android:textSize="12sp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -155,7 +155,7 @@
                         android:insetTop="0dp"
                         android:insetBottom="0dp"
                         android:paddingHorizontal="8dp"
-                        android:text="All"
+                        android:text="@string/action_replace_all"
                         android:textSize="12sp" />
                 </LinearLayout>
 

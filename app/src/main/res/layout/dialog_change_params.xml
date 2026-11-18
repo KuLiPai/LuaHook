@@ -69,5 +69,5 @@
         android:layout_marginStart="12dp"
         android:layout_marginTop="0dp"
         android:layout_marginEnd="12dp"
-        android:text="例如:1,2,3  'abc',true,0" />
+        android:text="@string/example_change_params" />
 </LinearLayout>

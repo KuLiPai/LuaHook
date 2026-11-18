@@ -88,12 +88,12 @@ class MultScriptAdapter(
                 bsdName.text = name
 
                 val (_, desc, _) = extractConfig(conf[bindingAdapterPosition].value)
-                bsdDescription.text = desc.takeUnless { it.isEmpty() } ?: "无"
+                bsdDescription.text = desc.takeUnless { it.isEmpty() } ?: context.getString(R.string.text_none)
 
                 adapterScope.launch {
                     val scriptContent = scriptRepository.readAppScript(currentPackageName, name)
                     val param = scriptRepository.parseParameters(scriptContent)
-                    bsdAuthor.text = param?.author ?: "无"
+                    bsdAuthor.text = param?.author ?: context.getString(R.string.text_none)
                 }
 
                 val window = bsd.window

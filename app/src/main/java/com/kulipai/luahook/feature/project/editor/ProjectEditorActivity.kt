@@ -339,7 +339,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     createItem(name, isFolder)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 
@@ -799,7 +799,7 @@ class ProjectEditorActivity : BaseActivity<ActivityProjectEditorBinding>() {
                     runProject(pkg)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 

@@ -55,13 +55,11 @@ class ToolAdapter(
                         val layoutChangeParams = view.findViewById<View>(R.id.layout_change_params)
                         // 定义下拉菜单的选项列表
                         val hookModes = listOf(
-                            "Hook方法",
-                            "Hook构造方法",
-                            "拦截执行",
-                            "修改返回值",
-                            "修改参数",
-//                            "Hook静态变量",
-//                            "Hook实例变量",
+                            context.getString(R.string.hook_mode_method),
+                            context.getString(R.string.hook_mode_constructor),
+                            context.getString(R.string.hook_mode_intercept),
+                            context.getString(R.string.hook_mode_return),
+                            context.getString(R.string.hook_mode_params),
                         )
 
 

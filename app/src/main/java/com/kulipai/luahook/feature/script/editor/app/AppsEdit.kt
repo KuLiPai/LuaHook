@@ -255,9 +255,9 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menu?.add(0, 0, 0, "Run")?.setIcon(R.drawable.play_arrow_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 1, 0, "Undo")?.setIcon(R.drawable.undo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
-        menu?.add(0, 2, 0, "Redo")?.setIcon(R.drawable.redo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 0, 0, getString(R.string.action_run))?.setIcon(R.drawable.play_arrow_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 1, 0, getString(R.string.action_undo))?.setIcon(R.drawable.undo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
+        menu?.add(0, 2, 0, getString(R.string.action_redo))?.setIcon(R.drawable.redo_24px)?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS)
         menu?.add(0, 3, 0, resources.getString(R.string.format))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 4, 0, resources.getString(R.string.log))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
         menu?.add(0, 5, 0, resources.getString(R.string.manual))?.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER)
@@ -283,7 +283,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             }
             3 -> {
                 binding.editor.formatLua(2).onFailure { e ->
-                    Toast.makeText(this, "Format failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_format_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
                 }
                 true
             }
@@ -329,7 +329,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
             val view = LayoutInflater.from(this).inflate(R.layout.dialog_edit, null)
             val inputLayout = view.findViewById<TextInputLayout>(R.id.text_input_layout)
             val edit = view.findViewById<TextInputEditText>(R.id.edit)
-            inputLayout.hint = "作者名称"
+            inputLayout.hint = getString(R.string.hint_author)
 
             edit.doBeforeTextChanged { _, _, _, _ -> edit.error = null }
 
@@ -473,7 +473,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                 try {
                     binding.editor.searcher.replaceCurrentMatch(replaceText)
                 } catch (e: Exception) {
-                    Toast.makeText(this, "Replace failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_replace_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -484,7 +484,7 @@ class AppsEdit : BaseActivity<ActivityAppsEditBinding>() {
                 try {
                     binding.editor.searcher.replaceAll(replaceText)
                 } catch (e: Exception) {
-                    Toast.makeText(this, "Replace All failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_replace_all_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }

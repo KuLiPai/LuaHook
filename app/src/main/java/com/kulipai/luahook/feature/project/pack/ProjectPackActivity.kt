@@ -270,7 +270,7 @@ class ProjectPackActivity : BaseActivity<ActivityProjectPackBinding>() {
                 }
             }
         } catch (e: Exception) {
-            Toast.makeText(this, e.message ?: "Failed to load icon", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, e.message ?: getString(R.string.err_load_icon_failed), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -287,7 +287,7 @@ class ProjectPackActivity : BaseActivity<ActivityProjectPackBinding>() {
             selectedKeystoreFile = destFile
             binding.tvKeystorePath.text = displayName
         } catch (e: Exception) {
-            Toast.makeText(this, e.message ?: "Failed to read keystore", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, e.message ?: getString(R.string.err_read_keystore_failed), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -542,7 +542,7 @@ class ProjectPackActivity : BaseActivity<ActivityProjectPackBinding>() {
             }
             startActivity(intent)
         } catch (e: Exception) {
-            Toast.makeText(this, e.message ?: "Install failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, e.message ?: getString(R.string.err_install_failed), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -560,7 +560,7 @@ class ProjectPackActivity : BaseActivity<ActivityProjectPackBinding>() {
             }
             startActivity(Intent.createChooser(shareIntent, getString(R.string.action_share_apk)))
         } catch (e: Exception) {
-            Toast.makeText(this, e.message ?: "Share failed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, e.message ?: getString(R.string.err_share_failed), Toast.LENGTH_SHORT).show()
         }
     }
 

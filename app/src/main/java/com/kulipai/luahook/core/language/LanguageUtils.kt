@@ -71,7 +71,7 @@ object LanguageUtils {
             LANGUAGE_CHINESE_SIMPLIFIED -> Locale.SIMPLIFIED_CHINESE
             "zh" -> Locale.SIMPLIFIED_CHINESE // Backward compatibility
             LANGUAGE_KOREAN -> Locale.KOREAN
-            LANGUAGE_PORTUGUESE -> Locale("pt")
+            LANGUAGE_PORTUGUESE -> Locale("pt", "BR")
             else -> Locale.ENGLISH
         }
     }
